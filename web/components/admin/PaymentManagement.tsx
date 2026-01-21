@@ -374,10 +374,10 @@ export default function PaymentManagement({ members: initialMembers, payments: i
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">All Payments</h2>
-            <div className="text-sm text-gray-500">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">All Payments</h2>
+            <div className="text-xs sm:text-sm text-gray-500">
               {searchQuery ? (
                 <span>
                   Showing {filteredPayments.length} of {payments.length} payments
@@ -409,72 +409,33 @@ export default function PaymentManagement({ members: initialMembers, payments: i
             )}
           </div>
         </div>
-        <div className="overflow-x-auto">
-          {filteredPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">
-                {searchQuery ? `No payments found matching "${searchQuery}"` : 'No payments yet'}
-              </p>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="mt-2 text-sm text-primary-600 hover:text-primary-700"
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-          ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Member
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reference
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPayments.map((payment) => (
-                <tr key={payment.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {format(new Date(payment.payment_date), 'MMM dd, yyyy')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>
-                      <div className="font-medium">{payment.member.full_name}</div>
-                      <div className="text-gray-500">{payment.member.membership_id}</div>
+        {filteredPayments.length === 0 ? (
+          <div className="text-center py-12">
+            <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">
+              {searchQuery ? `No payments found matching "${searchQuery}"` : 'No payments yet'}
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-sm text-primary-600 hover:text-primary-700"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-4">
+              {filteredPayments.map((payment) => (
+                <div key={payment.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-gray-900">{payment.member.full_name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">ID: {payment.member.membership_id}</p>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {formatCurrency(getDisplayAmount(payment.amount, payment.payment_status))}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {payment.payment_method}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {payment.reference_number}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
                       payment.payment_status === 'completed' 
                         ? 'bg-green-100 text-green-800'
                         : payment.payment_status === 'processing'
@@ -485,9 +446,26 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                     }`}>
                       {payment.payment_status || 'pending'}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center gap-3">
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Date: </span>
+                      <span className="text-gray-900">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Amount: </span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(getDisplayAmount(payment.amount, payment.payment_status))}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Method: </span>
+                      <span className="text-gray-900">{payment.payment_method}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Reference: </span>
+                      <span className="text-gray-900 font-mono text-xs">{payment.reference_number}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                       {payment.payment_method === 'monime' && payment.payment_status !== 'completed' && (
                         <button
                           onClick={() => handleSyncPayment(payment.id)}

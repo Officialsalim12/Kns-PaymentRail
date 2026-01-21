@@ -183,22 +183,22 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Create Payment Tab</h3>
-            <p className="text-sm text-gray-500 mt-1">Create a payment or donation tab for members</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-start sm:items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Create Payment Tab</h3>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Create a payment or donation tab for members</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -217,7 +217,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Create tab for:
               </label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={() => handleScopeChange('all')}

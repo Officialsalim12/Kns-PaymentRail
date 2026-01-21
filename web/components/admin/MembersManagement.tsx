@@ -236,22 +236,23 @@ export default function MembersManagement({ members: initialMembers, organizatio
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Members Management</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Members Management</h1>
         <button
           onClick={() => setShowBulkTabCreator(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm sm:text-base"
         >
           <Plus className="h-4 w-4" />
-          Create Payment Tab
+          <span className="hidden sm:inline">Create Payment Tab</span>
+          <span className="sm:hidden">Create Tab</span>
         </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">All Members</h2>
-            <div className="text-sm text-gray-500">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">All Members</h2>
+            <div className="text-xs sm:text-sm text-gray-500">
               {searchQuery ? (
                 <span>
                   Showing {filteredMembers.length} of {members.length} members
@@ -283,7 +284,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
             )}
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {members.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No members yet</p>
           ) : filteredMembers.length === 0 ? (
@@ -298,58 +299,38 @@ export default function MembersManagement({ members: initialMembers, organizatio
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Member
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Membership ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Unpaid Balance
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredMembers.map((member) => (
-                    <tr key={member.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{member.full_name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{member.membership_id}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{member.email || 'N/A'}</div>
-                        {member.phone_number && (
-                          <div className="text-xs text-gray-400">{member.phone_number}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(member.unpaid_balance || 0)}
+            <>
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-4">
+                {filteredMembers.map((member) => (
+                  <div key={member.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 truncate">{member.full_name}</h3>
+                        <p className="text-sm text-gray-500 mt-1">ID: {member.membership_id}</p>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold flex-shrink-0 ${getStatusColor(member.status)}`}>
+                        {getStatusIcon(member.status)}
+                        {member.status}
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Email: </span>
+                        <span className="text-gray-900">{member.email || 'N/A'}</span>
+                      </div>
+                      {member.phone_number && (
+                        <div>
+                          <span className="text-gray-500">Phone: </span>
+                          <span className="text-gray-900">{member.phone_number}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold ${getStatusColor(member.status)}`}>
-                          {getStatusIcon(member.status)}
-                          {member.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex gap-2 flex-wrap">
+                      )}
+                      <div>
+                        <span className="text-gray-500">Balance: </span>
+                        <span className="font-semibold text-gray-900">{formatCurrency(member.unpaid_balance || 0)}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                           {member.status === 'pending' && (
                             <>
                               <button

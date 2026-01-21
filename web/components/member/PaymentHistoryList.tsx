@@ -376,44 +376,38 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
             <p className="text-sm text-gray-400 mt-1">Your payment transactions will appear here</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-blue-200">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Reference</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-blue-200">
-                {payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-blue-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(payment.payment_date), 'MMM dd, yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {payment.reference_number || payment.id.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {formatCurrency(getMemberDisplayAmount(payment.amount))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {payment.payment_method}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {payment.description || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadge(payment.payment_status)}`}>
-                        {getStatusIcon(payment.payment_status)}
-                        {payment.payment_status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+          <>
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-4">
+              {payments.map((payment) => (
+                <div key={payment.id} className="bg-white border border-blue-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-gray-900">Reference: {payment.reference_number || payment.id.slice(0, 8)}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full flex-shrink-0 ${getStatusBadge(payment.payment_status)}`}>
+                      {getStatusIcon(payment.payment_status)}
+                      {payment.payment_status}
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Amount: </span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(getMemberDisplayAmount(payment.amount))}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Method: </span>
+                      <span className="text-gray-900">{payment.payment_method}</span>
+                    </div>
+                    {payment.description && (
+                      <div>
+                        <span className="text-gray-500">Description: </span>
+                        <span className="text-gray-900">{payment.description}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t border-blue-100">
                       {(() => {
                         // Normalize receipt data (handle array case from Supabase)
                         const normalizeReceipt = (receipt: any): any => {
