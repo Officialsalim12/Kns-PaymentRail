@@ -101,7 +101,6 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
 
     const supabase = createClient()
 
-    // Subscribe to payment changes
     const paymentsChannel = supabase
       .channel(`member-payments-${memberData.id}`)
       .on(
@@ -114,13 +113,11 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
         },
         (payload) => {
           console.log('Payment change detected:', payload)
-          // Refresh the page to get latest data
           router.refresh()
         }
       )
       .subscribe()
 
-    // Subscribe to receipt changes
     const receiptsChannel = supabase
       .channel(`member-receipts-${memberData.id}`)
       .on(
@@ -138,7 +135,6 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       )
       .subscribe()
 
-    // Subscribe to member updates (for total_paid changes)
     const memberChannel = supabase
       .channel(`member-updates-${memberData.id}`)
       .on(
@@ -159,7 +155,6 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       )
       .subscribe()
 
-    // Subscribe to member tab changes
     const tabsChannel = supabase
       .channel(`member-tabs-${memberData.id}`)
       .on(
@@ -187,7 +182,6 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
 
   // Calculate total paid from completed payments only (member sees full amount paid)
   // Always use recalculated value from actual completed payments - don't fall back to database value
-  // This ensures we only show payments that actually exist and are completed
   const recalculatedTotalPaid = calculateCompletedPaymentsDisplayAmount(payments)
   const displayTotalPaid = recalculatedTotalPaid
 
@@ -296,7 +290,6 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
         return
       }
       
-      // Helper function to trigger download
       const triggerDownload = (blob: Blob) => {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')

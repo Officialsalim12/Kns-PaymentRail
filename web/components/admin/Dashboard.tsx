@@ -121,7 +121,6 @@ export default function AdminDashboard({
 
     const supabase = createClient()
 
-    // Subscribe to payment changes for this organization
     const paymentsChannel = supabase
       .channel(`admin-payments-${organizationId}`)
       .on(
@@ -139,7 +138,6 @@ export default function AdminDashboard({
       )
       .subscribe()
 
-    // Subscribe to member changes for this organization
     const membersChannel = supabase
       .channel(`admin-members-${organizationId}`)
       .on(
@@ -157,7 +155,6 @@ export default function AdminDashboard({
       )
       .subscribe()
 
-    // Subscribe to notification changes for this organization
     const notificationsChannel = supabase
       .channel(`admin-notifications-${organizationId}`)
       .on(

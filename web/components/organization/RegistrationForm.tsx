@@ -110,7 +110,6 @@ export default function OrganizationRegistrationForm() {
       }
 
       // Step 4: Create user profile using server action with service role client
-      // This auto-confirms the user and creates the profile reliably
       // Use standardized phone number from organization data
       const profileResult = await createOrgAdminUserProfile(
         authData.user.id,

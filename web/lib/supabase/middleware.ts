@@ -18,16 +18,12 @@ export async function updateSession(request: NextRequest) {
     supabaseAnonKey === 'null' || 
     supabaseAnonKey === 'undefined'
   ) {
-    // If Supabase is not configured, allow the request to proceed
-    // This prevents crashes during development when env vars might be missing
     return supabaseResponse
   }
 
-  // Validate URL format before creating client
   try {
     new URL(supabaseUrl)
   } catch (urlError) {
-    // Invalid URL format - allow request to proceed without Supabase
     if (process.env.NODE_ENV === 'development') {
       console.warn('[Middleware] Invalid Supabase URL format:', supabaseUrl)
     }

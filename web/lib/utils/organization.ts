@@ -1,7 +1,3 @@
-/**
- * Get organization abbreviation from name
- * Takes first letter of each word, up to 3 letters
- */
 export function getOrganizationAbbreviation(name: string): string {
   if (!name) return 'O'
   
@@ -9,7 +5,6 @@ export function getOrganizationAbbreviation(name: string): string {
   
   if (words.length === 0) return 'O'
   
-  // If single word, take first 2-3 characters
   if (words.length === 1) {
     const word = words[0]
     if (word.length <= 3) {
@@ -18,22 +13,11 @@ export function getOrganizationAbbreviation(name: string): string {
     return word.substring(0, 3).toUpperCase()
   }
   
-  // If multiple words, take first letter of each word (up to 3 words)
   return words
     .slice(0, 3)
     .map(word => word.charAt(0).toUpperCase())
     .join('')
 }
-
-/**
- * Standardize organization data to match standard structure
- * This ensures all newly created accounts follow the same setup logic:
- * - All text fields are trimmed
- * - Empty strings are converted to null for optional fields
- * - Status defaults to 'pending' if not provided
- * 
- * These standards are hardcoded and do not depend on any reference organization.
- */
 export interface StandardizedOrganizationData {
   name: string
   organization_type: string
@@ -53,12 +37,10 @@ export function standardizeOrganizationData(data: {
   status?: string
   logo_url?: string | null
 }): StandardizedOrganizationData {
-  // Trim all text fields
   const trimmedName = (data.name || '').trim()
   const trimmedOrgType = (data.organization_type || '').trim()
   const trimmedAdminEmail = (data.admin_email || '').trim()
   
-  // For optional fields: trim if present, convert empty strings to null
   const phoneNumber = data.phone_number 
     ? (data.phone_number.trim() || null)
     : null
@@ -67,7 +49,6 @@ export function standardizeOrganizationData(data: {
     ? (data.description.trim() || null)
     : null
   
-  // Status defaults to 'pending' if not provided or empty
   const status = (data.status && data.status.trim()) || 'pending'
   
   return {

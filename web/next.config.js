@@ -18,9 +18,7 @@ const nextConfig = {
       }
     }
     
-    // Fix for Supabase ESM wrapper.mjs - ensure proper module resolution
-    // The issue is that wrapper.mjs imports from '../module/index.js' which has no default export
-    // We need to tell webpack to handle this correctly
+    // Fix for Supabase ESM wrapper.mjs
     config.module.rules.push({
       test: /\.mjs$/,
       include: /node_modules\/@supabase/,
@@ -30,7 +28,6 @@ const nextConfig = {
       },
     })
     
-    // Handle .js files in the module directory
     config.module.rules.push({
       test: /\.js$/,
       include: /node_modules\/@supabase\/supabase-js\/dist\/module/,
@@ -40,14 +37,11 @@ const nextConfig = {
       },
     })
     
-    // Configure module resolution to handle the import correctly
     config.resolve.extensionAlias = {
       '.js': ['.js', '.ts', '.tsx'],
       '.mjs': ['.mjs', '.js'],
     }
     
-    // Use a webpack alias to redirect the problematic import
-    // This makes webpack use the main (CJS) build instead of ESM for internal resolution
     config.resolve.alias = {
       ...config.resolve.alias,
     }

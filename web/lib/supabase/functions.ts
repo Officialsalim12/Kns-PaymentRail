@@ -352,10 +352,7 @@ This is a configuration issue that needs to be fixed in your Monime dashboard.`
       }
     }
 
-    // Check if the response indicates an error (even if HTTP status was 200)
-    // This handles cases where function returns 200 but with error in body
     if (result.data && typeof result.data === 'object' && !result.error) {
-      // Check for success: false pattern
       if ('success' in result.data && !result.data.success) {
         return {
           data: null,

@@ -48,7 +48,6 @@ export default function SuperAdminRegistrationForm() {
       }
 
       // Step 2: Create user profile using server action with service role client
-      // This auto-confirms the user and creates the profile reliably
       const profileResult = await createSuperAdminUserProfile(
         authData.user.id,
         formData.email.trim(),

@@ -1,14 +1,7 @@
-/**
- * Monime API Client
- * Handles all interactions with Monime payment API
- * 
- * Documentation: https://docs.monime.io/developer-resources/api-basics
- */
-
 import { fetchWithTimeout } from '@/lib/utils/fetch-with-timeout'
 
 const MONIME_API_BASE_URL = 'https://api.monime.io'
-const DEFAULT_TIMEOUT = 15000 // 15 seconds for API calls
+const DEFAULT_TIMEOUT = 15000
 
 export interface MonimeCheckoutSession {
   id: string
@@ -47,10 +40,6 @@ export class MonimeClient {
     this.baseUrl = MONIME_API_BASE_URL
   }
 
-  /**
-   * Create a checkout session
-   * This will return a URL that the user can be redirected to for payment
-   */
   async createCheckoutSession(
     params: CreateCheckoutSessionParams
   ): Promise<MonimeCheckoutSession> {
@@ -62,7 +51,7 @@ export class MonimeClient {
       },
       body: JSON.stringify({
         amount: params.amount,
-        currency: params.currency || 'SLE', // Default to SLE (Sierra Leonean Leone)
+        currency: params.currency || 'SLE',
         description: params.description,
         success_url: params.success_url,
         cancel_url: params.cancel_url,
@@ -80,9 +69,6 @@ export class MonimeClient {
     return response.json()
   }
 
-  /**
-   * Retrieve a checkout session by ID
-   */
   async getCheckoutSession(sessionId: string): Promise<MonimeCheckoutSession> {
     const response = await fetchWithTimeout(`${this.baseUrl}/checkout-sessions/${sessionId}`, {
       method: 'GET',
@@ -101,9 +87,6 @@ export class MonimeClient {
     return response.json()
   }
 
-  /**
-   * Retrieve a payment by ID
-   */
   async getPayment(paymentId: string): Promise<MonimePayment> {
     const response = await fetchWithTimeout(`${this.baseUrl}/payments/${paymentId}`, {
       method: 'GET',
@@ -122,21 +105,11 @@ export class MonimeClient {
     return response.json()
   }
 
-  /**
-   * Verify webhook signature (if Monime provides webhook signing)
-   * This is a placeholder - implement based on Monime's webhook documentation
-   */
   verifyWebhookSignature(payload: string, signature: string): boolean {
-    // TODO: Implement webhook signature verification based on Monime's documentation
-    // For now, return true (implement proper verification in production)
+    // TODO: implement webhook signature verification
     return true
   }
 }
-
-/**
- * Get Monime client instance
- * Uses environment variable for API key
- */
 export function getMonimeClient(): MonimeClient {
   const apiKey = process.env.MONIME_API_KEY || process.env.NEXT_PUBLIC_MONIME_API_KEY
   

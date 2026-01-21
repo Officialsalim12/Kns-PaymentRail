@@ -1,10 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import type { ActivityAction, ActivityLogData } from './activity-log-client'
 
-/**
- * Log an activity to the database (server-side only)
- * Uses service role client to ensure we can always write logs
- */
 export async function logActivity(data: ActivityLogData): Promise<void> {
   try {
     const supabase = createServiceRoleClient()
@@ -31,17 +27,11 @@ export async function logActivity(data: ActivityLogData): Promise<void> {
 
     if (error) {
       console.error('Failed to log activity:', error)
-      // Don't throw - we don't want logging failures to break the app
     }
   } catch (error) {
     console.error('Error logging activity:', error)
-    // Silently fail - logging should never break the application
   }
 }
-
-/**
- * Get user info for logging from Supabase client (server-side only)
- */
 export async function getUserInfoForLogging(userId: string): Promise<{
   email?: string
   full_name?: string

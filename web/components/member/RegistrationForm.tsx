@@ -66,8 +66,6 @@ export default function MemberRegistrationForm({ organizations }: Props) {
         return
       }
 
-      // Step 2: Create user profile using server action with service role client
-      // This auto-confirms the user and creates the profile reliably
       const profileResult = await createMemberUserProfile(
         authData.user.id,
         formData.email.trim(),
