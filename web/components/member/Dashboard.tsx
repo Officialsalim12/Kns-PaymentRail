@@ -427,13 +427,13 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
                 <p className="text-sm text-primary-100 mt-1 font-mono">ID: {memberData.membership_id}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <Link
                 href="/member/notifications"
-                className="relative flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-sm"
+                className="relative flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-xs sm:text-sm"
               >
-                <Bell className="h-4 w-4" />
-                <span>Notifications</span>
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Notifications</span>
                 {unreadNotificationCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                     {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
@@ -442,17 +442,17 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
               </Link>
               <Link
                 href="/profile"
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-sm"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-xs sm:text-sm"
               >
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Settings</span>
               </Link>
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-sm"
+                className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl border border-white/20 text-white transition-all hover:scale-105 active:scale-95 font-medium text-xs sm:text-sm"
               >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       {tabs && tabs.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {tabs.map((tab) => (
                 <div
                   key={tab.id}
@@ -504,7 +504,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       )}
 
       {/* Key Metrics Grid - Enhanced Design */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Status Card */}
         <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-primary-200 transition-all duration-300 overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

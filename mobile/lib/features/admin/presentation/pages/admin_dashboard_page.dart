@@ -69,9 +69,12 @@ class AdminDashboardPage extends ConsumerWidget {
             onRefresh: () async {
               ref.invalidate(adminDashboardProvider);
             },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final padding = constraints.maxWidth > 600 ? 24.0 : 16.0;
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -119,20 +122,23 @@ class AdminDashboardPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AdminStatsCard(
-                          title: 'Total Members',
-                          value: '${dashboard['stats']['totalMembers'] ?? 0}',
-                          subtitle: '${dashboard['stats']['activeMembers'] ?? 0} active',
-                          icon: Icons.people,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                  SizedBox(height: padding),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isSmallScreen = constraints.maxWidth < 400;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: AdminStatsCard(
+                              title: 'Total Members',
+                              value: '${dashboard['stats']['totalMembers'] ?? 0}',
+                              subtitle: '${dashboard['stats']['activeMembers'] ?? 0} active',
+                              icon: Icons.people,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          SizedBox(width: isSmallScreen ? 8 : 12),
+                          Expanded(
                         child: AdminStatsCard(
                           title: 'Total Payments',
                           value: CurrencyFormatter.format(
@@ -142,8 +148,10 @@ class AdminDashboardPage extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  );
+                    },
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: padding / 1.3),
                   AdminStatsCard(
                     title: 'Pending Approvals',
                     value: '${dashboard['pendingMembers']?.length ?? 0}',
@@ -279,6 +287,8 @@ class AdminDashboardPage extends ConsumerWidget {
                     }).toList(),
                 ],
               ),
+            );
+              },
             ),
           );
         },

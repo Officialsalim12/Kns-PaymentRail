@@ -180,9 +180,12 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
               ref.invalidate(memberNotificationsProvider);
               ref.invalidate(memberTabsProvider);
             },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final padding = constraints.maxWidth > 600 ? 24.0 : 16.0;
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -295,18 +298,21 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: MemberStatsCard(
-                          title: 'Status',
-                          value: (member['status'] ?? 'N/A').toString().toUpperCase(),
-                          icon: Icons.check_circle,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isSmallScreen = constraints.maxWidth < 400;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: MemberStatsCard(
+                              title: 'Status',
+                              value: (member['status'] ?? 'N/A').toString().toUpperCase(),
+                              icon: Icons.check_circle,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          SizedBox(width: isSmallScreen ? 8 : 12),
+                          Expanded(
                         child: paymentsAsync.when(
                           data: (payments) {
                             double totalPaid = 0;
@@ -339,20 +345,25 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                         ),
                       ),
                     ],
+                  );
+                    },
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: MemberStatsCard(
-                          title: 'Unpaid Balance',
-                          value: CurrencyFormatter.format((member['unpaid_balance'] ?? 0).toDouble()),
-                          icon: Icons.account_balance_wallet,
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isSmallScreen = constraints.maxWidth < 400;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: MemberStatsCard(
+                              title: 'Unpaid Balance',
+                              value: CurrencyFormatter.format((member['unpaid_balance'] ?? 0).toDouble()),
+                              icon: Icons.account_balance_wallet,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                          SizedBox(width: isSmallScreen ? 8 : 12),
+                          Expanded(
                         child: paymentsAsync.when(
                           data: (payments) => MemberStatsCard(
                             title: 'Last Payment',
@@ -381,6 +392,8 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                         ),
                       ),
                     ],
+                  );
+                    },
                   ),
                   const SizedBox(height: 24),
                   tabsAsync.when(
@@ -430,15 +443,19 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 1.2,
-                            ),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+                              final spacing = constraints.maxWidth > 600 ? 16.0 : 12.0;
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  childAspectRatio: constraints.maxWidth > 600 ? 1.3 : 1.2,
+                                ),
                             itemCount: tabs.length,
                             itemBuilder: (context, index) {
                               final tab = tabs[index];
@@ -594,6 +611,8 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                                 ),
                               );
                             },
+                          );
+                            },
                           ),
                           const SizedBox(height: 24),
                         ],
@@ -714,6 +733,8 @@ class _MemberDashboardPageState extends ConsumerState<MemberDashboardPage> {
                   ),
                 ],
               ),
+            );
+              },
             ),
           );
         },

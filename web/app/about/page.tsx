@@ -14,16 +14,16 @@ export default function AboutPage() {
               <Building2 className="w-8 h-8 text-primary-600 mr-2" />
               <span className="text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-2 sm:px-0"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md"
+                className="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md"
               >
                 Get Started
               </Link>
@@ -36,24 +36,24 @@ export default function AboutPage() {
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 py-24 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight px-2 sm:px-0">
               Streamline payment management for{' '}
               <span className="text-primary-600">your organization</span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
               KNS MultiRail is a multitenant payment management platform that helps organizations track payments, manage members, and generate receipts all in one secure, centralized system.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 sm:px-0">
               <Link
                 href="/organization/register"
-                className="px-8 py-4 text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 Get Started
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <Link
                 href="/contact"
-                className="px-8 py-4 text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-all border-2 border-gray-200 hover:border-gray-300"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-all border-2 border-gray-200 hover:border-gray-300"
               >
                 Contact Us
               </Link>
@@ -65,13 +65,13 @@ export default function AboutPage() {
       {/* Values Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-12 mb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12 mb-12 sm:mb-16 lg:mb-20">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Lightbulb className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">MultiTenant Architecture</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">MultiTenant Architecture</h3>
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 Each organization's data is completely isolated and secure. Your members, payments, and receipts are private to your organization only.
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function AboutPage() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8 text-center">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 sm:mb-8 text-center px-4 sm:px-0">
               Our Story
             </h2>
             <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed space-y-6">
@@ -133,7 +133,7 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             <div className="text-center p-8 rounded-xl bg-gray-50 border border-gray-100">
               <div className="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-6">
                 <Zap className="w-8 h-8 text-white" />
@@ -271,7 +271,7 @@ export default function AboutPage() {
             {/* Leadership Section */}
             <div className="mb-12">
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">Leadership</h3>
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                 <div className="bg-gray-50 rounded-xl p-8 border border-gray-100">
                   <div className="text-center">
                     <TeamMemberImage
@@ -352,7 +352,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8 sm:mb-12">
             <div>
               <div className="flex items-center mb-4">
                 <Building2 className="w-8 h-8 text-primary-400 mr-2" />
