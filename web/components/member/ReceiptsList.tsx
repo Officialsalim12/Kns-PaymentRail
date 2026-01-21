@@ -197,68 +197,126 @@ Please contact support with this information.`
             <p className="text-sm text-gray-400 mt-1">Receipts will appear here after payments are completed</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-blue-200">
-              <thead className="bg-blue-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Receipt Number</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Payment Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Payment Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-blue-200">
-                {receipts.map((receipt) => (
-                  <tr key={receipt.id} className="hover:bg-blue-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {receipt.receipt_number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(receipt.payment.payment_date), 'MMM dd, yyyy')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {formatCurrency(getMemberDisplayAmount(receipt.payment.amount))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {receipt.payment.payment_method}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {receipt.payment.description || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
-                        <button
-                          onClick={() => {
-                            if (receipt.receipt_number) {
-                              handleDownload(
-                                receipt.pdf_url || null,
-                                receipt.receipt_number,
-                                receipt.pdf_storage_path || null
-                              )
-                            }
-                          }}
-                          className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </button>
-                      ) : (
-                        <span 
-                          className="flex items-center gap-2 px-3 py-1.5 text-gray-400 cursor-not-allowed"
-                          title="Receipt URL is not available. The receipt may not have been generated yet. Please contact support."
-                        >
-                          <Download className="h-4 w-4" />
-                          Download
-                        </span>
-                      )}
-                    </td>
+          <>
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-4">
+              {receipts.map((receipt) => (
+                <div key={receipt.id} className="bg-white border border-blue-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-gray-900">Receipt #{receipt.receipt_number}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{format(new Date(receipt.payment.payment_date), 'MMM dd, yyyy')}</p>
+                    </div>
+                    {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
+                      <button
+                        onClick={() => {
+                          if (receipt.receipt_number) {
+                            handleDownload(
+                              receipt.pdf_url || null,
+                              receipt.receipt_number,
+                              receipt.pdf_storage_path || null
+                            )
+                          }
+                        }}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors text-xs"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </button>
+                    ) : (
+                      <span 
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-not-allowed text-xs"
+                        title="Receipt URL is not available"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Amount: </span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(getMemberDisplayAmount(receipt.payment.amount))}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Method: </span>
+                      <span className="text-gray-900">{receipt.payment.payment_method}</span>
+                    </div>
+                    {receipt.payment.description && (
+                      <div>
+                        <span className="text-gray-500">Description: </span>
+                        <span className="text-gray-900">{receipt.payment.description}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-blue-200">
+                <thead className="bg-blue-50">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Receipt Number</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Payment Date</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Amount</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Payment Method</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Description</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-blue-200">
+                  {receipts.map((receipt) => (
+                    <tr key={receipt.id} className="hover:bg-blue-50">
+                      <td className="px-4 lg:px-6 py-4 text-sm font-medium text-gray-900">
+                        {receipt.receipt_number}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
+                        {format(new Date(receipt.payment.payment_date), 'MMM dd, yyyy')}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm font-semibold text-gray-900">
+                        {formatCurrency(getMemberDisplayAmount(receipt.payment.amount))}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
+                        {receipt.payment.payment_method}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
+                        {receipt.payment.description || 'N/A'}
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 text-sm">
+                        {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
+                          <button
+                            onClick={() => {
+                              if (receipt.receipt_number) {
+                                handleDownload(
+                                  receipt.pdf_url || null,
+                                  receipt.receipt_number,
+                                  receipt.pdf_storage_path || null
+                                )
+                              }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </button>
+                        ) : (
+                          <span 
+                            className="flex items-center gap-2 px-3 py-1.5 text-gray-400 cursor-not-allowed"
+                            title="Receipt URL is not available. The receipt may not have been generated yet. Please contact support."
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

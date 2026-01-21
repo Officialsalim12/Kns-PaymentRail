@@ -334,48 +334,39 @@ export default function SuperAdminDashboard({ organizations: initialOrgs, stats,
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admin Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {organizations.map((org) => (
-                <tr key={org.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {org.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {org.organization_type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {org.admin_email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                    {org.memberCount ?? 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${
-                      org.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' :
-                      org.status === 'pending' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                      'bg-red-100 text-red-700 border-red-200'
-                    }`}>
-                      {org.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {format(new Date(org.created_at), 'MMM dd, yyyy')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center gap-3">
+        <>
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-4">
+            {organizations.map((org) => (
+              <div key={org.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-gray-900">{org.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{org.organization_type}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border flex-shrink-0 ${
+                    org.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                    org.status === 'pending' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                    'bg-red-100 text-red-700 border-red-200'
+                  }`}>
+                    {org.status}
+                  </span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Admin: </span>
+                    <span className="text-gray-900 break-words">{org.admin_email}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Members: </span>
+                    <span className="font-semibold text-gray-900">{org.memberCount ?? 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Created: </span>
+                    <span className="text-gray-900">{format(new Date(org.created_at), 'MMM dd, yyyy')}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-gray-100">
                       <Link
                         href={`/super-admin/organizations/${org.id}`}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium"
