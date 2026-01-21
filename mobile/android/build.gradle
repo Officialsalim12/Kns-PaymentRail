@@ -1,0 +1,75 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Workaround for app_links plugin compatibility
+// Read Flutter properties and make them available to all subprojects
+def flutterProperties = new Properties()
+def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader("UTF-8") { reader -> flutterProperties.load(reader) }
+}
+
+def flutterSdkPath = flutterProperties.getProperty("flutter.sdk")
+def flutterVersionCode = flutterProperties.getProperty("flutter.versionCode") ?: "1"
+def flutterVersionName = flutterProperties.getProperty("flutter.versionName") ?: "1.0.0"
+
+// Default Flutter SDK values (these are standard Flutter defaults)
+def defaultCompileSdk = 34
+def defaultMinSdk = 21
+def defaultTargetSdk = 34
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    
+    // Make Flutter properties available to plugin subprojects (not the app module)
+    // This allows old-style plugins like app_links to access flutter.compileSdkVersion
+    // Only add if this is not the app module (app module has its own Flutter extension)
+    if (project.name != 'app') {
+        // Create a Flutter extension-like object that can be accessed like flutter.compileSdkVersion
+        project.extensions.add('flutter', new Object() {
+            def getCompileSdkVersion() { return defaultCompileSdk }
+            def getMinSdkVersion() { return defaultMinSdk }
+            def getTargetSdkVersion() { return defaultTargetSdk }
+            def getVersionCode() { return flutterVersionCode }
+            def getVersionName() { return flutterVersionName }
+            def getNdkVersion() { return null }
+        })
+    }
+    
+    // Workaround for JDK image transformation issues and JVM target compatibility
+    afterEvaluate { project ->
+        if (project.hasProperty('android') && project.name != 'app') {
+            // Ensure consistent JVM target for Java and Kotlin
+            project.android {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_1_8
+                    targetCompatibility = JavaVersion.VERSION_1_8
+                }
+            }
+            // Set Kotlin JVM target to match Java
+            if (project.hasProperty('kotlin')) {
+                project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                    kotlinOptions {
+                        jvmTarget = "1.8"
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

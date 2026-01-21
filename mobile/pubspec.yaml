@@ -1,0 +1,56 @@
+name: multitenant_payment_system
+description: KNS MultiRail - Multi-Tenant Payment Management Platform - Mobile App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  
+  # Supabase
+  supabase_flutter: ^2.0.0
+  
+  # UI
+  google_fonts: ^6.3.0
+  flutter_svg: ^2.1.0
+  cached_network_image: ^3.3.0
+  
+  # Navigation
+  go_router: ^13.2.5
+  
+  # Utilities
+  intl: ^0.20.2
+  path_provider: ^2.1.1
+  share_plus: ^7.2.2
+  url_launcher: ^6.3.1
+  image_picker: ^1.1.2
+  
+  # HTTP & Storage
+  dio: ^5.4.0
+  shared_preferences: ^2.5.3
+  
+  # PDF
+  pdf: ^3.10.7
+  printing: ^5.12.0
+  
+  # Icons
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  json_serializable: ^6.9.0
+
+flutter:
+  uses-material-design: true
+
