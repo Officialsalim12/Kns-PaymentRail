@@ -323,13 +323,13 @@ export default function SuperAdminDashboard({ organizations: initialOrgs, stats,
 
       {/* Organizations Table - Enhanced */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Building2 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Organizations</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Organizations</h2>
               <p className="text-xs text-gray-500 font-medium mt-0.5">Manage all organizations</p>
             </div>
           </div>
@@ -366,55 +366,54 @@ export default function SuperAdminDashboard({ organizations: initialOrgs, stats,
                     <span className="text-gray-900">{format(new Date(org.created_at), 'MMM dd, yyyy')}</span>
                   </div>
                 </div>
-                <div className="flex gap-2 pt-2 border-t border-gray-100">
-                      <Link
-                        href={`/super-admin/organizations/${org.id}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium"
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </Link>
-                      <div className="flex items-center gap-2">
-                        {org.status === 'pending' && (
-                          <button
-                            onClick={() => handleStatusChange(org.id, 'approved')}
-                            disabled={loading === org.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Approve
-                          </button>
-                        )}
-                        {org.status === 'approved' && (
-                          <button
-                            onClick={() => handleStatusChange(org.id, 'suspended')}
-                            disabled={loading === org.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 font-medium"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            Suspend
-                          </button>
-                        )}
-                        {org.status === 'suspended' && (
-                          <button
-                            onClick={() => handleStatusChange(org.id, 'approved')}
-                            disabled={loading === org.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Reactivate
-                          </button>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => setDeleteConfirm(org.id)}
-                        disabled={loading === org.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
-                        title="Delete organization"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                  <Link
+                    href={`/super-admin/organizations/${org.id}`}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium text-xs sm:text-sm"
+                  >
+                    <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    View
+                  </Link>
+                  {org.status === 'pending' && (
+                    <button
+                      onClick={() => handleStatusChange(org.id, 'approved')}
+                      disabled={loading === org.id}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium text-xs sm:text-sm"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      Approve
+                    </button>
+                  )}
+                  {org.status === 'approved' && (
+                    <button
+                      onClick={() => handleStatusChange(org.id, 'suspended')}
+                      disabled={loading === org.id}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-all disabled:opacity-50 font-medium text-xs sm:text-sm"
+                    >
+                      <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      Suspend
+                    </button>
+                  )}
+                  {org.status === 'suspended' && (
+                    <button
+                      onClick={() => handleStatusChange(org.id, 'approved')}
+                      disabled={loading === org.id}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium text-xs sm:text-sm"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      Reactivate
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setDeleteConfirm(org.id)}
+                    disabled={loading === org.id}
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 text-xs sm:text-sm"
+                    title="Delete organization"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    Delete
+                  </button>
+                </div>
                   </td>
                 </tr>
               ))}
