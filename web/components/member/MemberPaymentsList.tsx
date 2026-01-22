@@ -15,7 +15,7 @@ interface Member {
 interface MemberTab {
   id: string
   tab_name: string
-  tab_type: string
+  tab_type: 'payment' | 'donation'
   monthly_cost?: number
   description?: string
 }
@@ -95,7 +95,7 @@ export default function MemberPaymentsList({ member, tabs: initialTabs }: Props)
               memberId={member.id}
               tabName={selectedTab.tab_name}
               tabType={selectedTab.tab_type}
-              monthlyCost={selectedTab.monthly_cost}
+              monthlyCost={selectedTab.monthly_cost ?? null}
               onSuccess={() => {
                 setSelectedTab(null)
                 window.location.reload()

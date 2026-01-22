@@ -64,7 +64,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    let notificationsChannel: ReturnType<typeof createClient>['channel'] | null = null
+    let notificationsChannel: ReturnType<ReturnType<typeof createClient>['channel']> | null = null
     const supabase = createClient()
 
     const setupSubscriptions = async () => {

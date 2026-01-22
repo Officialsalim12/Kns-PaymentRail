@@ -4,7 +4,6 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  transpilePackages: ['@supabase/supabase-js', '@supabase/ssr'],
   experimental: {
     serverComponentsExternalPackages: ['@supabase/supabase-js', '@supabase/ssr'],
   },

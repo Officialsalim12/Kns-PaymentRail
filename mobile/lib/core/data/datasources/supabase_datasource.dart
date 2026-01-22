@@ -179,7 +179,7 @@ class SupabaseDataSource {
         .from('members')
         .select('id, full_name, membership_id, email, user_id, status')
         .eq('organization_id', organizationId)
-        .in('status', ['active', 'pending'])
+        .inFilter('status', ['active', 'pending'])
         .not('user_id', 'is', null)
         .order('full_name');
   }

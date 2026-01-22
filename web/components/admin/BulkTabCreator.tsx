@@ -66,7 +66,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
       
       if (filteredMembers.length === 0) {
         if (allMembers && allMembers.length > 0) {
-          const statuses = [...new Set(allMembers.map(m => m.status))]
+          const statuses = Array.from(new Set(allMembers.map(m => m.status)))
           setError(`No active or pending members found. Found ${allMembers.length} member(s) with status(es): ${statuses.join(', ')}`)
         } else {
           setError('No members found for this organization. Members must register first.')

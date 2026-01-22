@@ -50,6 +50,7 @@ interface Payment {
   payment_date?: string
   created_at?: string
   reference_number: string
+  payment_status?: string
   member: {
     full_name: string
     membership_id: string
@@ -82,7 +83,7 @@ interface Props {
   recentPayments: Payment[]
   pendingApprovals: PendingApprovals
   recentActivity?: Payment[]
-  paymentChartData?: Array<{ amount: number; created_at: string }>
+  paymentChartData?: Array<{ amount: number; created_at: string; payment_status?: string }>
   userFullName?: string
   profilePhotoUrl?: string | null
   unreadNotificationCount?: number
@@ -170,7 +171,7 @@ export default function AdminDashboard({
           router.refresh()
         }
       )
-      .subscribe()
+      .subscribe() as ReturnType<typeof supabase.channel>
 
     return () => {
       supabase.removeChannel(paymentsChannel)

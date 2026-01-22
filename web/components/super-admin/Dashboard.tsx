@@ -414,12 +414,107 @@ export default function SuperAdminDashboard({ organizations: initialOrgs, stats,
                     Delete
                   </button>
                 </div>
-                  </td>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Organization</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Admin Email</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Members</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created</th>
+                  <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {organizations.map((org) => (
+                  <tr key={org.id} className="hover:bg-gray-50">
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{org.name}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{org.organization_type}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4">
+                      <div className="text-sm text-gray-900 break-words">{org.admin_email}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-900">{org.memberCount ?? 0}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg border ${
+                        org.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                        org.status === 'pending' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                        'bg-red-100 text-red-700 border-red-200'
+                      }`}>
+                        {org.status}
+                      </span>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{format(new Date(org.created_at), 'MMM dd, yyyy')}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/super-admin/organizations/${org.id}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all font-medium"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </Link>
+                        {org.status === 'pending' && (
+                          <button
+                            onClick={() => handleStatusChange(org.id, 'approved')}
+                            disabled={loading === org.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Approve
+                          </button>
+                        )}
+                        {org.status === 'approved' && (
+                          <button
+                            onClick={() => handleStatusChange(org.id, 'suspended')}
+                            disabled={loading === org.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-all disabled:opacity-50 font-medium"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            Suspend
+                          </button>
+                        )}
+                        {org.status === 'suspended' && (
+                          <button
+                            onClick={() => handleStatusChange(org.id, 'approved')}
+                            disabled={loading === org.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all disabled:opacity-50 font-medium"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            Reactivate
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDeleteConfirm(org.id)}
+                          disabled={loading === org.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                          title="Delete organization"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ interface Organization {
   phone_number: string | null
   description: string | null
   logo_url: string | null
+  status?: string
 }
 
 interface Props {
@@ -170,7 +171,7 @@ export default function OrganizationSettings({ organization: initialOrganization
         organization_type: standardizedData.organization_type,
         phone_number: standardizedData.phone_number,
         description: standardizedData.description,
-        logo_url: standardizedData.logo_url
+        logo_url: standardizedData.logo_url || null
       } : null)
       
       setLogoFile(null)

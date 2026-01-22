@@ -29,7 +29,6 @@ export default async function AdminLayout({
     if (data) {
       // Extract only the fields we need
       organization = {
-        id: data.id,
         name: data.name,
         logo_url: data.logo_url || null
       }

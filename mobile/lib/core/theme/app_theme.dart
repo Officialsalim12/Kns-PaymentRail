@@ -2,36 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color primaryBlue = Color(0xFF4A90E2);
-  static const Color primaryBlueDark = Color(0xFF357ABD);
-  static const Color primaryBlueLight = Color(0xFF6BA3E8);
-  static const Color secondaryBlue = Color(0xFF5BA3F5);
-  static const Color accentBlue = Color(0xFF7BB3F0);
+  // Primary colors matching Tailwind primary palette
+  static const Color primary50 = Color(0xFFF0F9FF);
+  static const Color primary100 = Color(0xFFE0F2FE);
+  static const Color primary200 = Color(0xFFBAE6FD);
+  static const Color primary300 = Color(0xFF7DD3FC);
+  static const Color primary400 = Color(0xFF38BDF8);
+  static const Color primary500 = Color(0xFF0EA5E9); // Main primary color
+  static const Color primary600 = Color(0xFF0284C7); // Button primary
+  static const Color primary700 = Color(0xFF0369A1);
+  static const Color primary800 = Color(0xFF075985);
+  static const Color primary900 = Color(0xFF0C4A6E);
+  
+  // Legacy aliases for backward compatibility
+  static const Color primaryBlue = primary500;
+  static const Color primaryBlueDark = primary700;
+  static const Color primaryBlueLight = primary400;
+  static const Color secondaryBlue = primary600;
+  static const Color accentBlue = primary300;
+  
   static const Color successGreen = Color(0xFF10B981);
   static const Color warningOrange = Color(0xFFF59E0B);
   static const Color errorRed = Color(0xFFEF4444);
   
-  static const Color backgroundLight = Color(0xFFFFFFFF);
+  // Light theme colors - matching web globals.css
+  static const Color backgroundLight = Color(0xFFEFF6FF); // rgb(239, 246, 255) - light blue background
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceSecondary = Color(0xFFF5F9FF);
+  static const Color surfaceSecondary = Color(0xFFF0F9FF); // primary-50
   static const Color textPrimary = Color(0xFF1E293B);
   static const Color textSecondary = Color(0xFF64748B);
-  static const Color borderLight = Color(0xFFE0E8F0);
+  static const Color borderLight = Color(0xFFE5E7EB); // gray-200 equivalent
   
-  static const Color backgroundDark = Color(0xFF0F172A);
+  // Dark theme colors - matching web globals.css dark mode
+  static const Color backgroundDark = Color(0xFF111827); // rgb(17, 24, 39)
   static const Color surfaceDark = Color(0xFF1E293B);
-  static const Color textPrimaryDark = Color(0xFFF1F5F9);
+  static const Color textPrimaryDark = Color(0xFFFFFFFF);
   static const Color textSecondaryDark = Color(0xFF94A3B8);
   static const Color borderDark = Color(0xFF334155);
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlue,
+      seedColor: primary500,
       brightness: Brightness.light,
-      primary: primaryBlue,
-      secondary: secondaryBlue,
-      tertiary: accentBlue,
+      primary: primary600, // Use primary-600 for buttons (matches web bg-primary-600)
+      secondary: primary500,
+      tertiary: primary400,
       error: errorRed,
       surface: surfaceLight,
       background: backgroundLight,
@@ -131,7 +147,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryBlue, width: 2),
+        borderSide: const BorderSide(color: primary500, width: 2), // Match web focus:border-primary-500
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -159,7 +175,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        backgroundColor: primaryBlue,
+        backgroundColor: primary600, // Match web bg-primary-600
         foregroundColor: Colors.white,
         textStyle: GoogleFonts.inter(
           fontSize: 16,
@@ -169,9 +185,12 @@ class AppTheme {
       ).copyWith(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.disabled)) {
-            return primaryBlue.withOpacity(0.4);
+            return primary600.withOpacity(0.4);
           }
-          return primaryBlue;
+          if (states.contains(WidgetState.hovered) || states.contains(WidgetState.pressed)) {
+            return primary700; // Match web hover:bg-primary-700
+          }
+          return primary600;
         }),
         overlayColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.pressed)) {
@@ -188,8 +207,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        side: BorderSide(color: primaryBlue, width: 1.5),
-        foregroundColor: primaryBlue,
+        side: BorderSide(color: primary600, width: 1.5),
+        foregroundColor: primary600,
         textStyle: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -199,7 +218,7 @@ class AppTheme {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryBlue,
+        foregroundColor: primary600,
         textStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -231,11 +250,11 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: primaryBlueLight,
+      seedColor: primary400,
       brightness: Brightness.dark,
-      primary: primaryBlueLight,
-      secondary: secondaryBlue,
-      tertiary: accentBlue,
+      primary: primary400,
+      secondary: primary500,
+      tertiary: primary300,
       error: errorRed,
       surface: surfaceDark,
       background: backgroundDark,
@@ -335,7 +354,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primaryBlueLight, width: 2),
+        borderSide: const BorderSide(color: primary400, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -363,7 +382,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        backgroundColor: primaryBlueLight,
+        backgroundColor: primary500,
         foregroundColor: Colors.white,
         textStyle: GoogleFonts.inter(
           fontSize: 16,
@@ -373,9 +392,12 @@ class AppTheme {
       ).copyWith(
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.disabled)) {
-            return primaryBlueLight.withOpacity(0.4);
+            return primary500.withOpacity(0.4);
           }
-          return primaryBlueLight;
+          if (states.contains(WidgetState.hovered) || states.contains(WidgetState.pressed)) {
+            return primary600;
+          }
+          return primary500;
         }),
         overlayColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.pressed)) {
@@ -392,8 +414,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        side: BorderSide(color: primaryBlueLight, width: 1.5),
-        foregroundColor: primaryBlueLight,
+        side: BorderSide(color: primary500, width: 1.5),
+        foregroundColor: primary500,
         textStyle: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -403,7 +425,7 @@ class AppTheme {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryBlueLight,
+        foregroundColor: primary500,
         textStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w600,

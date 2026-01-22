@@ -387,7 +387,7 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: filteredMembers.length,
-              itemBuilder: (context, index) {
+                          itemBuilder: (context, index) {
                 final member = filteredMembers[index];
                 final status = member['status'] as String? ?? 'pending';
                 final isLoading = _loadingMemberId == member['id'];
@@ -631,11 +631,15 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
                     ],
                   ),
                 );
-              },
+                          },
                         ),
-                ),
-              ],
-            );
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(

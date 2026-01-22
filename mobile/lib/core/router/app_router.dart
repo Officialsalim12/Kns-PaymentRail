@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
@@ -57,39 +55,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
       
-      // If logged in and on home page, redirect to appropriate dashboard
-      if (isLoggedIn && location == '/') {
-        final user = authState.value;
-        if (user != null) {
-          try {
-            final userProfile = await dataSource.getUserProfile(user.id);
-            final role = userProfile?['role'];
-            
-            if (role == 'super_admin') {
-              return '/super-admin';
-            } else if (role == 'org_admin') {
-              return '/admin';
-            } else if (role == 'member') {
-              return '/member';
+      // Redirect root path to login
+      if (location == '/') {
+        if (isLoggedIn) {
+          final user = authState.value;
+          if (user != null) {
+            try {
+              final userProfile = await dataSource.getUserProfile(user.id);
+              final role = userProfile?['role'];
+              
+              if (role == 'super_admin') {
+                return '/super-admin';
+              } else if (role == 'org_admin') {
+                return '/admin';
+              } else if (role == 'member') {
+                return '/member';
+              }
+            } catch (e) {
+              return '/login';
             }
-          } catch (e) {
-            return '/login';
           }
         }
-      }
-      
-      // If not logged in and on home page, redirect to login
-      if (!isLoggedIn && location == '/') {
         return '/login';
       }
       
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const HomePage(),
-      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),

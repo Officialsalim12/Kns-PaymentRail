@@ -29,7 +29,6 @@ export default async function MemberLayout({
     
     if (!error && data) {
       organization = {
-        id: data.id,
         name: data.name,
         logo_url: data.logo_url || null
       }

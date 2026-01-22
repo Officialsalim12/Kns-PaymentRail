@@ -496,12 +496,138 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
                           )
                         }
                       })()}
-                    </td>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-blue-200">
+                <thead className="bg-blue-50">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Reference</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Method</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Receipt</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-blue-200">
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gray-50">
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900 font-mono">{payment.reference_number || payment.id.slice(0, 8)}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900">{formatCurrency(getMemberDisplayAmount(payment.amount))}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{payment.payment_method}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadge(payment.payment_status)}`}>
+                          {getStatusIcon(payment.payment_status)}
+                          {payment.payment_status}
+                        </span>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        {(() => {
+                          const normalizeReceipt = (receipt: any): any => {
+                            if (Array.isArray(receipt)) {
+                              return receipt.length > 0 ? receipt[0] : null
+                            }
+                            return receipt
+                          }
+                          
+                          const normalizedReceipt = normalizeReceipt(payment.receipt)
+                          
+                          const hasValidReceipt = normalizedReceipt && 
+                            typeof normalizedReceipt === 'object' && 
+                            !Array.isArray(normalizedReceipt) &&
+                            normalizedReceipt.receipt_number && 
+                            typeof normalizedReceipt.receipt_number === 'string' &&
+                            normalizedReceipt.receipt_number.trim().length > 0 &&
+                            payment.payment_status === 'completed'
+                          
+                          const isCompleted = payment.payment_status === 'completed'
+                          const isGenerating = generatingReceiptId === payment.id
+                          
+                          if (isCompleted && !hasValidReceipt) {
+                            return (
+                              <button
+                                onClick={() => handleGenerateReceipt(payment)}
+                                disabled={isGenerating}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Generate receipt for this payment"
+                              >
+                                {isGenerating ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileText className="h-4 w-4" />
+                                    Generate Receipt
+                                  </>
+                                )}
+                              </button>
+                            )
+                          }
+                          
+                          if (!hasValidReceipt) {
+                            return <span className="text-gray-400">-</span>
+                          }
+                          
+                          const hasReceiptUrl = normalizedReceipt.pdf_url || normalizedReceipt.pdf_storage_path
+                          
+                          if (hasReceiptUrl) {
+                            return (
+                              <button
+                                onClick={() => {
+                                  const receiptNum = normalizedReceipt?.receipt_number
+                                  if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
+                                    handleDownloadReceipt(
+                                      normalizedReceipt.pdf_url || null,
+                                      receiptNum,
+                                      normalizedReceipt.pdf_storage_path || null
+                                    )
+                                  } else {
+                                    console.error('Invalid receipt number:', receiptNum)
+                                    alert('Receipt number is not available. Please contact support.')
+                                  }
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors font-medium"
+                                title="Download receipt PDF"
+                              >
+                                <Download className="h-4 w-4" />
+                                Download Receipt
+                              </button>
+                            )
+                          } else {
+                            return (
+                              <span 
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-not-allowed"
+                                title="Receipt URL is not available. The receipt may not have been generated yet. Please contact support."
+                              >
+                                <Download className="h-4 w-4" />
+                                Receipt
+                              </span>
+                            )
+                          }
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

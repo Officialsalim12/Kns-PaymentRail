@@ -38,6 +38,7 @@ export default function UserProfile({ user }: UserProfileProps) {
   }
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(user.profile?.profile_photo_url || null)
+  const [imageSrc, setImageSrc] = useState<string | null>(user.profile?.profile_photo_url || null)
   const [formData, setFormData] = useState({
     full_name: user.profile?.full_name || '',
     phone_number: user.profile?.phone_number || '',
@@ -45,13 +46,20 @@ export default function UserProfile({ user }: UserProfileProps) {
     id_number: user.profile?.id_number || '',
   })
 
+  // Update image src with cache-busting timestamp only on client side
+  useEffect(() => {
+    if (previewUrl) {
+      setImageSrc(`${previewUrl}?t=${Date.now()}`)
+    } else {
+      setImageSrc(null)
+    }
+  }, [previewUrl])
+
   // Update preview URL when user profile changes
   useEffect(() => {
     if (user.profile?.profile_photo_url) {
-      console.log('Setting preview URL from profile:', user.profile.profile_photo_url)
       setPreviewUrl(user.profile.profile_photo_url)
     } else {
-      console.log('No profile photo URL in user profile')
       setPreviewUrl(null)
     }
   }, [user.profile?.profile_photo_url])
@@ -437,9 +445,9 @@ export default function UserProfile({ user }: UserProfileProps) {
           <div className="flex-shrink-0 flex flex-col items-center lg:items-start">
             <div className="relative group">
               <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center overflow-hidden border-2 sm:border-4 border-white shadow-xl relative">
-                {previewUrl ? (
+                {imageSrc ? (
                   <img
-                    src={`${previewUrl}?t=${Date.now()}`}
+                    src={imageSrc}
                     alt={user.profile?.full_name || 'User'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -448,7 +456,6 @@ export default function UserProfile({ user }: UserProfileProps) {
                       setPreviewUrl(null)
                     }}
                     onLoad={() => {
-                      console.log('Image loaded successfully:', previewUrl)
                       setError(null)
                     }}
                   />

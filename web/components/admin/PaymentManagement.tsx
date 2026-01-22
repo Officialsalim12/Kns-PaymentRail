@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { format } from 'date-fns'
 import { Plus, Trash2, Search, X, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -51,7 +51,7 @@ export default function PaymentManagement({ members: initialMembers, payments: i
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    let paymentsChannel: ReturnType<typeof createClient>['channel'] | null = null
+    let paymentsChannel: ReturnType<ReturnType<typeof createClient>['channel']> | null = null
     const supabase = createClient()
 
     const setupSubscriptions = async () => {
@@ -337,18 +337,20 @@ export default function PaymentManagement({ members: initialMembers, payments: i
   }
 
   // Filter payments based on search query
-  const filteredPayments = payments.filter((payment) => {
-    if (!searchQuery.trim()) return true
+  const filteredPayments = useMemo(() => {
+    if (!searchQuery.trim()) return payments
     
     const query = searchQuery.toLowerCase().trim()
-    const memberNameMatch = payment.member.full_name?.toLowerCase().includes(query)
-    const memberIdMatch = payment.member.membership_id?.toLowerCase().includes(query)
-    const referenceMatch = payment.reference_number?.toLowerCase().includes(query)
-    const amountMatch = payment.amount?.toString().includes(query)
-    const descriptionMatch = payment.description?.toLowerCase().includes(query)
-    
-    return memberNameMatch || memberIdMatch || referenceMatch || amountMatch || descriptionMatch
-  })
+    return payments.filter((payment) => {
+      const memberNameMatch = payment.member.full_name?.toLowerCase().includes(query)
+      const memberIdMatch = payment.member.membership_id?.toLowerCase().includes(query)
+      const referenceMatch = payment.reference_number?.toLowerCase().includes(query)
+      const amountMatch = payment.amount?.toString().includes(query)
+      const descriptionMatch = payment.description?.toLowerCase().includes(query)
+      
+      return memberNameMatch || memberIdMatch || referenceMatch || amountMatch || descriptionMatch
+    })
+  }, [payments, searchQuery])
 
   return (
     <div className="space-y-6">
@@ -485,13 +487,87 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                         {deletingPaymentId === payment.id ? 'Deleting...' : 'Delete'}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                </div>
               ))}
-            </tbody>
-          </table>
-          )}
-        </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Member</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Method</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Reference</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredPayments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gray-50">
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{payment.member.full_name}</div>
+                        <div className="text-sm text-gray-500 font-mono">{payment.member.membership_id}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900">{formatCurrency(getDisplayAmount(payment.amount, payment.payment_status))}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{payment.payment_method}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          payment.payment_status === 'completed' 
+                            ? 'bg-green-100 text-green-800'
+                            : payment.payment_status === 'processing'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : payment.payment_status === 'failed'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {payment.payment_status || 'pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500 font-mono">{payment.reference_number}</div>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex flex-wrap gap-2">
+                          {payment.payment_method === 'monime' && payment.payment_status !== 'completed' && (
+                            <button
+                              onClick={() => handleSyncPayment(payment.id)}
+                              disabled={syncingPaymentId === payment.id}
+                              className="flex items-center gap-1 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Sync payment status from Monime"
+                            >
+                              <RefreshCw className={`h-4 w-4 ${syncingPaymentId === payment.id ? 'animate-spin' : ''}`} />
+                              {syncingPaymentId === payment.id ? 'Syncing...' : 'Sync'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeletePayment(payment.id)}
+                            disabled={deletingPaymentId === payment.id}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete payment"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {deletingPaymentId === payment.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
