@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import MemberRegistrationForm from '@/components/member/RegistrationForm'
+import AuthLayout from '@/components/auth/AuthLayout'
+import Link from 'next/link'
 
 export default async function MemberRegisterPage() {
   const supabase = await createClient()
@@ -11,19 +13,25 @@ export default async function MemberRegisterPage() {
     .order('name', { ascending: true })
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full space-y-6 sm:space-y-8">
-        <div>
-          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900 px-2">
-            Membership Registration
-          </h2>
-          <p className="mt-2 text-center text-sm sm:text-base text-gray-600 px-2">
-            Register your membership and link it to your organization
-          </p>
-        </div>
-        <MemberRegistrationForm organizations={organizations || []} />
+    <AuthLayout
+      title="Create Account"
+      subtitle="Join an organization and start managing your payments"
+    >
+      <MemberRegistrationForm organizations={organizations || []} />
+
+      <div className="mt-6 text-center text-sm">
+        <span className="text-gray-500">Already have an account? </span>
+        <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
+          Sign in
+        </Link>
       </div>
-    </div>
+      <div className="mt-2 text-center text-sm">
+        <span className="text-gray-500">Organisation Admin? </span>
+        <Link href="/organization/register" className="font-medium text-primary-600 hover:text-primary-500">
+          Register Organization
+        </Link>
+      </div>
+    </AuthLayout>
   )
 }
 

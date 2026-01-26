@@ -17,16 +17,18 @@ export async function updateSession(request: NextRequest) {
     '/organization/register',
     '/member-register',
     '/',
+    '/privacy',
+    '/terms',
   ]
 
-  const isPublicPath = publicPaths.some(path => 
+  const isPublicPath = publicPaths.some(path =>
     request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
   )
 
   // Check for Supabase auth cookies
   // Supabase SSR uses cookies with pattern: sb-<project-ref>-auth-token
   // Also check for chunked cookies: sb-<project-ref>-auth-token.0, etc.
-  const hasAuthCookie = request.cookies.getAll().some(cookie => 
+  const hasAuthCookie = request.cookies.getAll().some(cookie =>
     cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token')
   )
 
