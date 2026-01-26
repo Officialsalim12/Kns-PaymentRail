@@ -16,23 +16,53 @@ export async function getCurrentUser() {
     } = authResult as { data: { user: any }, error: any }
 
     if (authError || !user) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[getCurrentUser] Auth error:', authError?.message || 'No user found')
+      }
       return null
     }
 
-    const profilePromise = supabase
-      .from('users')
-      .select('*, organization:organizations(*)')
-      .eq('id', user.id)
-      .single()
+    // Try to fetch profile with retry logic
+    let userProfile = null
+    let profileError = null
+    const maxRetries = 3
     
-    const profileTimeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => 
-      setTimeout(() => resolve({ data: null, error: { message: 'Network timeout' } }), 5000)
-    )
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const profilePromise = supabase
+        .from('users')
+        .select('*, organization:organizations(*)')
+        .eq('id', user.id)
+        .single()
+      
+      const profileTimeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => 
+        setTimeout(() => resolve({ data: null, error: { message: 'Network timeout' } }), 5000)
+      )
 
-    const profileResult = await Promise.race([profilePromise, profileTimeoutPromise])
-    const { data: userProfile, error: profileError } = profileResult as { data: any, error: any }
+      const profileResult = await Promise.race([profilePromise, profileTimeoutPromise])
+      const { data: profile, error: error } = profileResult as { data: any, error: any }
+      
+      if (!error && profile) {
+        userProfile = profile
+        break
+      }
+      
+      profileError = error
+      
+      // If it's not a network error and not the last attempt, wait before retrying
+      if (attempt < maxRetries && error?.code !== 'PGRST116') {
+        await new Promise(resolve => setTimeout(resolve, 500 * attempt))
+      }
+    }
 
     if (profileError || !userProfile) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[getCurrentUser] Profile error after retries:', profileError?.message || 'No profile found', {
+          userId: user.id,
+          errorCode: profileError?.code,
+          errorDetails: profileError,
+          attempts: maxRetries
+        })
+      }
       return null
     }
 
@@ -42,7 +72,7 @@ export async function getCurrentUser() {
     }
   } catch (error: any) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn('[getCurrentUser] Error:', error.message)
+      console.error('[getCurrentUser] Unexpected error:', error.message, error.stack)
     }
     return null
   }

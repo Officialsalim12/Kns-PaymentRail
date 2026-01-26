@@ -344,7 +344,7 @@ export default function AdminDashboard({
       )}
 
       {/* Key Metrics Grid - Enhanced Design */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
         {/* Total Revenue Card */}
         <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-primary-200 transition-all duration-300 overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -462,7 +462,7 @@ export default function AdminDashboard({
       </div>
 
       {/* Secondary Metrics - Refined */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
         <div className="bg-gradient-to-br from-purple-50 via-purple-50/50 to-white rounded-2xl border border-purple-100 p-6 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -501,9 +501,9 @@ export default function AdminDashboard({
       </div>
 
       {/* Charts and Activity Section - Enhanced */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-1">Revenue Overview</h2>
@@ -538,7 +538,7 @@ export default function AdminDashboard({
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 overflow-hidden">
           <div className="flex items-center gap-2.5 mb-6">
             <div className="p-2 bg-primary-100 rounded-lg">
               <Activity className="h-5 w-5 text-primary-600" />
@@ -580,7 +580,7 @@ export default function AdminDashboard({
       </div>
 
       {/* Paid vs Unpaid Members Chart */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 overflow-hidden">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-1">Member Payment Status</h2>
@@ -591,7 +591,7 @@ export default function AdminDashboard({
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {/* Chart Visualization */}
           <div className="flex flex-col items-center justify-center">
             <div className="relative w-64 h-64 mb-6">
@@ -714,10 +714,10 @@ export default function AdminDashboard({
       </div>
 
       {/* Payment Record and Pending Approvals - Enhanced */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xl:gap-8">
         {/* Payment Record */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
+          <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50/50 to-white">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary-100 rounded-lg">
                 <FileText className="h-5 w-5 text-primary-600" />
@@ -732,7 +732,7 @@ export default function AdminDashboard({
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {recentPayments.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -782,7 +782,7 @@ export default function AdminDashboard({
 
         {/* Pending Approvals */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-orange-50/50 to-white">
+          <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-orange-50/50 to-white">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-orange-600" />
@@ -797,7 +797,7 @@ export default function AdminDashboard({
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {totalPendingApprovals === 0 ? (
               <div className="text-center py-16">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

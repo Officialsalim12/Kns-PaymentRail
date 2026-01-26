@@ -428,69 +428,70 @@ export default function PaymentTabsManagement({ organizationId, initialTabs }: P
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Tab Name</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Member</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTabs.map((tab) => (
-                    <tr key={tab.id} className="hover:bg-gray-50">
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{tab.tab_name}</div>
-                        {tab.description && (
-                          <div className="text-sm text-gray-500">{tab.description}</div>
-                        )}
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          tab.tab_type === 'payment'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {tab.tab_type === 'payment' ? (
-                            <CreditCard className="h-3 w-3" />
-                          ) : (
-                            <Heart className="h-3 w-3" />
+            <div className="hidden md:block overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-6 lg:px-8">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Tab Name</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Member</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredTabs.map((tab) => (
+                      <tr key={tab.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 lg:px-6 xl:px-8 py-4">
+                          <div className="text-sm lg:text-base font-medium text-gray-900">{tab.tab_name}</div>
+                          {tab.description && (
+                            <div className="text-sm lg:text-base text-gray-500 max-w-md truncate" title={tab.description}>{tab.description}</div>
                           )}
-                          {tab.tab_type === 'payment' ? 'Payment' : 'Donation'}
-                        </span>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        {tab.member ? (
-                          <div className="text-sm text-gray-900">{tab.member.full_name}</div>
-                        ) : (
-                          <div className="text-sm text-gray-400">-</div>
-                        )}
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        {tab.tab_type === 'payment' && tab.monthly_cost ? (
-                          <div className="text-sm font-semibold text-gray-900">{formatCurrency(tab.monthly_cost)}</div>
-                        ) : (
-                          <div className="text-sm text-gray-400">-</div>
-                        )}
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleActive(tab)}
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                            tab.is_active
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tab.is_active ? 'Active' : 'Inactive'}
-                        </button>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex gap-2">
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs lg:text-sm font-medium ${
+                            tab.tab_type === 'payment'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-purple-100 text-purple-700'
+                          }`}>
+                            {tab.tab_type === 'payment' ? (
+                              <CreditCard className="h-3 w-3 lg:h-4 lg:w-4" />
+                            ) : (
+                              <Heart className="h-3 w-3 lg:h-4 lg:w-4" />
+                            )}
+                            {tab.tab_type === 'payment' ? 'Payment' : 'Donation'}
+                          </span>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4">
+                          {tab.member ? (
+                            <div className="text-sm lg:text-base text-gray-900">{tab.member.full_name}</div>
+                          ) : (
+                            <div className="text-sm lg:text-base text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          {tab.tab_type === 'payment' && tab.monthly_cost ? (
+                            <div className="text-sm lg:text-base font-semibold text-gray-900">{formatCurrency(tab.monthly_cost)}</div>
+                          ) : (
+                            <div className="text-sm lg:text-base text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleToggleActive(tab)}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs lg:text-sm font-medium transition-colors ${
+                              tab.is_active
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {tab.is_active ? 'Active' : 'Inactive'}
+                          </button>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap text-sm lg:text-base font-medium">
+                          <div className="flex gap-2">
                           <button
                             onClick={() => handleEditTab(tab)}
                             className="flex items-center gap-1 px-3 py-2 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded-md transition-colors"
@@ -511,8 +512,9 @@ export default function PaymentTabsManagement({ organizationId, initialTabs }: P
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}

@@ -418,49 +418,51 @@ export default function ApprovalsManagement({
                   </div>
 
                   {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full divide-y divide-blue-200">
-                      <thead className="bg-blue-50">
-                        <tr>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Membership ID</th>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Phone</th>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Approved Date</th>
-                          <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-blue-200">
-                        {approvedMembers.map((member) => (
-                          <tr key={member.id}>
-                            <td className="px-4 lg:px-6 py-4 text-sm font-medium text-gray-900">
-                              {member.full_name}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                              {member.membership_id}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                              {member.email}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                              {member.phone_number || 'N/A'}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm text-gray-500">
-                              {format(new Date(member.created_at), 'MMM dd, yyyy')}
-                            </td>
-                            <td className="px-4 lg:px-6 py-4 text-sm">
-                              <button
-                                onClick={() => updateMemberStatus(member.id, 'suspended')}
-                                disabled={loading === member.id}
-                                className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                              >
-                                {loading === member.id ? 'Updating...' : 'Suspend'}
-                              </button>
-                            </td>
+                  <div className="hidden md:block overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8">
+                    <div className="inline-block min-w-full align-middle px-4 sm:px-6 lg:px-8">
+                      <table className="min-w-full divide-y divide-blue-200">
+                        <thead className="bg-blue-50">
+                          <tr>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Name</th>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Membership ID</th>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Email</th>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Phone</th>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Approved Date</th>
+                            <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-blue-200">
+                          {approvedMembers.map((member) => (
+                            <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 lg:px-6 xl:px-8 py-4 text-sm lg:text-base font-medium text-gray-900">
+                                {member.full_name}
+                              </td>
+                              <td className="px-4 lg:px-6 xl:px-8 py-4 text-sm lg:text-base text-gray-500 font-mono">
+                                {member.membership_id}
+                              </td>
+                              <td className="px-4 lg:px-6 xl:px-8 py-4">
+                                <div className="text-sm lg:text-base text-gray-500 max-w-xs truncate" title={member.email}>{member.email}</div>
+                              </td>
+                              <td className="px-4 lg:px-6 xl:px-8 py-4 text-sm lg:text-base text-gray-500">
+                                {member.phone_number || 'N/A'}
+                              </td>
+                              <td className="px-4 lg:px-6 xl:px-8 py-4 text-sm lg:text-base text-gray-500">
+                                {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                              </td>
+                              <td className="px-4 lg:px-6 xl:px-8 py-4 text-sm lg:text-base">
+                                <button
+                                  onClick={() => updateMemberStatus(member.id, 'suspended')}
+                                  disabled={loading === member.id}
+                                  className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                                >
+                                  {loading === member.id ? 'Updating...' : 'Suspend'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </>
               )}

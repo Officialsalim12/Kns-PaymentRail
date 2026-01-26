@@ -633,11 +633,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
                 );
                           },
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                ),
+              ],
             ),
           );
         },

@@ -13,22 +13,45 @@ export default async function MemberDashboardPage() {
     .eq('user_id', user.id)
     .single()
 
-  // Get only completed payments (incomplete payments should not be recorded)
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('*, receipt:receipts(*)')
-    .eq('member_id', member?.id || '')
-    .eq('payment_status', 'completed')
-    .order('payment_date', { ascending: false })
+  // Only fetch data if member exists
+  let payments = []
+  let receipts = []
+  let tabs = []
 
-  // Get receipts separately for dedicated receipts section
-  const { data: receipts } = await supabase
-    .from('receipts')
-    .select('*, payment:payments(id, amount, payment_date, payment_method, description)')
-    .eq('member_id', member?.id || '')
-    .order('created_at', { ascending: false })
+  if (member?.id) {
+    // Get only completed payments (incomplete payments should not be recorded)
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('*, receipt:receipts(*)')
+      .eq('member_id', member.id)
+      .eq('payment_status', 'completed')
+      .order('payment_date', { ascending: false })
+    payments = paymentsData || []
 
-  // Get notifications
+    // Get receipts separately for dedicated receipts section
+    const { data: receiptsData } = await supabase
+      .from('receipts')
+      .select('*, payment:payments(id, amount, payment_date, payment_method, description)')
+      .eq('member_id', member.id)
+      .order('created_at', { ascending: false })
+    receipts = receiptsData || []
+
+    // Get member tabs
+    const { data: tabsData, error: tabsError } = await supabase
+      .from('member_tabs')
+      .select('*')
+      .eq('member_id', member.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+    tabs = tabsData || []
+
+    // Log for debugging (remove in production)
+    if (tabsError) {
+      console.error('Error fetching member tabs:', tabsError)
+    }
+  }
+
+  // Get notifications (always available for any authenticated user)
   const { data: notifications } = await supabase
     .from('notifications')
     .select('*')
@@ -43,29 +66,16 @@ export default async function MemberDashboardPage() {
     .eq('recipient_id', user.id)
     .eq('is_read', false)
 
-  // Get member tabs
-  const { data: tabs, error: tabsError } = await supabase
-    .from('member_tabs')
-    .select('*')
-    .eq('member_id', member?.id || '')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-
-  // Log for debugging (remove in production)
-  if (tabsError) {
-    console.error('Error fetching member tabs:', tabsError)
-  }
-
   // Get user profile photo
   const profilePhotoUrl = user.profile?.profile_photo_url || null
 
   return (
     <MemberDashboard
       member={member}
-      payments={payments || []}
-      receipts={receipts || []}
+      payments={payments}
+      receipts={receipts}
       notifications={notifications || []}
-      tabs={tabs || []}
+      tabs={tabs}
       profilePhotoUrl={profilePhotoUrl}
       unreadNotificationCount={notificationCount || 0}
     />

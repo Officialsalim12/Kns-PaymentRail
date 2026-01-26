@@ -388,6 +388,7 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
           ),
         ),
       ),
+      ),
     );
   }
 }

@@ -60,6 +60,28 @@ export default function SuperAdminRegistrationForm() {
         return
       }
 
+      // Step 3: Verify profile was created (with retry)
+      let profileVerified = false
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        const { data: verifyProfile } = await supabase
+          .from('users')
+          .select('id, role')
+          .eq('id', authData.user.id)
+          .single()
+        
+        if (verifyProfile && verifyProfile.role === 'super_admin') {
+          profileVerified = true
+          break
+        }
+      }
+
+      if (!profileVerified) {
+        setError('Profile was created but could not be verified. Please try logging in manually.')
+        setLoading(false)
+        return
+      }
+
       setSuccess(true)
       setTimeout(() => {
         router.push('/login')
@@ -136,7 +158,7 @@ export default function SuperAdminRegistrationForm() {
         </div>
       </div>
 
-      <div>
+      <div className="space-y-4">
         <button
           type="submit"
           disabled={loading}
@@ -144,6 +166,18 @@ export default function SuperAdminRegistrationForm() {
         >
           {loading ? 'Creating account...' : 'Create Super Admin Account'}
         </button>
+        
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{' '}
+            <a
+              href="/login"
+              className="font-medium text-primary-600 hover:text-primary-700"
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
       </div>
     </form>
   )

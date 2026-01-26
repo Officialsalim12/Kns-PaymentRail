@@ -492,53 +492,54 @@ export default function PaymentManagement({ members: initialMembers, payments: i
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Member</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Date</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Amount</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Method</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Reference</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPayments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{payment.member.full_name}</div>
-                        <div className="text-sm text-gray-500 font-mono">{payment.member.membership_id}</div>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</div>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">{formatCurrency(getDisplayAmount(payment.amount, payment.payment_status))}</div>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{payment.payment_method}</div>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          payment.payment_status === 'completed' 
-                            ? 'bg-green-100 text-green-800'
-                            : payment.payment_status === 'processing'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : payment.payment_status === 'failed'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {payment.payment_status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 font-mono">{payment.reference_number}</div>
-                      </td>
-                      <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex flex-wrap gap-2">
+            <div className="hidden md:block overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-6 lg:px-8">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Member</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Date</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Method</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Reference</th>
+                      <th className="px-4 lg:px-6 xl:px-8 py-3 text-left text-xs lg:text-sm font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredPayments.map((payment) => (
+                      <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <div className="text-sm lg:text-base font-medium text-gray-900">{payment.member.full_name}</div>
+                          <div className="text-sm lg:text-base text-gray-500 font-mono">{payment.member.membership_id}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <div className="text-sm lg:text-base text-gray-900">{format(new Date(payment.payment_date), 'MMM dd, yyyy')}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <div className="text-sm lg:text-base font-semibold text-gray-900">{formatCurrency(getDisplayAmount(payment.amount, payment.payment_status))}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <div className="text-sm lg:text-base text-gray-500">{payment.payment_method}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs lg:text-sm font-medium ${
+                            payment.payment_status === 'completed' 
+                              ? 'bg-green-100 text-green-800'
+                              : payment.payment_status === 'processing'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : payment.payment_status === 'failed'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {payment.payment_status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4">
+                          <div className="text-sm lg:text-base text-gray-500 font-mono max-w-xs truncate" title={payment.reference_number}>{payment.reference_number}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 xl:px-8 py-4 whitespace-nowrap text-sm lg:text-base font-medium">
+                          <div className="flex flex-wrap gap-2">
                           {payment.payment_method === 'monime' && payment.payment_status !== 'completed' && (
                             <button
                               onClick={() => handleSyncPayment(payment.id)}
@@ -563,8 +564,9 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}

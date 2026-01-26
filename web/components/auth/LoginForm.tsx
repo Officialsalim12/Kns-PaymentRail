@@ -37,23 +37,46 @@ export default function LoginForm() {
       }
 
       if (data.user) {
-        const { data: profile } = await supabase
+        // Wait a bit for the session to be fully established
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Query the user profile
+        const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('role')
           .eq('id', data.user.id)
           .single()
 
-        const role = profile?.role
-        if (role === 'super_admin') {
-          router.push('/super-admin')
-        } else if (role === 'org_admin') {
-          router.push('/admin')
-        } else if (role === 'member') {
-          router.push('/member')
-        } else {
-          router.push('/')
+        // If profile query fails, redirect to home and let server-side handle it
+        if (profileError) {
+          console.log('Profile query failed, redirecting to home for server-side role detection')
+          window.location.href = '/'
+          return
         }
-        router.refresh()
+
+        const role = profile?.role || null
+
+        if (!role) {
+          console.log('User role not found, redirecting to home for server-side handling')
+          window.location.href = '/'
+          return
+        }
+        
+        console.log('Login successful, redirecting user with role:', role)
+        
+        // Use window.location.href for a full page reload to ensure session cookies are read
+        // This ensures the middleware and server components can properly access the session
+        if (role === 'super_admin') {
+          window.location.href = '/super-admin'
+        } else if (role === 'org_admin') {
+          window.location.href = '/admin'
+        } else if (role === 'member') {
+          window.location.href = '/member'
+        } else {
+          // Unknown role - redirect to home
+          console.warn('Unknown user role:', role)
+          window.location.href = '/'
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred')

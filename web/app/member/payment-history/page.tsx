@@ -14,19 +14,24 @@ export default async function PaymentHistoryPage() {
     .single()
 
   // Get all completed payments only (incomplete payments should not be recorded)
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('*, receipt:receipts(receipt_number, pdf_url, pdf_storage_path)')
-    .eq('member_id', member?.id || '')
-    .eq('payment_status', 'completed')
-    .order('payment_date', { ascending: false })
+  // Only query if member exists
+  let payments: any[] = []
+  if (member?.id) {
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('*, receipt:receipts(receipt_number, pdf_url, pdf_storage_path)')
+      .eq('member_id', member.id)
+      .eq('payment_status', 'completed')
+      .order('payment_date', { ascending: false })
+    payments = paymentsData || []
+  }
   
   // Add organization_id and member_id to each payment if not already included
-  const paymentsWithIds = payments?.map(payment => ({
+  const paymentsWithIds = payments.map(payment => ({
     ...payment,
     organization_id: payment.organization_id || member?.organization_id,
     member_id: payment.member_id || member?.id,
-  })) || []
+  }))
 
   return <PaymentHistoryList payments={paymentsWithIds} />
 }

@@ -43,18 +43,18 @@ export default function FAQ() {
   }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-12 sm:py-16 md:py-20 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-10 sm:mb-12 md:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-2">
             Frequently Asked Questions
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-base sm:text-lg text-gray-600 px-2">
             Everything you need to know about using KNS MultiRail
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {faqs.map((faq, index) => (
             <div
               key={index}
@@ -62,20 +62,20 @@ export default function FAQ() {
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex justify-between items-start sm:items-center hover:bg-gray-50 transition-colors gap-3 sm:gap-4"
               >
-                <h3 className="text-lg font-semibold text-gray-900 pr-8">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 pr-2 sm:pr-8 flex-1">
                   {faq.question}
                 </h3>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform ${
+                  className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform mt-0.5 sm:mt-0 ${
                     openIndex === index ? 'transform rotate-180' : ''
                   }`}
                 />
               </button>
               {openIndex === index && (
-                <div className="px-6 pb-5">
-                  <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                <div className="px-4 sm:px-6 pb-4 sm:pb-5">
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{faq.answer}</p>
                 </div>
               )}
             </div>

@@ -42,8 +42,10 @@ export default async function MemberLayout({
       {/* Main content area */}
       <div className="lg:ml-64">
         {/* Main content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-gradient-to-br from-primary-50/30 via-white to-primary-50/30 min-h-screen">
-          {children}
+        <main className="px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 bg-gradient-to-br from-primary-50/30 via-white to-primary-50/30 min-h-screen">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

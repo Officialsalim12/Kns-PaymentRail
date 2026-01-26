@@ -24,10 +24,17 @@ export default function OrganizationRegistrationForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Service to continue')
+      return
+    }
+    
     setLoading(true)
 
     try {
@@ -316,10 +323,43 @@ export default function OrganizationRegistrationForm() {
         </div>
       </div>
 
-      <div>
+      <div className="space-y-4">
+        <div className="flex items-start">
+          <input
+            id="terms"
+            name="terms"
+            type="checkbox"
+            required
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+          />
+          <label htmlFor="terms" className="ml-3 text-sm text-gray-700">
+            I agree to the{' '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:text-primary-700 font-medium underline"
+            >
+              Terms of Service
+            </a>
+            {' '}and{' '}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:text-primary-700 font-medium underline"
+            >
+              Privacy Policy
+            </a>
+            {' '}*
+          </label>
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !agreedToTerms}
           className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Creating Account...' : 'Create Account & Register Organization'}
