@@ -15,7 +15,14 @@ import {
 import FAQ from '@/components/shared/FAQ'
 
 export default async function HomePage() {
-  const user = await getCurrentUser()
+  let user = null
+  try {
+    user = await getCurrentUser()
+  } catch (error: any) {
+    // If Supabase is not configured, continue to show homepage
+    // This allows the site to work even if env vars aren't set yet
+    console.error('Error getting user:', error?.message)
+  }
 
   if (user) {
     const role = user.profile?.role
