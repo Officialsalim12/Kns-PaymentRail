@@ -20,6 +20,10 @@ export async function updateSession(request: NextRequest) {
     '/privacy',
     '/terms',
     '/debug',
+    '/contact',
+    '/unauthorized',
+    '/payment-success',
+    '/payment-cancelled',
   ]
 
   const isPublicPath = publicPaths.some(path =>
