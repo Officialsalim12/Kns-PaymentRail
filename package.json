@@ -9,6 +9,10 @@
     "dev": "npm run dev --workspace=web",
     "build": "npm run build --workspace=web",
     "start": "npm run start --workspace=web",
-    "lint": "npm run lint --workspace=web"
+    "lint": "npm run lint --workspace=web",
+    "postinstall": "npm run postinstall --workspace=web"
+  },
+  "devDependencies": {
+    "patch-package": "^8.0.1"
   }
 }
