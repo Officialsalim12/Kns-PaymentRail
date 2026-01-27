@@ -19,6 +19,7 @@ export async function updateSession(request: NextRequest) {
     '/',
     '/privacy',
     '/terms',
+    '/debug',
   ]
 
   const isPublicPath = publicPaths.some(path =>

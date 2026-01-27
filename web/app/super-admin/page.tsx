@@ -6,25 +6,25 @@ export default async function SuperAdminDashboardPage() {
   try {
     const user = await requireSuperAdmin()
     const supabase = await createClient()
-    
+
     // Get user profile info
     const userFullName = user.profile?.full_name || user.email || 'Super Admin'
     const profilePhotoUrl = user.profile?.profile_photo_url || null
-    
+
     // Initialize default values
     let passwordResetCount = 0
     let notificationCount = 0
     let organizations: any[] = []
     let allUsers: any[] = []
     let passwordResetRequests: any[] = []
-    
+
     // Get unread notification count (password reset requests and other notifications)
     try {
       const { count, error } = await supabase
         .from('password_reset_requests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending')
-      
+
       if (error) {
         console.error('Error fetching password reset count:', error)
       } else {
@@ -40,7 +40,7 @@ export default async function SuperAdminDashboardPage() {
         .select('*', { count: 'exact', head: true })
         .eq('recipient_id', user.id)
         .eq('is_read', false)
-      
+
       if (error) {
         console.error('Error fetching notification count:', error)
       } else {
@@ -58,7 +58,7 @@ export default async function SuperAdminDashboardPage() {
         .from('organizations')
         .select('*')
         .order('created_at', { ascending: false })
-      
+
       if (error) {
         console.error('Error fetching organizations:', error)
       } else {
@@ -71,7 +71,7 @@ export default async function SuperAdminDashboardPage() {
     // Get member counts for each organization
     const organizationIds = organizations?.map(org => org.id) || []
     const memberCounts: { [key: string]: number } = {}
-    
+
     if (organizationIds.length > 0) {
       try {
         const { data: memberCountsData, error } = await supabase
@@ -105,7 +105,7 @@ export default async function SuperAdminDashboardPage() {
         .from('users')
         .select('id, role')
         .neq('role', 'super_admin')
-      
+
       if (error) {
         console.error('Error fetching users:', error)
       } else {
@@ -121,7 +121,7 @@ export default async function SuperAdminDashboardPage() {
         .from('password_reset_requests')
         .select('id')
         .eq('status', 'pending')
-      
+
       if (error) {
         console.error('Error fetching password reset requests:', error)
       } else {
@@ -139,15 +139,18 @@ export default async function SuperAdminDashboardPage() {
     }
 
     return (
-      <SuperAdminDashboard 
-        organizations={organizationsWithCounts} 
-        stats={stats} 
-        userFullName={userFullName} 
-        profilePhotoUrl={profilePhotoUrl} 
-        unreadNotificationCount={totalNotifications} 
+      <SuperAdminDashboard
+        organizations={organizationsWithCounts}
+        stats={stats}
+        userFullName={userFullName}
+        profilePhotoUrl={profilePhotoUrl}
+        unreadNotificationCount={totalNotifications}
       />
     )
   } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
     console.error('Super admin dashboard error:', error)
     return (
       <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">

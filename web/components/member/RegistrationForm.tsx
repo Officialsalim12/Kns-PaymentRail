@@ -51,8 +51,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
         return
       }
 
-      // Step 1: Sign up the member user
-      // Disable email confirmation requirement for immediate user creation
+      // Step 1: Sign up the member use
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,

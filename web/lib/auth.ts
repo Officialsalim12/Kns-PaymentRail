@@ -2,10 +2,12 @@ import { createClient } from './supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function getCurrentUser() {
+  console.log('[getCurrentUser] Starting...')
   try {
     const supabase = await createClient()
+    console.log('[getCurrentUser] Supabase client created')
     const getUserPromise = supabase.auth.getUser()
-    const timeoutPromise = new Promise<{ data: { user: null }, error: { message: string } }>((resolve) => 
+    const timeoutPromise = new Promise<{ data: { user: null }, error: { message: string } }>((resolve) =>
       setTimeout(() => resolve({ data: { user: null }, error: { message: 'Network timeout' } }), 5000)
     )
 
@@ -26,28 +28,28 @@ export async function getCurrentUser() {
     let userProfile = null
     let profileError = null
     const maxRetries = 3
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const profilePromise = supabase
         .from('users')
         .select('*, organization:organizations(*)')
         .eq('id', user.id)
         .single()
-      
-      const profileTimeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) => 
+
+      const profileTimeoutPromise = new Promise<{ data: null, error: { message: string } }>((resolve) =>
         setTimeout(() => resolve({ data: null, error: { message: 'Network timeout' } }), 5000)
       )
 
       const profileResult = await Promise.race([profilePromise, profileTimeoutPromise])
       const { data: profile, error: error } = profileResult as { data: any, error: any }
-      
+
       if (!error && profile) {
         userProfile = profile
         break
       }
-      
+
       profileError = error
-      
+
       // If it's not a network error and not the last attempt, wait before retrying
       if (attempt < maxRetries && error?.code !== 'PGRST116') {
         await new Promise(resolve => setTimeout(resolve, 500 * attempt))
@@ -88,11 +90,11 @@ export async function requireAuth() {
 
 export async function requireRole(allowedRoles: string[]) {
   const user = await requireAuth()
-  
+
   if (!user.profile?.role || !allowedRoles.includes(user.profile.role)) {
     redirect('/unauthorized')
   }
-  
+
   return user
 }
 

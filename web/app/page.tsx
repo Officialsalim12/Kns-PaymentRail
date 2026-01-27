@@ -15,13 +15,17 @@ import {
 import FAQ from '@/components/shared/FAQ'
 
 export default async function HomePage() {
+  console.log('[HomePage] Rendering...')
   let user = null
   try {
+    console.log('[HomePage] Calling getCurrentUser...')
     user = await getCurrentUser()
+    console.log('[HomePage] getCurrentUser returned user:', user?.id)
   } catch (error: any) {
     // If Supabase is not configured, continue to show homepage
     // This allows the site to work even if env vars aren't set yet
-    console.error('Error getting user:', error?.message)
+    console.error('[HomePage] Error getting user:', error?.message)
+    console.error('[HomePage] Full error:', error)
   }
 
   if (user) {

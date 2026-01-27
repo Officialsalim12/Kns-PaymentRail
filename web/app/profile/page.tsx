@@ -53,6 +53,9 @@ export default async function ProfilePage() {
       </div>
     )
   } catch (error: any) {
+    if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw error
+    }
     console.error('Profile page error:', error)
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8">
