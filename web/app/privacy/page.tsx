@@ -25,21 +25,21 @@ export default function PrivacyPage() {
       {/* Navigation Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <Link href="/" className="flex items-center">
-              <Building2 className="w-8 h-8 text-primary-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-900">KNS MultiRail</span>
+              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
+              <span className="text-lg sm:text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md"
+                className="px-3 sm:px-5 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 Get Started
               </Link>
@@ -50,10 +50,10 @@ export default function PrivacyPage() {
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <Link href="/" className="hover:text-gray-900 transition-colors">Home</Link>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 flex-shrink-0" />
             <span className="text-gray-900 font-medium">Privacy Policy</span>
           </nav>
         </div>
@@ -64,38 +64,37 @@ export default function PrivacyPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
           <aside className="lg:w-64 flex-shrink-0">
-            <div className="sticky top-24 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">On This Page</h2>
-              <nav className="space-y-1">
+            <div className="sticky top-20 bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
+              <h2 className="text-xs font-semibold text-gray-900 mb-4 uppercase tracking-wide">On This Page</h2>
+              <nav className="space-y-1 max-h-[30vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-2 lg:pr-0">
                 {sections.map((section) => (
                   <a
                     key={section.id}
                     href={`#${section.id}`}
                     onClick={() => setActiveSection(section.id)}
-                    className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                      activeSection === section.id
+                    className={`block px-3 py-2 text-xs sm:text-sm rounded-md transition-colors ${activeSection === section.id
                         ? 'bg-primary-50 text-primary-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     {section.title}
                   </a>
                 ))}
               </nav>
-              
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Related</h3>
+
+              <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-3">Related</h3>
                 <div className="space-y-2">
                   <Link
                     href="/terms"
-                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                    className="flex items-center text-xs sm:text-sm text-gray-600 hover:text-primary-600 transition-colors"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Terms of Service
                   </Link>
                   <Link
                     href="/contact"
-                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                    className="flex items-center text-xs sm:text-sm text-gray-600 hover:text-primary-600 transition-colors"
                   >
                     <Mail className="w-4 h-4 mr-2" />
                     Contact Us
@@ -107,19 +106,19 @@ export default function PrivacyPage() {
 
           {/* Main Content Area */}
           <main className="flex-1 min-w-0">
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 lg:p-12">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 sm:p-8 lg:p-12">
               {/* Header */}
-              <div className="mb-8 pb-8 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+              <div className="mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Shield className="w-6 h-6 text-primary-600" />
                   </div>
                   <div>
-                    <h1 className="text-4xl font-bold text-gray-900">Privacy Policy</h1>
-                    <p className="text-sm text-gray-500 mt-1">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Privacy Policy</h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   </div>
                 </div>
-                <p className="text-lg text-gray-600 leading-relaxed">
+                <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
                   KNS MultiRail ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our multitenant payment management platform.
                 </p>
               </div>
