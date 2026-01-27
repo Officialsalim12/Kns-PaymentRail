@@ -40,22 +40,22 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white">
       {/* Navigation Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="w-full px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center min-w-0 flex-1">
-              <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary-600 mr-2 flex-shrink-0" />
-              <span className="text-xl sm:text-2xl font-bold text-gray-900 truncate">KNS MultiRail</span>
+              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2 flex-shrink-0" />
+              <span className="text-lg sm:text-2xl font-bold text-gray-900 truncate">KNS MultiRail</span>
             </div>
-            <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0 ml-2">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 ml-2">
               <Link
                 href="/login"
-                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-2"
+                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-4 py-2 text-sm font-semibold text-primary-600 hover:text-primary-700 bg-white hover:bg-primary-50 border border-primary-300 hover:border-primary-400 rounded-lg transition-all whitespace-nowrap shadow-sm hover:shadow"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary-600 hover:text-primary-700 bg-white hover:bg-primary-50 border border-primary-300 hover:border-primary-400 rounded-lg transition-all whitespace-nowrap shadow-sm hover:shadow"
               >
                 Get Started
               </Link>
@@ -65,27 +65,27 @@ export default async function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 py-12 sm:py-16 md:py-20 lg:py-24 xl:py-32 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 py-10 sm:py-16 md:py-20 lg:py-24 xl:py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Modern Payments for <br className="hidden sm:block" />
               <span className="text-primary-600">Growing Organizations</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4">
+            <p className="text-sm sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-2">
               Sierra Leone's most reliable payment management platform, offering an end-to-end solution that boosts payment performance and streamlines finances. We help organizations grow revenue and retain members.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-2 sm:px-0">
               <Link
                 href="/organization/register"
-                className="w-full sm:w-auto px-6 py-3 text-base sm:text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 Get Started
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <Link
                 href="/contact"
-                className="w-full sm:w-auto px-6 py-3 text-base sm:text-lg font-semibold text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-all border-2 border-gray-200 hover:border-gray-300"
+                className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold text-gray-700 bg-white hover:bg-gray-50 rounded-lg transition-all border-2 border-gray-200 hover:border-gray-300"
               >
                 Company Contact
               </Link>
@@ -175,16 +175,16 @@ export default async function HomePage() {
             <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
               Accept payments through multiple channels
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
               {[
                 { name: 'Card', icon: '💳' },
                 { name: 'Bank Account', icon: '🏦' },
                 { name: 'Bank Transfer', icon: '🔄' },
                 { name: 'Mobile Money', icon: '📱' },
               ].map((method, idx) => (
-                <div key={idx} className="text-center p-6 rounded-xl bg-gray-50 hover:bg-primary-50 transition-colors">
-                  <div className="text-4xl mb-4">{method.icon}</div>
-                  <div className="text-base font-semibold text-gray-900 break-words">{method.name}</div>
+                <div key={idx} className="text-center p-4 sm:p-6 rounded-xl bg-gray-50 hover:bg-primary-50 transition-colors">
+                  <div className="text-2xl sm:text-4xl mb-2 sm:mb-4">{method.icon}</div>
+                  <div className="text-xs sm:text-base font-semibold text-gray-900 break-words">{method.name}</div>
                 </div>
               ))}
             </div>

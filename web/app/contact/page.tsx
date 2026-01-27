@@ -18,7 +18,7 @@ export default function ContactPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
-    
+
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false)
@@ -41,13 +41,13 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <Link href="/" className="flex items-center">
-              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1 sm:mr-2" />
+              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
               <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-2 sm:px-0"
+                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
               >
                 Sign In
               </Link>
@@ -94,7 +94,7 @@ export default function ContactPage() {
           <aside className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Contact Information</h2>
-              
+
               <div className="space-y-6">
                 {/* Email */}
                 <div>
@@ -104,8 +104,8 @@ export default function ContactPage() {
                     </div>
                     <h3 className="font-semibold text-gray-900">Email</h3>
                   </div>
-                  <a 
-                    href="mailto:info@knsmultirail.com" 
+                  <a
+                    href="mailto:info@knsmultirail.com"
                     className="text-primary-600 hover:text-primary-700 text-sm ml-12 block mt-1"
                   >
                     info@knsmultirail.com
@@ -120,8 +120,8 @@ export default function ContactPage() {
                     </div>
                     <h3 className="font-semibold text-gray-900">Phone</h3>
                   </div>
-                  <a 
-                    href="tel:+23277287881" 
+                  <a
+                    href="tel:+23277287881"
                     className="text-primary-600 hover:text-primary-700 text-sm ml-12 block mt-1"
                   >
                     +232 77 287 881
@@ -136,8 +136,8 @@ export default function ContactPage() {
                     </div>
                     <h3 className="font-semibold text-gray-900">Phone</h3>
                   </div>
-                  <a 
-                    href="tel:+23279594218" 
+                  <a
+                    href="tel:+23279594218"
                     className="text-primary-600 hover:text-primary-700 text-sm ml-12 block mt-1"
                   >
                     +232 79 594 218
@@ -152,8 +152,8 @@ export default function ContactPage() {
                     </div>
                     <h3 className="font-semibold text-gray-900">WhatsApp</h3>
                   </div>
-                  <a 
-                    href="https://wa.me/23277287881" 
+                  <a
+                    href="https://wa.me/23277287881"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-green-600 hover:text-green-700 text-sm ml-12 block mt-1"
@@ -188,26 +188,26 @@ export default function ContactPage() {
               </div>
 
               {/* Quick Links */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="mt-6 sm:mt-8 pt-6 border-t border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-4">Quick Links</h3>
-                <div className="space-y-2">
+                <div className="space-y-3 sm:space-y-2">
                   <Link
                     href="/privacy"
-                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors py-1"
                   >
                     <HelpCircle className="w-4 h-4 mr-2" />
                     Privacy Policy
                   </Link>
                   <Link
                     href="/terms"
-                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors py-1"
                   >
                     <HelpCircle className="w-4 h-4 mr-2" />
                     Terms of Service
                   </Link>
                   <Link
                     href="/#faq"
-                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors"
+                    className="flex items-center text-sm text-gray-600 hover:text-primary-600 transition-colors py-1"
                   >
                     <HelpCircle className="w-4 h-4 mr-2" />
                     Frequently Asked Questions
@@ -345,55 +345,55 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 max-w-4xl mx-auto">
               <a
                 href="https://www.facebook.com/knsmultirail"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1877F2] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1877F2] hover:shadow-lg transition-all group"
               >
-                <Facebook className="w-8 h-8 text-[#1877F2] mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">Facebook</span>
+                <Facebook className="w-6 h-6 sm:w-8 sm:h-8 text-[#1877F2] mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Facebook</span>
               </a>
 
               <a
                 href="https://twitter.com/knsmultirail"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1DA1F2] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1DA1F2] hover:shadow-lg transition-all group"
               >
-                <Twitter className="w-8 h-8 text-[#1DA1F2] mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">Twitter</span>
+                <Twitter className="w-6 h-6 sm:w-8 sm:h-8 text-[#1DA1F2] mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Twitter</span>
               </a>
 
               <a
                 href="https://www.linkedin.com/company/knsmultirail"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#0077B5] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#0077B5] hover:shadow-lg transition-all group"
               >
-                <Linkedin className="w-8 h-8 text-[#0077B5] mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">LinkedIn</span>
+                <Linkedin className="w-6 h-6 sm:w-8 sm:h-8 text-[#0077B5] mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">LinkedIn</span>
               </a>
 
               <a
                 href="https://www.instagram.com/knsmultirail"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#E4405F] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#E4405F] hover:shadow-lg transition-all group"
               >
-                <Instagram className="w-8 h-8 text-[#E4405F] mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">Instagram</span>
+                <Instagram className="w-6 h-6 sm:w-8 sm:h-8 text-[#E4405F] mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Instagram</span>
               </a>
 
               <a
                 href="https://github.com/knsmultirail"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-gray-800 hover:shadow-lg transition-all group"
+                className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-gray-800 hover:shadow-lg transition-all group"
               >
-                <Github className="w-8 h-8 text-gray-800 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">GitHub</span>
+                <Github className="w-6 h-6 sm:w-8 sm:h-8 text-gray-800 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs sm:text-sm font-medium text-gray-700">GitHub</span>
               </a>
             </div>
           </div>
