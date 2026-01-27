@@ -14,5 +14,9 @@
   },
   "devDependencies": {
     "patch-package": "^8.0.1"
+  },
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "14.2.35",
+    "@next/swc-linux-x64-musl": "14.2.35"
   }
 }

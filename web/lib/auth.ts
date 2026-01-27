@@ -2,10 +2,14 @@ import { createClient } from './supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function getCurrentUser() {
-  console.log('[getCurrentUser] Starting...')
+  /* if (process.env.NODE_ENV === 'development') {
+    console.log('[getCurrentUser] Starting...')
+  } */
   try {
     const supabase = await createClient()
-    console.log('[getCurrentUser] Supabase client created')
+    /* if (process.env.NODE_ENV === 'development') {
+      console.log('[getCurrentUser] Supabase client created')
+    } */
     const getUserPromise = supabase.auth.getUser()
     const timeoutPromise = new Promise<{ data: { user: null }, error: { message: string } }>((resolve) =>
       setTimeout(() => resolve({ data: { user: null }, error: { message: 'Network timeout' } }), 5000)
