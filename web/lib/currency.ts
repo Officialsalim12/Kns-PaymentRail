@@ -1,8 +1,8 @@
 export function formatCurrency(amount: number | string): string {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
-  if (isNaN(numAmount)) return 'NLe 0.00'
-  
-  return `NLe ${numAmount.toLocaleString('en-US', {
+  if (isNaN(numAmount)) return 'Le 0.00'
+
+  return `Le ${numAmount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
@@ -10,9 +10,9 @@ export function formatCurrency(amount: number | string): string {
 
 export function formatCurrencyCompact(amount: number | string): string {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
-  if (isNaN(numAmount)) return 'NLe 0'
-  
-  return `NLe ${numAmount.toLocaleString('en-US', {
+  if (isNaN(numAmount)) return 'Le 0'
+
+  return `Le ${numAmount.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`

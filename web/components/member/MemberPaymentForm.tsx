@@ -75,7 +75,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
           member_id: memberId,
           amount: paymentAmount,
           payment_date: new Date().toISOString(),
-          payment_method: 'monime',
+          payment_method: 'online',
           description: paymentDescription,
           created_by: user.id,
           payment_status: 'pending',
@@ -127,29 +127,17 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
       )
 
       if (checkoutError) {
-        // Clean up the payment if checkout creation failed
         try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
-        }
-        throw new Error(checkoutError.message || 'Failed to create checkout session')
+          await supabase.from('payments').delete().eq('id', payment.id)
+        } catch (e) { }
+        throw new Error(checkoutError.message || 'Failed to create checkout')
       }
 
       if (!checkoutData?.checkoutSession) {
-        // Clean up the payment if checkout creation failed
         try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
-        }
-        throw new Error('Failed to create checkout session: Invalid response from payment service')
+          await supabase.from('payments').delete().eq('id', payment.id)
+        } catch (e) { }
+        throw new Error('Invalid checkout session')
       }
 
       if (checkoutData.checkoutSession.url) {
@@ -231,22 +219,22 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
               </div>
             </>
           ) : (
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Amount *
-            </label>
-            <input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="0.00"
-            />
-          </div>
+            <div>
+              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Amount *
+              </label>
+              <input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
           )}
 
           <div>

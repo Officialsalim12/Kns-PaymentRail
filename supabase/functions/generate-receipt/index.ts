@@ -34,7 +34,7 @@ serve(async (req) => {
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
+
     // Allow service role key authentication when called from other edge functions
     // Check if the authorization header matches the service role key
     let isServiceRoleAuth = false;
@@ -42,7 +42,7 @@ serve(async (req) => {
       const token = authHeader.replace("Bearer ", "").trim();
       isServiceRoleAuth = token === serviceRoleKey;
     }
-    
+
     if (!authHeader) {
       return new Response(
         JSON.stringify({
@@ -67,12 +67,12 @@ serve(async (req) => {
         },
       }
     );
-    
+
     // If not service role auth, verify user token
     if (!isServiceRoleAuth) {
       const token = authHeader.replace("Bearer ", "").trim();
       const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-      
+
       if (authError || !user) {
         return new Response(
           JSON.stringify({
@@ -121,7 +121,7 @@ serve(async (req) => {
         }
       );
     }
-    
+
     // Check idempotency - prevent duplicate receipt generation
     if (idempotencyKey) {
       const { data: existingIdempotent } = await supabaseClient
@@ -129,7 +129,7 @@ serve(async (req) => {
         .select("id")
         .eq("payment_id", paymentId)
         .maybeSingle();
-      
+
       if (existingIdempotent) {
         console.log(`Receipt already exists for payment ${paymentId} (idempotency check)`);
         return new Response(
@@ -186,7 +186,7 @@ serve(async (req) => {
         .select("id, name, organization_type")
         .eq("id", payment.organization_id || organizationId)
         .maybeSingle();
-      
+
       if (fallbackOrg) {
         organization = fallbackOrg;
       } else {
@@ -200,7 +200,7 @@ serve(async (req) => {
     } else {
       throw new Error("Failed to attach organization to payment member");
     }
-    
+
     // Verify payment status is completed
     if (payment.payment_status !== "completed") {
       throw new Error(`Payment status is ${payment.payment_status}, not completed. Cannot generate receipt.`);
@@ -233,7 +233,7 @@ serve(async (req) => {
       try {
         const monimeApiKey = Deno.env.get("MONIME_ACCESS_TOKEN") || Deno.env.get("MONIME_API_KEY");
         const monimeSpaceId = Deno.env.get("MONIME_SPACE_ID");
-        
+
         if (monimeApiKey && monimeSpaceId) {
           console.log(`Fetching exact payment details from Monime API: ${payment.monime_payment_id}`);
           const monimeResponse = await fetch(
@@ -247,7 +247,7 @@ serve(async (req) => {
               },
             }
           );
-          
+
           if (monimeResponse.ok) {
             const monimeResponseData = await monimeResponse.json();
             monimePaymentData = monimeResponseData?.result || monimeResponseData;
@@ -421,7 +421,7 @@ async function sendReceiptEmail(
 ): Promise<void> {
   // Check if Resend API key is configured
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  
+
   if (resendApiKey) {
     // Use Resend for email sending
     try {
@@ -450,7 +450,7 @@ async function sendReceiptEmail(
         const errorData = await emailResponse.json();
         throw new Error(`Resend API error: ${errorData.message || "Unknown error"}`);
       }
-      
+
       return;
     } catch (error) {
       console.error("Resend email error:", error);
@@ -488,16 +488,16 @@ function generateReceiptEmailHTML(
   monimePaymentData: any = null
 ): string {
   // Get the actual payment date/time from Monime or payment data
-  const monimePaymentDate = monimePaymentData?.created_at || 
-                            monimePaymentData?.createdAt || 
-                            monimePaymentData?.paid_at ||
-                            monimePaymentData?.paidAt ||
-                            monimePaymentData?.completed_at ||
-                            monimePaymentData?.completedAt ||
-                            payment.payment_date ||
-                            payment.created_at ||
-                            new Date().toISOString();
-  
+  const monimePaymentDate = monimePaymentData?.created_at ||
+    monimePaymentData?.createdAt ||
+    monimePaymentData?.paid_at ||
+    monimePaymentData?.paidAt ||
+    monimePaymentData?.completed_at ||
+    monimePaymentData?.completedAt ||
+    payment.payment_date ||
+    payment.created_at ||
+    new Date().toISOString();
+
   const actualPaymentDate = new Date(monimePaymentDate);
   const formattedPaymentDate = actualPaymentDate.toLocaleString("en-US", {
     year: "numeric",
@@ -508,7 +508,7 @@ function generateReceiptEmailHTML(
     second: "2-digit",
     hour12: true
   });
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -536,7 +536,7 @@ function generateReceiptEmailHTML(
           <div class="receipt-details">
             <h3>Receipt Details</h3>
             <p><strong>Receipt Number:</strong> ${receiptNumber}</p>
-            <p><strong>Amount:</strong> ${payment.currency || 'SLE'} ${(typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount || 0).toFixed(2)}</p>
+            <p><strong>Amount:</strong> ${payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le')} ${(typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount || 0).toFixed(2)}</p>
             <p><strong>Payment Date:</strong> ${formattedPaymentDate}</p>
             <p><strong>Payment Method:</strong> ${payment.payment_method}</p>
             ${payment.description ? `<p><strong>Description:</strong> ${payment.description}</p>` : ''}
@@ -571,13 +571,13 @@ async function generateReceiptPDF(
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([612, 792]); // US Letter size
   const { width, height } = page.getSize();
-  
+
   // Fonts
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  
+
   let yPosition = height - 50;
-  
+
   // Header
   page.drawText("PAYMENT RECEIPT", {
     x: 50,
@@ -586,22 +586,22 @@ async function generateReceiptPDF(
     font: helveticaBoldFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 40;
-  
+
   // Get the actual payment date/time from Monime or payment data
-  const monimePaymentDate = monimePaymentData?.created_at || 
-                            monimePaymentData?.createdAt || 
-                            monimePaymentData?.paid_at ||
-                            monimePaymentData?.paidAt ||
-                            monimePaymentData?.completed_at ||
-                            monimePaymentData?.completedAt ||
-                            payment.payment_date ||
-                            payment.created_at ||
-                            new Date().toISOString();
-  
+  const monimePaymentDate = monimePaymentData?.created_at ||
+    monimePaymentData?.createdAt ||
+    monimePaymentData?.paid_at ||
+    monimePaymentData?.paidAt ||
+    monimePaymentData?.completed_at ||
+    monimePaymentData?.completedAt ||
+    payment.payment_date ||
+    payment.created_at ||
+    new Date().toISOString();
+
   const actualPaymentDate = new Date(monimePaymentDate);
-  
+
   // Receipt Number and Date
   yPosition -= 30;
   page.drawText(`Receipt Number: ${receiptNumber}`, {
@@ -611,11 +611,11 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 20;
-  page.drawText(`Date: ${actualPaymentDate.toLocaleString("en-US", { 
-    year: "numeric", 
-    month: "long", 
+  page.drawText(`Date: ${actualPaymentDate.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -628,9 +628,9 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0.5, 0.5, 0.5),
   });
-  
+
   yPosition -= 40;
-  
+
   // Organization Information
   page.drawText("Organization Information", {
     x: 50,
@@ -639,7 +639,7 @@ async function generateReceiptPDF(
     font: helveticaBoldFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 25;
   page.drawText(`Name: ${payment.member.organization.name}`, {
     x: 50,
@@ -648,7 +648,7 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 15;
   if (payment.member.organization.organization_type) {
     page.drawText(`Type: ${payment.member.organization.organization_type}`, {
@@ -660,9 +660,9 @@ async function generateReceiptPDF(
     });
     yPosition -= 15;
   }
-  
+
   yPosition -= 20;
-  
+
   // Member Information
   page.drawText("Member Information", {
     x: 50,
@@ -671,7 +671,7 @@ async function generateReceiptPDF(
     font: helveticaBoldFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 25;
   page.drawText(`Name: ${payment.member.full_name}`, {
     x: 50,
@@ -680,7 +680,7 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 15;
   page.drawText(`Membership ID: ${payment.member.membership_id}`, {
     x: 50,
@@ -689,7 +689,7 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 15;
   if (payment.member.email) {
     page.drawText(`Email: ${payment.member.email}`, {
@@ -701,7 +701,7 @@ async function generateReceiptPDF(
     });
     yPosition -= 15;
   }
-  
+
   if (payment.member.phone_number) {
     page.drawText(`Phone: ${payment.member.phone_number}`, {
       x: 50,
@@ -712,9 +712,9 @@ async function generateReceiptPDF(
     });
     yPosition -= 15;
   }
-  
+
   yPosition -= 20;
-  
+
   // Payment Details - Use exact data from Monime API if available
   page.drawText("Payment Details", {
     x: 50,
@@ -734,17 +734,17 @@ async function generateReceiptPDF(
   });
 
   yPosition -= 15;
-  
+
   // Use Monime order number if available, otherwise use reference_number
-  const orderNumber = monimePaymentData?.order_number || 
-                      monimePaymentData?.orderNumber || 
-                      monimePaymentData?.order_id ||
-                      monimePaymentData?.orderId ||
-                      monimePaymentData?.order?.number ||
-                      monimePaymentData?.order?.id ||
-                      payment.reference_number ||
-                      null;
-  
+  const orderNumber = monimePaymentData?.order_number ||
+    monimePaymentData?.orderNumber ||
+    monimePaymentData?.order_id ||
+    monimePaymentData?.orderId ||
+    monimePaymentData?.order?.number ||
+    monimePaymentData?.order?.id ||
+    payment.reference_number ||
+    null;
+
   if (orderNumber) {
     page.drawText(`Order Number: ${orderNumber}`, {
       x: 50,
@@ -781,13 +781,13 @@ async function generateReceiptPDF(
 
   // Amount - Always use the payment amount from database (this is the actual amount paid)
   // Convert payment.amount to number if it's a string
-  const paymentAmount = typeof payment.amount === 'string' 
-    ? parseFloat(payment.amount) 
+  const paymentAmount = typeof payment.amount === 'string'
+    ? parseFloat(payment.amount)
     : (payment.amount || 0);
-  
+
   // Currency - Use payment currency if available, otherwise default to SLE
-  const paymentCurrency = payment.currency || "SLE";
-  
+  const paymentCurrency = payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le');
+
   const amountText = `Amount: ${paymentCurrency} ${paymentAmount.toFixed(2)}`;
   page.drawText(amountText, {
     x: 50,
@@ -798,7 +798,7 @@ async function generateReceiptPDF(
   });
 
   yPosition -= 25;
-  
+
   // Payment Date - Use the actual payment date/time (already calculated above)
   page.drawText(`Payment Date: ${actualPaymentDate.toLocaleString("en-US", {
     year: "numeric",
@@ -817,14 +817,14 @@ async function generateReceiptPDF(
   });
 
   yPosition -= 15;
-  
+
   // Payment Method - Use Monime payment method details if available
-  const monimePaymentMethod = monimePaymentData?.payment_method || 
-                              monimePaymentData?.paymentMethod ||
-                              monimePaymentData?.method ||
-                              payment.payment_method || 
-                              "Mobile Payment";
-  
+  const monimePaymentMethod = monimePaymentData?.payment_method ||
+    monimePaymentData?.paymentMethod ||
+    monimePaymentData?.method ||
+    payment.payment_method ||
+    "Mobile Payment";
+
   page.drawText(`Payment Method: ${monimePaymentMethod}`, {
     x: 50,
     y: yPosition,
@@ -834,13 +834,13 @@ async function generateReceiptPDF(
   });
 
   yPosition -= 15;
-  
+
   // Payment Status - Use Monime status if available
-  const monimeStatus = monimePaymentData?.status || 
-                       monimePaymentData?.payment_status ||
-                       payment.payment_status || 
-                       "Completed";
-  
+  const monimeStatus = monimePaymentData?.status ||
+    monimePaymentData?.payment_status ||
+    payment.payment_status ||
+    "Completed";
+
   page.drawText(`Payment Status: ${monimeStatus}`, {
     x: 50,
     y: yPosition,
@@ -850,13 +850,13 @@ async function generateReceiptPDF(
   });
 
   yPosition -= 20;
-  
+
   // Description - Use Monime description if available
-  const monimeDescription = monimePaymentData?.description || 
-                            monimePaymentData?.name ||
-                            payment.description ||
-                            null;
-  
+  const monimeDescription = monimePaymentData?.description ||
+    monimePaymentData?.name ||
+    payment.description ||
+    null;
+
   if (monimeDescription) {
     page.drawText(`Description: ${monimeDescription}`, {
       x: 50,
@@ -867,7 +867,7 @@ async function generateReceiptPDF(
     });
     yPosition -= 20;
   }
-  
+
   // Show additional Monime payment details if available
   if (monimePaymentData) {
     // Show line items if available
@@ -881,7 +881,7 @@ async function generateReceiptPDF(
         color: rgb(0, 0, 0),
       });
       yPosition -= 20;
-      
+
       monimePaymentData.line_items.forEach((item: any, index: number) => {
         if (yPosition < 100) {
           // Start new page if needed (simplified - in production, handle page breaks properly)
@@ -889,9 +889,9 @@ async function generateReceiptPDF(
         }
         const itemName = item.name || item.description || `Item ${index + 1}`;
         const itemPrice = item.price?.value || item.price || item.amount || 0;
-        const itemCurrency = item.price?.currency || item.currency || monimeCurrency;
+        const itemCurrency = item.price?.currency || item.currency || paymentCurrency;
         const itemQuantity = item.quantity || 1;
-        
+
         page.drawText(`${itemName} - ${itemCurrency} ${parseFloat(itemPrice.toString()).toFixed(2)} x ${itemQuantity}`, {
           x: 60,
           y: yPosition,
@@ -903,7 +903,7 @@ async function generateReceiptPDF(
       });
     }
   }
-  
+
   // Footer
   yPosition = 50;
   page.drawText("Thank you for your payment!", {
@@ -913,7 +913,7 @@ async function generateReceiptPDF(
     font: helveticaBoldFont,
     color: rgb(0, 0, 0),
   });
-  
+
   yPosition -= 20;
   page.drawText("This is an official receipt for your records.", {
     x: 50,
@@ -922,7 +922,7 @@ async function generateReceiptPDF(
     font: helveticaFont,
     color: rgb(0.5, 0.5, 0.5),
   });
-  
+
   // Generate PDF bytes
   const pdfBytes = await pdfDoc.save();
   return new Uint8Array(pdfBytes);

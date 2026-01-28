@@ -112,7 +112,7 @@ export class MonimeClient {
 }
 export function getMonimeClient(): MonimeClient {
   const apiKey = process.env.MONIME_API_KEY || process.env.NEXT_PUBLIC_MONIME_API_KEY
-  
+
   if (!apiKey) {
     throw new Error('MONIME_API_KEY environment variable is not set')
   }

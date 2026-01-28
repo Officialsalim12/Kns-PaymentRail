@@ -134,11 +134,10 @@ export default function MemberPaymentsList({ member, tabs: initialTabs }: Props)
                         )}
                         <h3 className="font-semibold text-gray-900">{tab.tab_name}</h3>
                       </div>
-                      <span className={`px-2 py-1 text-xs rounded font-medium ${
-                        tab.tab_type === 'payment' 
-                          ? 'bg-blue-100 text-blue-700' 
+                      <span className={`px-2 py-1 text-xs rounded font-medium ${tab.tab_type === 'payment'
+                          ? 'bg-blue-100 text-blue-700'
                           : 'bg-purple-100 text-purple-700'
-                      }`}>
+                        }`}>
                         {tab.tab_type === 'payment' ? 'Payment' : 'Donation'}
                       </span>
                     </div>
@@ -147,7 +146,7 @@ export default function MemberPaymentsList({ member, tabs: initialTabs }: Props)
                     )}
                     {tab.monthly_cost && tab.tab_type === 'payment' && (
                       <p className="text-sm font-medium text-gray-700 mb-4">
-                        Monthly: {tab.monthly_cost.toLocaleString()} SLE
+                        Monthly: {tab.monthly_cost.toLocaleString()} Le
                       </p>
                     )}
                     <button
@@ -155,11 +154,10 @@ export default function MemberPaymentsList({ member, tabs: initialTabs }: Props)
                         e.stopPropagation()
                         setSelectedTab(tab)
                       }}
-                      className={`w-full px-4 py-2 rounded-md font-medium transition-colors ${
-                        tab.tab_type === 'payment'
+                      className={`w-full px-4 py-2 rounded-md font-medium transition-colors ${tab.tab_type === 'payment'
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-purple-600 text-white hover:bg-purple-700'
-                      }`}
+                        }`}
                     >
                       {tab.tab_type === 'payment' ? 'Pay Now' : 'Donate Here'}
                     </button>

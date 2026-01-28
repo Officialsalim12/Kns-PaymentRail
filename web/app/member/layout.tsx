@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth'
 import MemberSidebar from '@/components/member/Sidebar'
 import { createClient } from '@/lib/supabase/server'
+import DashboardLayoutWrapper from '@/components/shared/DashboardLayoutWrapper'
 
 export default async function MemberLayout({
   children,
@@ -21,13 +22,13 @@ export default async function MemberLayout({
   const organizationId = member?.organization_id || user.profile?.organization_id
   let organization = null
   if (organizationId) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('organizations')
       .select('*')
       .eq('id', organizationId)
       .single()
-    
-    if (!error && data) {
+
+    if (data) {
       organization = {
         name: data.name,
         logo_url: data.logo_url || null
@@ -35,20 +36,34 @@ export default async function MemberLayout({
     }
   }
 
+  // Get user profile info
+  const userFullName = member?.full_name || user.email || 'Member'
+  const profilePhotoUrl = user.profile?.profile_photo_url || null
+
+  // Get unread notification count
+  const { count: notificationCount } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('recipient_id', user.id)
+    .eq('is_read', false)
+
   return (
-    <div className="min-h-screen bg-white">
-      <MemberSidebar organization={organization || null} />
-      
-      {/* Main content area */}
-      <div className="lg:ml-64">
-        {/* Main content */}
-        <main className="px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 bg-gradient-to-br from-primary-50/30 via-white to-primary-50/30 min-h-screen">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
+    <DashboardLayoutWrapper
+      role="member"
+      userFullName={userFullName}
+      profilePhotoUrl={profilePhotoUrl}
+      unreadNotificationCount={notificationCount || 0}
+      sidebar={
+        <MemberSidebar
+          organization={organization}
+          userFullName={userFullName}
+          profilePhotoUrl={profilePhotoUrl}
+          unreadNotificationCount={notificationCount || 0}
+        />
+      }
+    >
+      {children}
+    </DashboardLayoutWrapper>
   )
 }
 

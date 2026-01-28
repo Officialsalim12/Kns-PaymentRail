@@ -42,7 +42,7 @@ serve(async (req) => {
 
     // Parse webhook event - handle different formats
     const rawBody = await req.text();
-    
+
     // Log webhook payload for audit purposes
     const webhookLog = {
       timestamp: new Date().toISOString(),
@@ -90,9 +90,9 @@ serve(async (req) => {
       // Don't fail webhook processing if logging fails
       console.error("Failed to log webhook:", logError);
     }
-    
+
     console.log("Raw webhook body:", rawBody);
-    
+
     let event: MonimeWebhookEvent;
     try {
       const parsed = JSON.parse(rawBody);
@@ -130,7 +130,7 @@ serve(async (req) => {
         throw new Error(`Invalid JSON in webhook body: ${e.message}`);
       }
     }
-    
+
     console.log("Parsed webhook event:", JSON.stringify(event, null, 2));
 
     // Handle different event types - normalize event type
@@ -156,12 +156,12 @@ serve(async (req) => {
     if (eventType === "checkout_session.completed") {
       eventType = "checkout.session.completed";
     }
-    
+
     // Normalize checkout_session.cancelled to checkout.session.cancelled
     if (eventType === "checkout_session.cancelled" || eventType === "checkout_session.canceled") {
       eventType = "checkout.session.cancelled";
     }
-    
+
     // Also check if status in data indicates completion
     if (!eventType && event.data) {
       const dataStatus = event.data.status?.toLowerCase();
@@ -170,7 +170,7 @@ serve(async (req) => {
         console.log(`Inferred event type from data.status: ${eventType}`);
       }
     }
-    
+
     console.log(`Processing webhook event type: ${eventType || "unknown"}`);
 
     switch (eventType) {
@@ -255,18 +255,18 @@ async function handlePaymentCompleted(
   }
 
   // Try multiple ways to find the payment ID
-  let paymentId = data.metadata?.payment_id || 
-                  data.metadata?.paymentId ||
-                  data.payment_id ||
-                  data.paymentId;
-  
+  let paymentId = data.metadata?.payment_id ||
+    data.metadata?.paymentId ||
+    data.payment_id ||
+    data.paymentId;
+
   // Extract checkout_session_id from various possible fields
-  const checkoutSessionId = data.checkout_session_id || 
-                           data.checkoutSessionId ||
-                           data.session_id ||
-                           data.sessionId ||
-                           data.id; // Sometimes the id is the session ID
-  
+  const checkoutSessionId = data.checkout_session_id ||
+    data.checkoutSessionId ||
+    data.session_id ||
+    data.sessionId ||
+    data.id; // Sometimes the id is the session ID
+
   // If not in metadata, try to find by checkout_session_id
   if (!paymentId && checkoutSessionId) {
     console.log(`Looking up payment by checkout_session_id: ${checkoutSessionId}`);
@@ -275,7 +275,7 @@ async function handlePaymentCompleted(
       .select("id")
       .eq("monime_checkout_session_id", checkoutSessionId)
       .maybeSingle();
-    
+
     if (paymentBySession) {
       paymentId = paymentBySession.id;
       console.log(`Found payment by session ID: ${paymentId}`);
@@ -292,7 +292,7 @@ async function handlePaymentCompleted(
       .select("id")
       .eq("monime_payment_id", data.id)
       .maybeSingle();
-    
+
     if (paymentByMonimeId) {
       paymentId = paymentByMonimeId.id;
       console.log(`Found payment by Monime payment ID: ${paymentId}`);
@@ -308,27 +308,27 @@ async function handlePaymentCompleted(
 
   // Extract order number from webhook data - Monime sends order number in various fields
   // Check nested structures as well (order.number, payment.order_number, etc.)
-  let orderNumber = data.order_number || 
-                     data.orderNumber || 
-                     data.order_id || 
-                     data.orderId ||
-                     data.metadata?.order_number ||
-                     data.metadata?.orderNumber ||
-                     data.order?.number ||
-                     data.order?.id ||
-                     data.payment?.order_number ||
-                     data.payment?.orderNumber ||
-                     data.result?.order_number ||
-                     data.result?.orderNumber ||
-                     data.result?.order?.number ||
-                     data.result?.order?.id ||
-                     null;
-  
+  let orderNumber = data.order_number ||
+    data.orderNumber ||
+    data.order_id ||
+    data.orderId ||
+    data.metadata?.order_number ||
+    data.metadata?.orderNumber ||
+    data.order?.number ||
+    data.order?.id ||
+    data.payment?.order_number ||
+    data.payment?.orderNumber ||
+    data.result?.order_number ||
+    data.result?.orderNumber ||
+    data.result?.order?.number ||
+    data.result?.order?.id ||
+    null;
+
   // If still not found, search all fields recursively for anything containing "order"
   if (!orderNumber) {
     const searchForOrderNumber = (obj: any, depth = 0): string | null => {
       if (depth > 5 || !obj || typeof obj !== 'object') return null;
-      
+
       for (const [key, value] of Object.entries(obj)) {
         const lowerKey = key.toLowerCase();
         // Check if key contains "order" and value is a string/number
@@ -348,21 +348,21 @@ async function handlePaymentCompleted(
       }
       return null;
     };
-    
+
     const foundOrderNumber = searchForOrderNumber(data);
     if (foundOrderNumber) {
       orderNumber = foundOrderNumber;
       console.log(`Found order number via recursive search: ${orderNumber}`);
     }
   }
-  
+
   // If order number not found in webhook data, fetch it from Monime API
   // Try checkout session first (most likely to have order number), then payment endpoint
   if (!orderNumber) {
     try {
       const monimeApiKey = Deno.env.get("MONIME_ACCESS_TOKEN") || Deno.env.get("MONIME_API_KEY");
       const monimeSpaceId = Deno.env.get("MONIME_SPACE_ID");
-      
+
       if (monimeApiKey && monimeSpaceId) {
         // Get checkout session ID from database if we have paymentId but not checkoutSessionId
         let sessionIdToCheck = checkoutSessionId;
@@ -372,13 +372,13 @@ async function handlePaymentCompleted(
             .select("monime_checkout_session_id")
             .eq("id", paymentId)
             .maybeSingle();
-          
+
           if (paymentRecord?.monime_checkout_session_id) {
             sessionIdToCheck = paymentRecord.monime_checkout_session_id;
             console.log(`Retrieved checkout session ID from database: ${sessionIdToCheck}`);
           }
         }
-        
+
         // First, try to get order number from checkout session
         if (sessionIdToCheck && sessionIdToCheck !== data.id) {
           try {
@@ -394,20 +394,20 @@ async function handlePaymentCompleted(
                 },
               }
             );
-            
+
             if (sessionResponse.ok) {
               const sessionData = await sessionResponse.json();
               const session = sessionData?.result || sessionData;
-              orderNumber = session?.order_number || 
-                           session?.orderNumber || 
-                           session?.order_id ||
-                           session?.orderId ||
-                           session?.order?.number ||
-                           session?.order?.id ||
-                           session?.payment?.order_number ||
-                           session?.payment?.orderNumber ||
-                           null;
-              
+              orderNumber = session?.order_number ||
+                session?.orderNumber ||
+                session?.order_id ||
+                session?.orderId ||
+                session?.order?.number ||
+                session?.order?.id ||
+                session?.payment?.order_number ||
+                session?.payment?.orderNumber ||
+                null;
+
               if (orderNumber) {
                 console.log(`Found order number from checkout session: ${orderNumber}`);
               } else {
@@ -420,7 +420,7 @@ async function handlePaymentCompleted(
             console.warn("Error fetching checkout session from Monime API:", error);
           }
         }
-        
+
         // If still not found, try payment endpoint
         if (!orderNumber && data.id) {
           try {
@@ -436,18 +436,18 @@ async function handlePaymentCompleted(
                 },
               }
             );
-            
+
             if (paymentResponse.ok) {
               const paymentData = await paymentResponse.json();
               const payment = paymentData?.result || paymentData;
-              orderNumber = payment?.order_number || 
-                           payment?.orderNumber || 
-                           payment?.order_id ||
-                           payment?.orderId ||
-                           payment?.order?.number ||
-                           payment?.order?.id ||
-                           null;
-              
+              orderNumber = payment?.order_number ||
+                payment?.orderNumber ||
+                payment?.order_id ||
+                payment?.orderId ||
+                payment?.order?.number ||
+                payment?.order?.id ||
+                null;
+
               if (orderNumber) {
                 console.log(`Found order number from Monime payment: ${orderNumber}`);
               } else {
@@ -467,10 +467,10 @@ async function handlePaymentCompleted(
       console.warn("Error fetching order number from Monime API:", error);
     }
   }
-  
+
   // Use order number as reference_number (preferred), fallback to checkout session ID
   const referenceNumber = orderNumber || checkoutSessionId || data.id || null;
-  
+
   // CRITICAL: Verify payment status with Monime API BEFORE updating database
   // This prevents marking payments as completed when they're not actually completed
   const monimeApiKey = Deno.env.get("MONIME_ACCESS_TOKEN") || Deno.env.get("MONIME_API_KEY");
@@ -478,7 +478,7 @@ async function handlePaymentCompleted(
   let verifiedPaymentStatus: string | null = null;
   let verificationPerformed = false;
   let shouldUpdateToCompleted = true;
-  
+
   if (monimeApiKey && monimeSpaceId && data.id) {
     try {
       console.log(`Verifying payment with Monime API BEFORE updating: ${data.id}`);
@@ -493,13 +493,13 @@ async function handlePaymentCompleted(
           },
         }
       );
-      
+
       if (verifyResponse.ok) {
         verificationPerformed = true;
         const verifyData = await verifyResponse.json();
         const paymentData = verifyData?.result || verifyData;
         verifiedPaymentStatus = paymentData?.status || paymentData?.payment_status;
-        
+
         // Verify payment is actually completed
         if (verifiedPaymentStatus !== "completed" && verifiedPaymentStatus !== "paid" && verifiedPaymentStatus !== "succeeded" && verifiedPaymentStatus !== "success") {
           console.error(`❌ PAYMENT NOT COMPLETED: Monime API reports status "${verifiedPaymentStatus}", but webhook says completed. NOT updating payment to completed.`);
@@ -527,21 +527,21 @@ async function handlePaymentCompleted(
     console.warn("⚠️ Proceeding with webhook update without verification");
     verificationPerformed = false;
   }
-  
+
   // Only block update if verification was performed AND it shows payment is NOT completed
   // If verification couldn't be performed (API down, etc.), we trust the webhook
   if (verificationPerformed && !shouldUpdateToCompleted) {
     console.error(`❌ NOT updating payment ${paymentId} to completed - Monime API verification failed`);
     throw new Error(`Payment verification failed: Monime API reports status "${verifiedPaymentStatus}", not completed. Payment will not be marked as completed.`);
   }
-  
+
   const updateData: any = {
     monime_payment_id: data.id,
     payment_status: "completed",
     payment_date: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  
+
   // Always update reference_number to match Monime order number
   if (referenceNumber) {
     updateData.reference_number = referenceNumber;
@@ -552,7 +552,7 @@ async function handlePaymentCompleted(
 
   // Update payment by ID (most reliable)
   console.log(`Updating payment ${paymentId} with data:`, JSON.stringify(updateData, null, 2));
-  
+
   const { error: updateError, data: updatedPayment } = await supabaseClient
     .from("payments")
     .update(updateData)
@@ -596,7 +596,7 @@ async function handlePaymentCompleted(
     console.error("Error fetching payment after update:", paymentFetchError);
     throw new Error(`Payment not found after update: ${paymentFetchError?.message}`);
   }
-  
+
   // Check if payment status is actually completed before proceeding
   if (payment.payment_status !== "completed") {
     console.warn(`Payment ${paymentId} status is ${payment.payment_status}, not completed. Skipping receipt generation.`);
@@ -609,216 +609,154 @@ async function handlePaymentCompleted(
     }, null, 2));
     return;
   }
-  
+
   console.log(`Payment ${paymentId} confirmed as completed. Proceeding with receipt generation and notifications.`);
 
   // Update member's total_paid by recalculating from all completed payments
-    if (payment.member_id) {
-      const { data: allPayments, error: paymentsError } = await supabaseClient
-        .from("payments")
-        .select("amount, payment_status")
-        .eq("member_id", payment.member_id);
+  if (payment.member_id) {
+    const { data: allPayments, error: paymentsError } = await supabaseClient
+      .from("payments")
+      .select("amount, payment_status")
+      .eq("member_id", payment.member_id);
 
-      if (!paymentsError && allPayments) {
-        // Calculate total_paid from all completed payments
-        const totalPaid = allPayments
-          .filter((p) => p.payment_status === "completed")
-          .reduce((sum, p) => {
-            const amount = typeof p.amount === "string" 
-              ? parseFloat(p.amount) 
-              : (p.amount || 0);
-            return sum + amount;
-          }, 0);
+    if (!paymentsError && allPayments) {
+      // Calculate total_paid from all completed payments
+      const totalPaid = allPayments
+        .filter((p) => p.payment_status === "completed")
+        .reduce((sum, p) => {
+          const amount = typeof p.amount === "string"
+            ? parseFloat(p.amount)
+            : (p.amount || 0);
+          return sum + amount;
+        }, 0);
 
-        // Update member's total_paid
-        const { error: memberUpdateError } = await supabaseClient
-          .from("members")
-          .update({ total_paid: Math.max(0, totalPaid) })
-          .eq("id", payment.member_id);
+      // Update member's total_paid
+      const { error: memberUpdateError } = await supabaseClient
+        .from("members")
+        .update({ total_paid: Math.max(0, totalPaid) })
+        .eq("id", payment.member_id);
 
-        if (memberUpdateError) {
-          console.error("Error updating member total_paid:", memberUpdateError);
-        } else {
-          console.log(`Updated member ${payment.member_id} total_paid to ${totalPaid}`);
-        }
+      if (memberUpdateError) {
+        console.error("Error updating member total_paid:", memberUpdateError);
+      } else {
+        console.log(`Updated member ${payment.member_id} total_paid to ${totalPaid}`);
       }
     }
+  }
 
-    // Log payment completion activity
-    try {
-      const { data: paymentUser } = await supabaseClient
-        .from("payments")
-        .select("created_by")
-        .eq("id", paymentId)
+  // Log payment completion activity
+  try {
+    const { data: paymentUser } = await supabaseClient
+      .from("payments")
+      .select("created_by")
+      .eq("id", paymentId)
+      .single();
+
+    if (paymentUser?.created_by) {
+      const { data: userInfo } = await supabaseClient
+        .from("users")
+        .select("email, full_name, role, organization_id")
+        .eq("id", paymentUser.created_by)
         .single();
 
-      if (paymentUser?.created_by) {
-        const { data: userInfo } = await supabaseClient
-          .from("users")
-          .select("email, full_name, role, organization_id")
-          .eq("id", paymentUser.created_by)
-          .single();
-
-        await supabaseClient.from("activity_logs").insert({
-          user_id: paymentUser.created_by,
-          user_email: userInfo?.email,
-          user_name: userInfo?.full_name,
-          user_role: userInfo?.role,
-          organization_id: payment.organization_id,
-          action: "payment.completed",
-          entity_type: "payment",
-          entity_id: paymentId,
-          description: `Payment ${paymentId} completed via Monime webhook`,
-          metadata: {
-            amount: payment.amount,
-            payment_method: payment.payment_method,
-            reference_number: referenceNumber,
-          },
-        });
-      }
-    } catch (logError: any) {
-      console.error("Error logging payment completion:", logError);
-      // Don't fail payment processing if logging fails
+      await supabaseClient.from("activity_logs").insert({
+        user_id: paymentUser.created_by,
+        user_email: userInfo?.email,
+        user_name: userInfo?.full_name,
+        user_role: userInfo?.role,
+        organization_id: payment.organization_id,
+        action: "payment.completed",
+        entity_type: "payment",
+        entity_id: paymentId,
+        description: `Payment ${paymentId} completed via Monime webhook`,
+        metadata: {
+          amount: payment.amount,
+          payment_method: payment.payment_method,
+          reference_number: referenceNumber,
+        },
+      });
     }
+  } catch (logError: any) {
+    console.error("Error logging payment completion:", logError);
+    // Don't fail payment processing if logging fails
+  }
 
-    // Update CSV reports automatically
-    try {
-      const paymentDate = new Date(payment.payment_date || payment.created_at || new Date());
-      const { error: reportUpdateError } = await supabaseClient.functions.invoke(
-        "update-reports",
-        {
-          body: {
-            organizationId: payment.organization_id,
-            paymentDate: paymentDate.toISOString(),
-          },
-        }
-      );
-
-      if (reportUpdateError) {
-        console.error("Error updating reports:", reportUpdateError);
-        // Don't fail payment processing if report update fails
-      } else {
-        console.log("✅ Reports updated successfully");
+  // Update CSV reports automatically
+  try {
+    const paymentDate = new Date(payment.payment_date || payment.created_at || new Date());
+    const { error: reportUpdateError } = await supabaseClient.functions.invoke(
+      "update-reports",
+      {
+        body: {
+          organizationId: payment.organization_id,
+          paymentDate: paymentDate.toISOString(),
+        },
       }
-    } catch (reportError: any) {
-      console.error("Error calling update-reports function:", reportError);
+    );
+
+    if (reportUpdateError) {
+      console.error("Error updating reports:", reportUpdateError);
       // Don't fail payment processing if report update fails
-    }
-
-    // Generate receipt with proper error handling and idempotency
-    // Check if receipt already exists to prevent duplicates
-    const { data: existingReceipt } = await supabaseClient
-      .from("receipts")
-      .select("id, receipt_number")
-      .eq("payment_id", payment.id)
-      .maybeSingle();
-    
-    if (existingReceipt) {
-      console.log(`Receipt already exists for payment ${payment.id}: ${existingReceipt.receipt_number}`);
     } else {
-      try {
-        console.log("Generating receipt for payment:", payment.id);
-        
-        // Use idempotency key to prevent duplicate processing
-        const idempotencyKey = `receipt-${payment.id}-${payment.updated_at || Date.now()}`;
-        
-        // Get service role key and Supabase URL for internal function calls
-        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        const supabaseUrl = Deno.env.get("SUPABASE_URL");
-        
-        if (!serviceRoleKey || !supabaseUrl) {
-          throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL environment variables");
-        }
-        
-        // Invoke generate-receipt function using direct HTTP fetch (proper way for Edge Function to Edge Function calls)
-        const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
-        const receiptResponse = await fetch(functionUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${serviceRoleKey}`,
-            "Content-Type": "application/json",
-            "apikey": serviceRoleKey,
-          },
-          body: JSON.stringify({
-            paymentId: payment.id,
-            organizationId: payment.organization_id,
-            memberId: payment.member_id,
-            idempotencyKey: idempotencyKey,
-          }),
-        });
+      console.log("✅ Reports updated successfully");
+    }
+  } catch (reportError: any) {
+    console.error("Error calling update-reports function:", reportError);
+    // Don't fail payment processing if report update fails
+  }
 
-        if (!receiptResponse.ok) {
-          const errorText = await receiptResponse.text();
-          console.error("Receipt generation HTTP error:", receiptResponse.status, errorText);
-          console.error("Receipt generation request details:", {
-            functionUrl,
-            paymentId: payment.id,
-            organizationId: payment.organization_id,
-            memberId: payment.member_id,
-          });
-          
-          // Log to database for tracking
-          try {
-            await supabaseClient.from("receipt_generation_logs").insert({
-              payment_id: payment.id,
-              organization_id: payment.organization_id,
-              member_id: payment.member_id,
-              status: "failed",
-              error_message: `HTTP ${receiptResponse.status}: ${errorText}`,
-              created_at: new Date().toISOString(),
-            });
-          } catch (logError) {
-            console.warn("Could not log receipt generation error:", logError);
-          }
-        } else {
-          const receiptData = await receiptResponse.json();
+  // Generate receipt with proper error handling and idempotency
+  // Check if receipt already exists to prevent duplicates
+  const { data: existingReceipt } = await supabaseClient
+    .from("receipts")
+    .select("id, receipt_number")
+    .eq("payment_id", payment.id)
+    .maybeSingle();
 
-          if (!receiptData.success) {
-            console.error("Receipt generation failed:", receiptData.error || "Unknown error");
-            console.error("Receipt generation response:", JSON.stringify(receiptData, null, 2));
-            
-            // Log to database for tracking
-            try {
-              await supabaseClient.from("receipt_generation_logs").insert({
-                payment_id: payment.id,
-                organization_id: payment.organization_id,
-                member_id: payment.member_id,
-                status: "failed",
-                error_message: receiptData.error || "Unknown error",
-                created_at: new Date().toISOString(),
-              });
-            } catch (logError) {
-              console.warn("Could not log receipt generation error:", logError);
-            }
-          } else {
-            console.log("✅ Receipt generated successfully for payment:", payment.id);
-            console.log("Receipt details:", JSON.stringify(receiptData, null, 2));
-            
-            // Log success to database for tracking
-            try {
-              await supabaseClient.from("receipt_generation_logs").insert({
-                payment_id: payment.id,
-                organization_id: payment.organization_id,
-                member_id: payment.member_id,
-                status: "success",
-                error_message: null,
-                created_at: new Date().toISOString(),
-              });
-            } catch (logError) {
-              console.warn("Could not log receipt generation success:", logError);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error invoking generate-receipt function:", error);
-        console.error("Error stack:", error.stack);
-        console.error("Error details:", {
+  if (existingReceipt) {
+    console.log(`Receipt already exists for payment ${payment.id}: ${existingReceipt.receipt_number}`);
+  } else {
+    try {
+      console.log("Generating receipt for payment:", payment.id);
+
+      // Use idempotency key to prevent duplicate processing
+      const idempotencyKey = `receipt-${payment.id}-${payment.updated_at || Date.now()}`;
+
+      // Get service role key and Supabase URL for internal function calls
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+
+      if (!serviceRoleKey || !supabaseUrl) {
+        throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL environment variables");
+      }
+
+      // Invoke generate-receipt function using direct HTTP fetch (proper way for Edge Function to Edge Function calls)
+      const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
+      const receiptResponse = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+          "apikey": serviceRoleKey,
+        },
+        body: JSON.stringify({
           paymentId: payment.id,
           organizationId: payment.organization_id,
           memberId: payment.member_id,
-          errorMessage: error.message,
+          idempotencyKey: idempotencyKey,
+        }),
+      });
+
+      if (!receiptResponse.ok) {
+        const errorText = await receiptResponse.text();
+        console.error("Receipt generation HTTP error:", receiptResponse.status, errorText);
+        console.error("Receipt generation request details:", {
+          functionUrl,
+          paymentId: payment.id,
+          organizationId: payment.organization_id,
+          memberId: payment.member_id,
         });
-        
+
         // Log to database for tracking
         try {
           await supabaseClient.from("receipt_generation_logs").insert({
@@ -826,50 +764,112 @@ async function handlePaymentCompleted(
             organization_id: payment.organization_id,
             member_id: payment.member_id,
             status: "failed",
-            error_message: error.message,
-            error_stack: error.stack,
+            error_message: `HTTP ${receiptResponse.status}: ${errorText}`,
             created_at: new Date().toISOString(),
           });
         } catch (logError) {
           console.warn("Could not log receipt generation error:", logError);
         }
-        // Don't throw - receipt generation failure shouldn't fail the webhook
-      }
-    }
+      } else {
+        const receiptData = await receiptResponse.json();
 
-    // Send notification to member
-    if (payment.member?.user_id) {
+        if (!receiptData.success) {
+          console.error("Receipt generation failed:", receiptData.error || "Unknown error");
+          console.error("Receipt generation response:", JSON.stringify(receiptData, null, 2));
+
+          // Log to database for tracking
+          try {
+            await supabaseClient.from("receipt_generation_logs").insert({
+              payment_id: payment.id,
+              organization_id: payment.organization_id,
+              member_id: payment.member_id,
+              status: "failed",
+              error_message: receiptData.error || "Unknown error",
+              created_at: new Date().toISOString(),
+            });
+          } catch (logError) {
+            console.warn("Could not log receipt generation error:", logError);
+          }
+        } else {
+          console.log("✅ Receipt generated successfully for payment:", payment.id);
+          console.log("Receipt details:", JSON.stringify(receiptData, null, 2));
+
+          // Log success to database for tracking
+          try {
+            await supabaseClient.from("receipt_generation_logs").insert({
+              payment_id: payment.id,
+              organization_id: payment.organization_id,
+              member_id: payment.member_id,
+              status: "success",
+              error_message: null,
+              created_at: new Date().toISOString(),
+            });
+          } catch (logError) {
+            console.warn("Could not log receipt generation success:", logError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error invoking generate-receipt function:", error);
+      console.error("Error stack:", error.stack);
+      console.error("Error details:", {
+        paymentId: payment.id,
+        organizationId: payment.organization_id,
+        memberId: payment.member_id,
+        errorMessage: error.message,
+      });
+
+      // Log to database for tracking
+      try {
+        await supabaseClient.from("receipt_generation_logs").insert({
+          payment_id: payment.id,
+          organization_id: payment.organization_id,
+          member_id: payment.member_id,
+          status: "failed",
+          error_message: error.message,
+          error_stack: error.stack,
+          created_at: new Date().toISOString(),
+        });
+      } catch (logError) {
+        console.warn("Could not log receipt generation error:", logError);
+      }
+      // Don't throw - receipt generation failure shouldn't fail the webhook
+    }
+  }
+
+  // Send notification to member
+  if (payment.member?.user_id) {
+    await supabaseClient.from("notifications").insert({
+      organization_id: payment.organization_id,
+      recipient_id: payment.member.user_id,
+      member_id: payment.member_id,
+      title: "Payment Completed",
+      message: `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully.`,
+      type: "payment",
+    });
+  }
+
+  // Send notification to admin about payment completion
+  if (payment.organization_id) {
+    // Get organization admin
+    const { data: adminUser } = await supabaseClient
+      .from("users")
+      .select("id")
+      .eq("organization_id", payment.organization_id)
+      .eq("role", "org_admin")
+      .single();
+
+    if (adminUser) {
       await supabaseClient.from("notifications").insert({
         organization_id: payment.organization_id,
-        recipient_id: payment.member.user_id,
+        recipient_id: adminUser.id,
         member_id: payment.member_id,
-        title: "Payment Completed",
-        message: `Your payment of ${payment.amount} ${data.currency || "SLE"} has been completed successfully.`,
+        title: "New Payment Received",
+        message: `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`,
         type: "payment",
       });
     }
-
-    // Send notification to admin about payment completion
-    if (payment.organization_id) {
-      // Get organization admin
-      const { data: adminUser } = await supabaseClient
-        .from("users")
-        .select("id")
-        .eq("organization_id", payment.organization_id)
-        .eq("role", "org_admin")
-        .single();
-
-      if (adminUser) {
-        await supabaseClient.from("notifications").insert({
-          organization_id: payment.organization_id,
-          recipient_id: adminUser.id,
-          member_id: payment.member_id,
-          title: "New Payment Received",
-          message: `Payment of ${payment.amount} ${data.currency || "SLE"} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`,
-          type: "payment",
-        });
-      }
-    }
+  }
 
   console.log("Payment completion webhook processed successfully for payment:", paymentId);
 }
@@ -898,7 +898,7 @@ async function handlePaymentFailed(
     .delete()
     .or(orConditions.join(","));
 
-  if (deleteError) {}
+  if (deleteError) { }
 }
 
 async function handlePaymentCancelled(
@@ -909,17 +909,17 @@ async function handlePaymentCancelled(
   console.log("Full webhook data:", JSON.stringify(data, null, 2));
 
   // Try multiple ways to find the payment ID
-  let paymentId = data.metadata?.payment_id || 
-                  data.metadata?.paymentId ||
-                  data.payment_id ||
-                  data.paymentId;
-  
+  let paymentId = data.metadata?.payment_id ||
+    data.metadata?.paymentId ||
+    data.payment_id ||
+    data.paymentId;
+
   // Extract checkout_session_id from various possible fields
-  const checkoutSessionId = data.checkout_session_id || 
-                           data.checkoutSessionId ||
-                           data.session_id ||
-                           data.sessionId ||
-                           data.id;
+  const checkoutSessionId = data.checkout_session_id ||
+    data.checkoutSessionId ||
+    data.session_id ||
+    data.sessionId ||
+    data.id;
 
   // If not in metadata, try to find by checkout_session_id
   if (!paymentId && checkoutSessionId) {
@@ -929,7 +929,7 @@ async function handlePaymentCancelled(
       .select("id, payment_status")
       .eq("monime_checkout_session_id", checkoutSessionId)
       .maybeSingle();
-    
+
     if (paymentBySession) {
       paymentId = paymentBySession.id;
       console.log(`Found payment by session ID: ${paymentId}, status: ${paymentBySession.payment_status}`);
@@ -946,7 +946,7 @@ async function handlePaymentCancelled(
       .select("id, payment_status")
       .eq("monime_payment_id", data.id)
       .maybeSingle();
-    
+
     if (paymentByMonimeId) {
       paymentId = paymentByMonimeId.id;
       console.log(`Found payment by Monime payment ID: ${paymentId}, status: ${paymentByMonimeId.payment_status}`);
@@ -1049,7 +1049,7 @@ async function handlePaymentProcessing(
     })
     .or(orConditions.join(","));
 
-  if (updateError) {}
+  if (updateError) { }
 }
 
 // Verify webhook signature using HMAC-SHA256
@@ -1062,35 +1062,35 @@ async function verifyWebhookSignature(
     // Monime typically uses HMAC-SHA256
     // Format may vary: check Monime documentation for exact format
     // Common formats: "sha256=hash" or "t=timestamp,v1=hash"
-    
+
     // Try format: "t=timestamp,v1=hash"
     if (signature.includes("t=") && signature.includes("v1=")) {
       const parts = signature.split(",");
       const timestampPart = parts.find((p) => p.startsWith("t="));
       const sigPart = parts.find((p) => p.startsWith("v1="));
-      
+
       if (!timestampPart || !sigPart) {
         return false;
       }
-      
+
       const timestamp = parseInt(timestampPart.split("=")[1]);
       const receivedSig = sigPart.split("=")[1];
-      
+
       // Check timestamp tolerance (5 minutes)
       const now = Math.floor(Date.now() / 1000);
       if (Math.abs(now - timestamp) > 300) {
         console.warn("Webhook timestamp expired or too far in future");
         return false;
       }
-      
+
       // Compute expected signature
       const payloadToSign = `${timestamp}.${payload}`;
       const expectedSig = await computeHMAC(payloadToSign, secret);
-      
+
       // Timing-safe comparison
       return timingSafeEqual(receivedSig, expectedSig);
     }
-    
+
     // Try direct HMAC comparison (if signature is just the hash)
     const expectedSig = await computeHMAC(payload, secret);
     return timingSafeEqual(signature, expectedSig);
@@ -1104,7 +1104,7 @@ async function verifyWebhookSignature(
 async function computeHMAC(message: string, secret: string): Promise<string> {
   const key = new TextEncoder().encode(secret);
   const data = new TextEncoder().encode(message);
-  
+
   // Use Web Crypto API for HMAC
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
@@ -1113,9 +1113,9 @@ async function computeHMAC(message: string, secret: string): Promise<string> {
     false,
     ["sign"]
   );
-  
+
   const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
-  
+
   // Convert ArrayBuffer to hex string
   const hashArray = Array.from(new Uint8Array(signature));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -1126,12 +1126,12 @@ function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }
-  
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
-  
+
   return result === 0;
 }
 

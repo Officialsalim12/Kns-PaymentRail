@@ -173,7 +173,7 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                     decoration: const InputDecoration(
                       labelText: 'Monthly Cost *',
                       border: OutlineInputBorder(),
-                      prefixText: 'NLe ',
+                      prefixText: 'Le ',
                     ),
                     validator: (value) {
                       if (_tabType == 'payment' && (value == null || value.trim().isEmpty)) {

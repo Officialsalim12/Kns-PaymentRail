@@ -100,17 +100,17 @@ serve(async (req) => {
         .select("*")
         .eq("id", paymentId)
         .single();
-      
+
       if (simpleError || !paymentData) {
         throw new Error(`Payment not found: ${simpleError?.message || paymentError?.message}`);
       }
-      
+
       const { data: memberData } = await supabaseClient
         .from("members")
         .select("id, full_name, membership_id, email, organization_id, organization:organizations(id, name)")
         .eq("id", paymentData.member_id)
         .single();
-      
+
       payment = {
         ...paymentData,
         member: memberData,
@@ -120,7 +120,7 @@ serve(async (req) => {
     if (!payment) {
       throw new Error("Payment not found after retry");
     }
-    
+
     if (!payment.member) {
       throw new Error("Payment member not found. Please ensure the payment is linked to a member.");
     }
@@ -157,7 +157,7 @@ serve(async (req) => {
             }
           );
         }
-      } catch (error) {}
+      } catch (error) { }
     }
 
     // Use the provided URLs directly (frontend sends full URLs)
@@ -169,20 +169,20 @@ serve(async (req) => {
     // Prepare the request body for Monime API
     // Build a descriptive payment name from metadata and payment details
     let paymentDescription = description || payment.description || '';
-    
+
     // If metadata has tab info, build a more descriptive name
     if (metadata?.tab_name) {
       const tabName = metadata.tab_name;
       const tabType = metadata.tab_type || 'payment';
-      
+
       // If we have quantity info in metadata, include it
       if (metadata.months || metadata.quantity) {
         const quantity = metadata.months || metadata.quantity;
         const unitPrice = metadata.monthly_cost || metadata.unit_price;
-        
+
         if (unitPrice) {
-          // Format: "Monthly Dues - 3 months × NLe 100.00"
-          paymentDescription = `${tabName} - ${quantity} ${parseInt(quantity) === 1 ? 'month' : 'months'}${unitPrice ? ` × NLe ${parseFloat(unitPrice).toFixed(2)}` : ''}`;
+          // Format: "Monthly Dues - 3 months × Le 100.00"
+          paymentDescription = `${tabName} - ${quantity} ${parseInt(quantity) === 1 ? 'month' : 'months'}${unitPrice ? ` × Le ${parseFloat(unitPrice).toFixed(2)}` : ''}`;
         } else {
           // Format: "Monthly Dues - 3 months"
           paymentDescription = `${tabName} - ${quantity} ${parseInt(quantity) === 1 ? 'month' : 'months'}`;
@@ -192,29 +192,29 @@ serve(async (req) => {
         paymentDescription = tabName;
       }
     }
-    
+
     // Fallback if still empty
     if (!paymentDescription) {
       paymentDescription = `Payment for ${payment.member?.full_name || "Member"}`;
     }
-    
+
     // Ensure amount is a number (not string) and is valid
     const amountValue = typeof amount === 'string' ? parseFloat(amount) : amount;
     if (isNaN(amountValue) || amountValue <= 0) {
       throw new Error(`Invalid amount: ${amount}`);
     }
-    
+
     // Monime uses SLE (Sierra Leonean Leone) currency
     // Amounts must be in minor units: Le 1.00 = 100 minor units
     const finalCurrency = currency || 'SLE';
     const finalAmountMinor = Math.round(amountValue * 100); // Convert to minor units
-    
+
     // Monime API requires: name (string) and lineItems (array) - camelCase
     // Does NOT allow: space_id, amount, currency, success_url, cancel_url in body
     // space_id is sent as Monime-Space-Id header (required for Space-scoped endpoints)
     // price in lineItems must be a MoneyAlias object with amount (in minor units) and currency
     // Metadata: All values must be strings, max 100 characters each
-    
+
     // Convert metadata to string map (matching Monime integration guide)
     const toStringMap = (input: any): Record<string, string> => {
       const out: Record<string, string> = {};
@@ -237,7 +237,7 @@ serve(async (req) => {
       }
       return trimmed;
     };
-    
+
     // Prepare metadata using toStringMap and enforceMetadataLimits
     const metadataInput = { ...(metadata || {}) };
     const metadataBase = {
@@ -249,47 +249,47 @@ serve(async (req) => {
       ...(payment.member?.organization ? { organization_name: String(payment.member.organization.name || '') } : {}),
     };
     const safeMetadata = enforceMetadataLimits(metadataBase);
-    
+
     // Build line item name with cost breakdown
     // Note: metadata values are strings (sanitized), so we need to parse them
     let lineItemName = paymentDescription;
-    
+
     // If we have quantity and unit price info, add it to the line item name
     if (metadata?.months && metadata?.monthly_cost) {
       const months = metadata.months.toString();
       const monthlyCost = parseFloat(metadata.monthly_cost.toString());
       const monthsNum = parseInt(months);
       const totalCost = monthsNum * monthlyCost;
-      
+
       if (!isNaN(monthlyCost) && !isNaN(monthsNum)) {
-        // Format: "Monthly Dues - 3 months × NLe 100.00 = NLe 300.00"
-        lineItemName = `${paymentDescription} - ${months} ${monthsNum === 1 ? 'month' : 'months'} × NLe ${monthlyCost.toFixed(2)} = NLe ${totalCost.toFixed(2)}`;
+        // Format: "Monthly Dues - 3 months × Le 100.00 = Le 300.00"
+        lineItemName = `${paymentDescription} - ${months} ${monthsNum === 1 ? 'month' : 'months'} × Le ${monthlyCost.toFixed(2)} = Le ${totalCost.toFixed(2)}`;
       }
     } else if (metadata?.quantity && metadata?.unit_price) {
       const quantity = metadata.quantity.toString();
       const unitPrice = parseFloat(metadata.unit_price.toString());
       const quantityNum = parseInt(quantity);
       const totalCost = quantityNum * unitPrice;
-      
+
       if (!isNaN(unitPrice) && !isNaN(quantityNum)) {
-        // Format: "Item Name - 2 × NLe 50.00 = NLe 100.00"
-        lineItemName = `${paymentDescription} - ${quantity} × NLe ${unitPrice.toFixed(2)} = NLe ${totalCost.toFixed(2)}`;
+        // Format: "Item Name - 2 × Le 50.00 = Le 100.00"
+        lineItemName = `${paymentDescription} - ${quantity} × Le ${unitPrice.toFixed(2)} = Le ${totalCost.toFixed(2)}`;
       }
     }
-    
+
     // If line item name is still just the description, add the total amount
     if (lineItemName === paymentDescription && amountValue > 0) {
-      lineItemName = `${paymentDescription} - NLe ${amountValue.toFixed(2)}`;
+      lineItemName = `${paymentDescription} - Le ${amountValue.toFixed(2)}`;
     }
-    
+
     // Ensure line item name doesn't exceed reasonable length (Monime might have limits)
     if (lineItemName.length > 200) {
       lineItemName = lineItemName.substring(0, 197) + '...';
     }
-    
+
     // Build line items with proper structure matching Monime integration guide
-    const effectiveQuantity = metadata?.quantity 
-      ? parseInt(metadata.quantity.toString()) 
+    const effectiveQuantity = metadata?.quantity
+      ? parseInt(metadata.quantity.toString())
       : (metadata?.months ? parseInt(metadata.months.toString()) : 1);
 
     // Create payload matching Monime integration guide structure
@@ -301,23 +301,23 @@ serve(async (req) => {
         {
           type: 'custom',
           name: lineItemName,
-          price: { 
-            currency: finalCurrency, 
-            value: finalAmountMinor 
+          price: {
+            currency: finalCurrency,
+            value: finalAmountMinor
           },
           quantity: effectiveQuantity,
         },
       ],
       metadata: safeMetadata,
     };
-    
+
     // Idempotency key: check headers first, then generate UUID
     // This matches the Monime integration guide pattern
     const clientIdemFromHeader = req.headers.get('Idempotency-Key') || req.headers.get('X-Idempotency-Key');
-    const clientIdemFromBody = metadata?.idempotencyKey && typeof metadata.idempotencyKey === 'string' && metadata.idempotencyKey.trim() 
-      ? metadata.idempotencyKey.trim() 
+    const clientIdemFromBody = metadata?.idempotencyKey && typeof metadata.idempotencyKey === 'string' && metadata.idempotencyKey.trim()
+      ? metadata.idempotencyKey.trim()
       : null;
-    
+
     // Generate UUID for idempotency (Deno compatible)
     let idempotencyKey = clientIdemFromHeader || clientIdemFromBody;
     if (!idempotencyKey) {
@@ -326,7 +326,7 @@ serve(async (req) => {
       const random = Math.random().toString(36).substring(2, 15);
       idempotencyKey = `${paymentId}-${timestamp}-${random}`;
     }
-    
+
     const checkoutResponse = await fetch(
       `${MONIME_API_BASE_URL}/checkout-sessions`,
       {
@@ -340,11 +340,11 @@ serve(async (req) => {
         body: JSON.stringify(monimeRequestBody),
       }
     );
-    
+
     if (!checkoutResponse.ok) {
       const errorText = await checkoutResponse.text();
       let errorMessage = checkoutResponse.statusText || "Unknown error";
-      
+
       try {
         const errorJson = JSON.parse(errorText);
         // Try multiple ways to extract the error message
@@ -364,7 +364,7 @@ serve(async (req) => {
           errorMessage = typeof errorJson.detail === 'string' ? errorJson.detail : JSON.stringify(errorJson.detail);
         } else if (errorJson.errors && Array.isArray(errorJson.errors)) {
           // Handle validation errors array
-          errorMessage = errorJson.errors.map((e: any) => 
+          errorMessage = errorJson.errors.map((e: any) =>
             typeof e === 'string' ? e : (e.message || JSON.stringify(e))
           ).join(', ');
         } else {
@@ -375,7 +375,7 @@ serve(async (req) => {
         // If not JSON, use the text as error message
         errorMessage = errorText || errorMessage;
       }
-      
+
       // Log full error details for debugging
       let errorDetails = null;
       try {
@@ -383,14 +383,14 @@ serve(async (req) => {
       } catch {
         errorDetails = errorText;
       }
-      
+
       // Extract detailed error information
       let detailedError = errorMessage;
-      
+
       // Check for permission errors
       const errorTextLower = errorText.toLowerCase();
       const errorMessageLower = errorMessage.toLowerCase();
-      const isPermissionError = 
+      const isPermissionError =
         errorTextLower.includes('permission') ||
         errorTextLower.includes('checkout.checkout_sessions:create') ||
         errorTextLower.includes('checkout_sessions:create') ||
@@ -398,7 +398,7 @@ serve(async (req) => {
         errorMessageLower.includes('checkout.checkout_sessions:create') ||
         errorMessageLower.includes('checkout_sessions:create') ||
         checkoutResponse.status === 403;
-      
+
       if (isPermissionError) {
         detailedError = `Permission denied: The Monime API key requires the 'checkout.checkout_sessions:create' permission. Please verify your API key has this permission enabled in your Monime dashboard. Original error: ${errorMessage}`;
       } else if (errorDetails && typeof errorDetails === 'object') {
@@ -423,7 +423,7 @@ serve(async (req) => {
           }
         }
       }
-      
+
       return new Response(
         JSON.stringify({
           success: false,
@@ -449,20 +449,20 @@ serve(async (req) => {
     // Response structure: { result: { redirectUrl: string, id: string } }
     const redirectUrl = data?.result?.redirectUrl || data?.redirectUrl || data?.url || data?.checkout_url || data?.checkoutUrl;
     const sessionId = data?.result?.id || data?.id || data?.sessionId;
-    
+
     // Extract order number from various possible locations in the response
     // Monime may return order number in result.orderNumber, result.order_number, or nested in order object
-    let orderNumber = data?.result?.orderNumber || 
-                     data?.result?.order_number || 
-                     data?.result?.order?.number ||
-                     data?.result?.order?.id ||
-                     data?.orderNumber || 
-                     data?.order_number || 
-                     data?.order?.number ||
-                     data?.order?.id ||
-                     data?.result?.orderId || 
-                     data?.orderId ||
-                     null;
+    let orderNumber = data?.result?.orderNumber ||
+      data?.result?.order_number ||
+      data?.result?.order?.number ||
+      data?.result?.order?.id ||
+      data?.orderNumber ||
+      data?.order_number ||
+      data?.order?.number ||
+      data?.order?.id ||
+      data?.result?.orderId ||
+      data?.orderId ||
+      null;
 
     console.log("Monime checkout response:", JSON.stringify(data, null, 2));
     console.log("Extracted order number:", orderNumber);
@@ -482,7 +482,7 @@ serve(async (req) => {
         monime_checkout_session_id: sessionId,
         payment_status: "pending",
       };
-      
+
       // Always set reference_number to match Monime order number or checkout session ID
       if (referenceNumber) {
         updatePayload.reference_number = referenceNumber;
@@ -540,7 +540,7 @@ serve(async (req) => {
     } else if (error && typeof error === 'object' && 'message' in error) {
       errorMessage = String(error.message);
     }
-    
+
     return new Response(
       JSON.stringify({
         success: false,

@@ -12,6 +12,7 @@ import {
   Building2,
   Lock
 } from 'lucide-react'
+import LandingNavbar from '@/components/shared/LandingNavbar'
 import FAQ from '@/components/shared/FAQ'
 
 export default async function HomePage() {
@@ -19,10 +20,7 @@ export default async function HomePage() {
   try {
     user = await getCurrentUser()
   } catch (error: any) {
-    // If Supabase is not configured, continue to show homepage
-    // This allows the site to work even if env vars aren't set yet
-    console.error('[HomePage] Error getting user:', error?.message)
-    console.error('[HomePage] Full error:', error)
+    console.error('Session error:', error?.message)
   }
 
   if (user) {
@@ -38,34 +36,10 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
-        <div className="w-full px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center min-w-0 flex-1">
-              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2 flex-shrink-0" />
-              <span className="text-lg sm:text-2xl font-bold text-gray-900 truncate">KNS MultiRail</span>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 ml-2">
-              <Link
-                href="/login"
-                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/organization/register"
-                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary-600 hover:text-primary-700 bg-white hover:bg-primary-50 border border-primary-300 hover:border-primary-400 rounded-lg transition-all whitespace-nowrap shadow-sm hover:shadow"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <LandingNavbar />
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 py-10 sm:py-16 md:py-20 lg:py-24 xl:py-32 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 pt-28 pb-10 sm:pt-32 sm:pb-16 md:pt-40 md:pb-20 lg:pt-48 lg:pb-24 xl:pt-56 xl:pb-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
@@ -94,23 +68,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Trust Indicators - Partner */}
-      <section className="py-10 bg-gray-50 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm text-gray-500 uppercase tracking-wider mb-4">Powered by</p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
-              <div className="text-2xl font-bold text-gray-900">
-                Monime
-              </div>
-              <span className="hidden sm:inline mx-4 text-gray-400">•</span>
-              <p className="text-base text-gray-600">
-                Integrated Payment Gateway
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Take Charge Section */}
       <section className="py-16 sm:py-20 bg-white">
@@ -152,6 +109,86 @@ export default async function HomePage() {
               <h3 className="text-xl font-bold text-gray-900 mb-3">Automated Receipts</h3>
               <p className="text-base text-gray-600">
                 Automatically generate professional PDF receipts for all transactions with secure storage and easy access for members.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Solutions Section */}
+      <section className="py-20 sm:py-24 bg-gray-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+              Solutions for Every Organization
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+              Discover how KNS MultiRail can transform your daily financial operations and empower your community.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
+            {/* Donations */}
+            <div className="group flex flex-col items-center text-center">
+              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                <img
+                  src="/Donation.jpg"
+                  alt="Donations of any type"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Donations for Any Cause</h3>
+              <p className="text-gray-600 leading-relaxed max-w-md">
+                Whether you're raising funds for a local charity or a global initiative, our platform provides a seamless way to collect and manage donations of any type, ensuring every cent makes a difference.
+              </p>
+            </div>
+
+            {/* Religious Organizations */}
+            <div className="group flex flex-col items-center text-center">
+              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                <img
+                  src="/ChurchMembers.jpg"
+                  alt="Churches and Mosques"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Faith-Based Organizations</h3>
+              <p className="text-gray-600 leading-relaxed max-w-md">
+                Perfect for churches and mosques to manage offerings, tithes, building project donations, or department contributions. Bring transparency and ease to your community's generous giving.
+              </p>
+            </div>
+
+            {/* Crowdfunding */}
+            <div className="group flex flex-col items-center text-center">
+              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                <img
+                  src="/Business Contribution.jpg"
+                  alt="Crowdfunding donations"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Community Crowdfunding</h3>
+              <p className="text-gray-600 leading-relaxed max-w-md">
+                Empower your community projects with robust crowdfunding tools. Manage multiple contributions effectively and keep your donors updated on the progress of your shared goals.
+              </p>
+            </div>
+
+            {/* Office/Institutional */}
+            <div className="group flex flex-col items-center text-center">
+              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                <img
+                  src="/Office Contribution.jpg"
+                  alt="Office and Institutional contributions"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Institutional Contributions</h3>
+              <p className="text-gray-600 leading-relaxed max-w-md">
+                Ideal for offices and institutions to manage monthly or yearly staff contributions, event funds, or internal collections with automated tracking and reporting.
               </p>
             </div>
           </div>

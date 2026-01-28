@@ -8,11 +8,11 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
   const organizationId = user.profile?.organization_id
-  
+
   // Get user profile info
   const userFullName = user.profile?.full_name || user.email || 'Admin'
   const profilePhotoUrl = user.profile?.profile_photo_url || null
-  
+
   // Get unread notification count
   const { count: notificationCount } = await supabase
     .from('notifications')
@@ -27,7 +27,7 @@ export default async function AdminDashboardPage() {
     .select('*')
     .eq('id', organizationId)
     .single()
-  
+
   const organization = orgData ? {
     id: orgData.id,
     name: orgData.name,
@@ -47,18 +47,18 @@ export default async function AdminDashboardPage() {
     .eq('payment_status', 'completed')
 
   const activeMembers = members?.filter(m => m.status === 'active').length || 0
-  
+
   // Calculate paid vs unpaid members
   const paidMembers = members?.filter(m => {
     const balance = m.unpaid_balance || 0
     return balance === 0 || balance === null
   }).length || 0
-  
+
   const unpaidMembers = members?.filter(m => {
     const balance = m.unpaid_balance || 0
     return balance > 0
   }).length || 0
-  
+
   // Calculate totals using display amounts (97% for completed payments)
   const totalPayments = payments?.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0) || 0
 
@@ -81,8 +81,8 @@ export default async function AdminDashboardPage() {
   const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
 
   // Calculate average payment
-  const averagePayment = payments && payments.length > 0 
-    ? totalPayments / payments.length 
+  const averagePayment = payments && payments.length > 0
+    ? totalPayments / payments.length
     : 0
 
   // Get payments for last 7 days for chart
@@ -133,11 +133,19 @@ export default async function AdminDashboardPage() {
     .order('created_at', { ascending: false })
     .limit(5)
 
-  const pendingApprovals = {
-    members: pendingMembers || [],
-    organization: orgRequest?.status === 'pending' ? [orgRequest] : [],
-    adminRequests: passwordResetRequests || [],
-  }
+  const pendingApprovalsList = [
+    ...(pendingMembers || []),
+    ...(orgRequest?.status === 'pending' ? [orgRequest] : []),
+    ...(passwordResetRequests || [])
+  ]
+
+  const revenueChange = lastMonthRevenue > 0
+    ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+    : 0
+
+  const memberGrowth = members && members.length > 0
+    ? (activeMembers / members.length) * 100
+    : 0
 
   return (
     <AdminDashboard
@@ -147,19 +155,16 @@ export default async function AdminDashboardPage() {
         activeMembers,
         totalPayments,
         monthlyRevenue,
-        lastMonthRevenue,
         averagePayment,
         totalTransactions: payments?.length || 0,
         paidMembers,
         unpaidMembers,
       }}
       recentPayments={recentPayments || []}
-      pendingApprovals={pendingApprovals}
-      recentActivity={recentActivity || []}
-      paymentChartData={recentPaymentsData}
-      userFullName={userFullName}
-      profilePhotoUrl={profilePhotoUrl}
-      unreadNotificationCount={notificationCount || 0}
+      pendingApprovals={pendingApprovalsList}
+      revenueHistory={payments || []}
+      memberGrowth={memberGrowth}
+      revenueChange={revenueChange}
     />
   )
 }

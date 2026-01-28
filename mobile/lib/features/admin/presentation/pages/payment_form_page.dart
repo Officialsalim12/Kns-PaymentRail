@@ -93,7 +93,7 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
         'member_id': _selectedMemberId,
         'amount': amount,
         'payment_date': DateTime.now().toIso8601String(),
-        'payment_method': _selectedPaymentMethod,
+        'payment_method': 'online',
         'description': paymentDescription,
         'created_by': user.id,
         'payment_status': 'pending',
@@ -119,29 +119,18 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
 
         if (response.data != null && response.data['checkoutSession'] != null) {
           final checkoutUrl = response.data['checkoutSession']['url'];
-          
           if (mounted) {
             Navigator.pop(context);
             final uri = Uri.parse(checkoutUrl);
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             } else {
-              // Clean up payment if checkout URL launch fails
-              try {
-                await dataSource.deletePayment(payment['id']);
-              } catch (cleanupError) {
-                print('Error cleaning up payment after launch failure: $cleanupError');
-              }
+              try { await dataSource.deletePayment(payment['id']); } catch (e) {}
               throw Exception('Could not launch checkout URL');
             }
           }
         } else {
-          // Clean up payment if checkout session creation failed
-          try {
-            await dataSource.deletePayment(payment['id']);
-          } catch (cleanupError) {
-            print('Error cleaning up payment after checkout failure: $cleanupError');
-          }
+          try { await dataSource.deletePayment(payment['id']); } catch (e) {}
           throw Exception('Failed to create checkout session');
         }
       } catch (e) {

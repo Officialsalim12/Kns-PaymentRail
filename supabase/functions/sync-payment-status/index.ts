@@ -75,7 +75,7 @@ serve(async (req) => {
 
     // Check payment status from Monime API
     const checkoutSessionId = payment.monime_checkout_session_id;
-    
+
     console.log(`Checking Monime checkout session: ${checkoutSessionId}`);
 
     const monimeResponse = await fetch(
@@ -101,13 +101,13 @@ serve(async (req) => {
     // Extract status and IDs from Monime response
     const sessionData = monimeData?.result || monimeData;
     const monimePaymentId = sessionData?.paymentId || sessionData?.payment?.id || sessionData?.id;
-    
+
     // CRITICAL: We must check the actual payment status, not just the checkout session status
     // A checkout session can be "completed" even if the payment hasn't been processed yet
     let actualPaymentStatus: string | null = null;
     let orderNumber: string | null = null;
     let paymentData: any = null;
-    
+
     // Always fetch the actual payment status from the payment endpoint
     if (monimePaymentId) {
       try {
@@ -123,26 +123,26 @@ serve(async (req) => {
             },
           }
         );
-        
+
         if (paymentResponse.ok) {
           const paymentResponseData = await paymentResponse.json();
           paymentData = paymentResponseData?.result || paymentResponseData;
-          
+
           // Get the actual payment status - this is the authoritative source
-          actualPaymentStatus = paymentData?.status || 
-                               paymentData?.payment_status || 
-                               paymentData?.paymentStatus ||
-                               null;
-          
+          actualPaymentStatus = paymentData?.status ||
+            paymentData?.payment_status ||
+            paymentData?.paymentStatus ||
+            null;
+
           // Get order number from payment
-          orderNumber = paymentData?.order_number || 
-                       paymentData?.orderNumber || 
-                       paymentData?.order_id ||
-                       paymentData?.orderId ||
-                       paymentData?.order?.number ||
-                       paymentData?.order?.id ||
-                       null;
-          
+          orderNumber = paymentData?.order_number ||
+            paymentData?.orderNumber ||
+            paymentData?.order_id ||
+            paymentData?.orderId ||
+            paymentData?.order?.number ||
+            paymentData?.order?.id ||
+            null;
+
           console.log(`Actual payment status from Monime: ${actualPaymentStatus}`);
         } else {
           const errorText = await paymentResponse.text();
@@ -152,16 +152,16 @@ serve(async (req) => {
         console.warn("Could not fetch payment details from Monime API:", error);
       }
     }
-    
+
     // If we couldn't get payment data, check if there's payment info in the session data
     if (!actualPaymentStatus && sessionData?.payment) {
-      actualPaymentStatus = sessionData.payment.status || 
-                           sessionData.payment.payment_status ||
-                           sessionData.payment.paymentStatus ||
-                           null;
+      actualPaymentStatus = sessionData.payment.status ||
+        sessionData.payment.payment_status ||
+        sessionData.payment.paymentStatus ||
+        null;
       console.log(`Using payment status from session data: ${actualPaymentStatus}`);
     }
-    
+
     // If still no payment status, check the session status as a last resort
     // But note: session status is NOT reliable for determining payment completion
     if (!actualPaymentStatus) {
@@ -170,27 +170,27 @@ serve(async (req) => {
       console.warn(`WARNING: Session status may not accurately reflect payment completion. Payment ID: ${monimePaymentId || 'N/A'}`);
       actualPaymentStatus = sessionStatus;
     }
-    
+
     // Try to get order number from session if not found in payment
     if (!orderNumber) {
-      orderNumber = sessionData?.order_number || 
-                   sessionData?.orderNumber || 
-                   sessionData?.order_id ||
-                   sessionData?.orderId ||
-                   sessionData?.payment?.order_number ||
-                   sessionData?.payment?.orderNumber ||
-                   null;
+      orderNumber = sessionData?.order_number ||
+        sessionData?.orderNumber ||
+        sessionData?.order_id ||
+        sessionData?.orderId ||
+        sessionData?.payment?.order_number ||
+        sessionData?.payment?.orderNumber ||
+        null;
     }
-    
+
     // Use order number as reference (preferred), fallback to checkout session ID
     const referenceNumber = orderNumber || checkoutSessionId;
 
     // Determine if payment is completed - ONLY use actual payment status
     // Do NOT rely on checkout session status alone
-    const isCompleted = actualPaymentStatus === "completed" || 
-                       actualPaymentStatus === "paid" || 
-                       actualPaymentStatus === "succeeded";
-    
+    const isCompleted = actualPaymentStatus === "completed" ||
+      actualPaymentStatus === "paid" ||
+      actualPaymentStatus === "succeeded";
+
     if (!isCompleted && actualPaymentStatus) {
       console.log(`Payment is NOT completed. Status: ${actualPaymentStatus}`);
     }
@@ -230,8 +230,8 @@ serve(async (req) => {
           const totalPaid = allPayments
             .filter((p) => p.payment_status === "completed")
             .reduce((sum, p) => {
-              const amount = typeof p.amount === "string" 
-                ? parseFloat(p.amount) 
+              const amount = typeof p.amount === "string"
+                ? parseFloat(p.amount)
                 : (p.amount || 0);
               return sum + amount;
             }, 0);
@@ -274,7 +274,7 @@ serve(async (req) => {
         // Get service role key and Supabase URL for internal function calls
         const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
         const supabaseUrl = Deno.env.get("SUPABASE_URL");
-        
+
         if (!serviceRoleKey || !supabaseUrl) {
           console.error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL environment variables - cannot generate receipt");
           // Don't throw - payment sync should still succeed even if receipt generation fails
@@ -282,7 +282,7 @@ serve(async (req) => {
           // Invoke generate-receipt function using direct HTTP fetch (proper way for Edge Function to Edge Function calls)
           const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
           console.log(`Attempting to generate receipt for payment ${payment.id}...`);
-          
+
           const receiptResponse = await fetch(functionUrl, {
             method: "POST",
             headers: {
@@ -296,7 +296,7 @@ serve(async (req) => {
               memberId: payment.member_id,
             }),
           });
-          
+
           if (!receiptResponse.ok) {
             const errorText = await receiptResponse.text();
             console.error(`Receipt generation HTTP error (${receiptResponse.status}):`, errorText);
@@ -325,7 +325,7 @@ serve(async (req) => {
           recipient_id: payment.member.user_id,
           member_id: payment.member_id,
           title: "Payment Completed",
-          message: `Your payment of ${payment.amount} SLE has been completed successfully.`,
+          message: `Your payment of ${payment.amount} Le has been completed successfully.`,
           type: "payment",
         });
       }
@@ -346,7 +346,7 @@ serve(async (req) => {
             recipient_id: adminUser.id,
             member_id: payment.member_id,
             title: "New Payment Received",
-            message: `Payment of ${payment.amount} SLE from ${payment.member?.full_name || "Member"} (${referenceNumber || payment.id}) has been completed.`,
+            message: `Payment of ${payment.amount} Le from ${payment.member?.full_name || "Member"} (${referenceNumber || payment.id}) has been completed.`,
             type: "payment",
           });
         }

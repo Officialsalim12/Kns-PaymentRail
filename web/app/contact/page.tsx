@@ -44,16 +44,16 @@ export default function ContactPage() {
               <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
               <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
+                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-semibold transition-colors px-1"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-3 sm:px-5 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
+                className="px-4 py-2 sm:px-5 py-2.5 text-sm sm:text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 Get Started
               </Link>

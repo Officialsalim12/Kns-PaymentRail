@@ -17,7 +17,11 @@ class AdminDashboardPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('KNS MultiRail'),
+        title: dashboardAsync.when(
+          data: (dashboard) => Text(dashboard?['organization']?['name'] ?? 'KNS MultiRail'),
+          loading: () => const Text('Loading...'),
+          error: (error, stack) => const Text('Error'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.people),
@@ -107,13 +111,6 @@ class AdminDashboardPage extends ConsumerWidget {
                                         .textTheme
                                         .titleLarge
                                         ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    'Organization Dashboard',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: Colors.grey[600]),
                                   ),
                                 ],
                               ),

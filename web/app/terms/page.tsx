@@ -33,16 +33,16 @@ export default function TermsPage() {
               <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
               <span className="text-lg sm:text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
+                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-semibold transition-colors px-1"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-3 sm:px-5 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
+                className="px-4 py-2 sm:px-5 py-2.5 text-sm sm:text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 Get Started
               </Link>
@@ -76,8 +76,8 @@ export default function TermsPage() {
                     href={`#${section.id}`}
                     onClick={() => setActiveSection(section.id)}
                     className={`block px-3 py-2 text-xs sm:text-sm rounded-md transition-colors ${activeSection === section.id
-                        ? 'bg-primary-50 text-primary-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary-50 text-primary-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
                     {section.title}
@@ -160,7 +160,7 @@ export default function TermsPage() {
                       <li>Maintain secure, isolated data environments</li>
                     </ul>
                     <p className="mt-4">
-                      The Platform integrates with Monime payment gateway to facilitate payment processing. We reserve the right to modify, suspend, or discontinue any aspect of the service at any time.
+                      The Platform integrates with leading payment gateways to facilitate payment processing. We reserve the right to modify, suspend, or discontinue any aspect of the service at any time.
                     </p>
                   </div>
                 </section>
@@ -241,12 +241,12 @@ export default function TermsPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Payment Processing</h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      KNS MultiRail integrates with Monime payment gateway to process payments. By using our payment services, you agree to:
+                      KNS MultiRail integrates with third-party payment gateways to process payments. By using our payment services, you agree to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Comply with all applicable payment processing regulations</li>
                       <li>Provide accurate payment information</li>
-                      <li>Accept that payment processing is subject to the terms and conditions of Monime</li>
+                      <li>Accept that payment processing is subject to the terms and conditions of our payment partners</li>
                       <li>Understand that we are not responsible for payment gateway failures or issues</li>
                       <li>Authorize us to process payments on your behalf</li>
                       <li>Accept that all transactions are final unless otherwise stated</li>

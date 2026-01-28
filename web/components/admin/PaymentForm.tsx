@@ -52,14 +52,14 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
         throw new Error('Organization not found')
       }
 
-      const balanceToAdd = formData.balance && parseFloat(formData.balance) > 0 
-        ? parseFloat(formData.balance) 
+      const balanceToAdd = formData.balance && parseFloat(formData.balance) > 0
+        ? parseFloat(formData.balance)
         : 0
 
       const paymentDescription = balanceToAdd > 0
-        ? (formData.description 
-            ? `${formData.description} [BALANCE_ADDED:${balanceToAdd}]`
-            : `[BALANCE_ADDED:${balanceToAdd}]`)
+        ? (formData.description
+          ? `${formData.description} [BALANCE_ADDED:${balanceToAdd}]`
+          : `[BALANCE_ADDED:${balanceToAdd}]`)
         : formData.description
 
       const paymentAmount = parseFloat(formData.amount)
@@ -103,7 +103,7 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription || `Payment for member`,
-            successUrl: typeof window !== 'undefined' 
+            successUrl: typeof window !== 'undefined'
               ? `${window.location.origin}/payment-success?payment_id=${payment.id}`
               : `/payment-success?payment_id=${payment.id}`,
             cancelUrl: typeof window !== 'undefined'
@@ -167,7 +167,7 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
   return (
     <div className="bg-white rounded-lg shadow p-4 sm:p-6">
       <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Create Payment</h2>
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           {error}

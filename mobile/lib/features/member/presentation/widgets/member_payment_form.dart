@@ -86,7 +86,7 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
         'member_id': widget.memberId,
         'amount': paymentAmount,
         'payment_date': DateTime.now().toIso8601String(),
-        'payment_method': 'monime', // Using Monime for online payments
+        'payment_method': 'online', // Using integrated gateway for online payments
         'description': paymentDescription,
         'created_by': user.id,
         'payment_status': 'pending',
@@ -302,7 +302,7 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
                   decoration: InputDecoration(
                     labelText: 'Amount *',
                     border: const OutlineInputBorder(),
-                    prefixText: 'NLe ',
+                    prefixText: 'Le ',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: isSmallScreen ? 12 : 16,

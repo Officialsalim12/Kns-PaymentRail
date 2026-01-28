@@ -30,16 +30,16 @@ export default function PrivacyPage() {
               <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
               <span className="text-lg sm:text-2xl font-bold text-gray-900">KNS MultiRail</span>
             </Link>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <Link
                 href="/login"
-                className="text-xs sm:text-base text-gray-700 hover:text-gray-900 font-medium transition-colors px-1"
+                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-semibold transition-colors px-1"
               >
                 Sign In
               </Link>
               <Link
                 href="/organization/register"
-                className="px-3 sm:px-5 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
+                className="px-4 py-2 sm:px-5 py-2.5 text-sm sm:text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 Get Started
               </Link>
@@ -73,8 +73,8 @@ export default function PrivacyPage() {
                     href={`#${section.id}`}
                     onClick={() => setActiveSection(section.id)}
                     className={`block px-3 py-2 text-xs sm:text-sm rounded-md transition-colors ${activeSection === section.id
-                        ? 'bg-primary-50 text-primary-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary-50 text-primary-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
                     {section.title}
@@ -222,7 +222,7 @@ export default function PrivacyPage() {
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:</p>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Payment Gateway Providers:</strong> With Monime and other payment processors to facilitate transactions</li>
+                      <li><strong>Payment Gateway Providers:</strong> With our payment partners and other processors to facilitate transactions</li>
                       <li><strong>Legal Requirements:</strong> When required by law or to comply with legal processes, court orders, or government requests</li>
                       <li><strong>Protection of Rights:</strong> To protect our rights, privacy, safety, or property, or that of our users</li>
                       <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>

@@ -11,15 +11,15 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   {
     question: 'What payment methods do you support?',
-    answer: 'KNS MultiRail integrates with Monime payment gateway, which supports various payment methods including mobile money, bank transfers, cards, and digital wallets. All payments are processed securely through Monime\'s infrastructure and tracked in realtime within your organization\'s dashboard. Payment methods available depend on what Monime supports in your region.',
+    answer: 'KNS MultiRail integrates with leading payment gateways, which support various payment methods including mobile money, bank transfers, cards, and digital wallets. All payments are processed securely through our partners\' infrastructure and tracked in realtime within your organization\'s dashboard. Payment methods available depend on the gateway support in your region.',
   },
   {
     question: 'How does the pricing work?',
-    answer: 'KNS MultiRail is currently in pilot phase. We offer flexible pricing based on your organization\'s needs. Since we integrate with Monime for payment processing, transaction fees are determined by Monime\'s pricing structure. Contact us to discuss pricing plans tailored to your organization\'s transaction volume and requirements. We offer transparent pricing with no hidden fees.',
+    answer: 'KNS MultiRail is currently in pilot phase. We offer flexible pricing based on your organization\'s needs. Since we integrate with third-party providers for payment processing, transaction fees are determined by their pricing structures. Contact us to discuss pricing plans tailored to your organization\'s transaction volume and requirements. We offer transparent pricing with no hidden fees.',
   },
   {
     question: 'How long does it take to set up?',
-    answer: 'Setting up your organization on KNS MultiRail is quick and straightforward. After registering your organization, you can immediately start adding members, creating payment tabs, and configuring your payment settings. The entire setup process typically takes just a few minutes. Once your organization admin approves member registrations, members can start making payments right away through the integrated Monime payment gateway.',
+    answer: 'Setting up your organization on KNS MultiRail is quick and straightforward. After registering your organization, you can immediately start adding members, creating payment tabs, and configuring your payment settings. The entire setup process typically takes just a few minutes. Once your organization admin approves member registrations, members can start making payments right away through the integrated payment gateways.',
   },
   {
     question: 'Is my data secure?',
@@ -31,7 +31,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: 'Do you offer transaction volume discounts?',
-    answer: 'Since we\'re currently in pilot phase, we\'re open to discussing custom pricing arrangements based on your organization\'s transaction volume. While payment processing fees are determined by Monime, we can work with you to create pricing plans that scale with your needs. Contact us to discuss volume discounts and custom pricing options for your organization.',
+    answer: 'Since we\'re currently in pilot phase, we\'re open to discussing custom pricing arrangements based on your organization\'s transaction volume. While payment processing fees are determined by our payment partners, we can work with you to create pricing plans that scale with your needs. Contact us to discuss volume discounts and custom pricing options for your organization.',
   },
 ]
 
@@ -68,9 +68,8 @@ export default function FAQ() {
                   {faq.question}
                 </h3>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform mt-0.5 sm:mt-0 ${
-                    openIndex === index ? 'transform rotate-180' : ''
-                  }`}
+                  className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform mt-0.5 sm:mt-0 ${openIndex === index ? 'transform rotate-180' : ''
+                    }`}
                 />
               </button>
               {openIndex === index && (
