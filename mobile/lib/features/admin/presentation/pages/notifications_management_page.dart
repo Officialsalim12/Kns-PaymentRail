@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/data/datasources/supabase_datasource.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-final adminNotificationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final adminNotificationsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final authAsync = ref.watch(authProvider);
   final user = authAsync.value;
   if (user == null) {
@@ -41,7 +42,8 @@ class NotificationsManagementPage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+                  Icon(Icons.notifications_none,
+                      size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No notifications sent yet',
@@ -63,7 +65,13 @@ class NotificationsManagementPage extends ConsumerWidget {
               itemCount: notifications.length,
               itemBuilder: (context, index) {
                 final notification = notifications[index];
-                final recipient = notification['recipient'] as Map<String, dynamic>?;
+                final recipientData = notification['recipient'];
+                final recipient =
+                    (recipientData is List && recipientData.isNotEmpty)
+                        ? recipientData.first as Map<String, dynamic>
+                        : (recipientData is Map<String, dynamic>
+                            ? recipientData
+                            : null);
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -90,7 +98,8 @@ class NotificationsManagementPage extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           DateFormat('MMM dd, yyyy HH:mm').format(
-                            DateTime.parse(notification['created_at'] ?? DateTime.now().toIso8601String()),
+                            DateTime.parse(notification['created_at'] ??
+                                DateTime.now().toIso8601String()),
                           ),
                           style: TextStyle(
                             fontSize: 12,
@@ -104,7 +113,8 @@ class NotificationsManagementPage extends ConsumerWidget {
                         notification['type'] ?? 'info',
                         style: const TextStyle(fontSize: 11),
                       ),
-                      backgroundColor: _getTypeColor(notification['type']).withOpacity(0.2),
+                      backgroundColor:
+                          _getTypeColor(notification['type']).withOpacity(0.2),
                       labelStyle: TextStyle(
                         color: _getTypeColor(notification['type']),
                       ),
@@ -159,4 +169,3 @@ class NotificationsManagementPage extends ConsumerWidget {
     }
   }
 }
-

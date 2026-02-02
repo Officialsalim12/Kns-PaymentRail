@@ -10,7 +10,8 @@ class MembersManagementPage extends ConsumerStatefulWidget {
   const MembersManagementPage({super.key});
 
   @override
-  ConsumerState<MembersManagementPage> createState() => _MembersManagementPageState();
+  ConsumerState<MembersManagementPage> createState() =>
+      _MembersManagementPageState();
 }
 
 class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
@@ -28,12 +29,14 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     super.dispose();
   }
 
-  Future<void> _updateMemberStatus(String memberId, String newStatus, {double? unpaidBalance}) async {
+  Future<void> _updateMemberStatus(String memberId, String newStatus,
+      {double? unpaidBalance}) async {
     setState(() => _loadingMemberId = memberId);
     try {
       final dataSource = ref.read(supabaseDataSourceProvider);
-      await dataSource.updateMemberStatus(memberId, newStatus, unpaidBalance: unpaidBalance);
-      
+      await dataSource.updateMemberStatus(memberId, newStatus,
+          unpaidBalance: unpaidBalance);
+
       if (mounted) {
         ref.invalidate(adminMembersProvider);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -61,7 +64,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Recalculate Balance'),
-        content: const Text('This will recalculate the member\'s balance based on existing payments. Continue?'),
+        content: const Text(
+            'This will recalculate the member\'s balance based on existing payments. Continue?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -80,45 +84,14 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     setState(() => _loadingMemberId = memberId);
     try {
       final dataSource = ref.read(supabaseDataSourceProvider);
-      final authAsync = ref.read(authProvider);
-      final user = authAsync.value;
-      if (user == null) throw Exception('User not found');
-
-      final userProfile = await dataSource.getUserProfile(user.id);
-      if (userProfile == null || userProfile['organization_id'] == null) {
-        throw Exception('Organization not found');
-      }
-
-      // Get all payments for this member
-      final payments = await dataSource.getPayments(
-        userProfile['organization_id'],
-        memberId: memberId,
-      );
-
-      // Calculate total balance added from all payments
-      double totalBalanceAdded = 0;
-      for (var payment in payments) {
-        final description = payment['description'] as String?;
-        if (description != null) {
-          final regex = RegExp(r'\[BALANCE_ADDED:\s*([\d]+\.?[\d]*)\]', caseSensitive: false);
-          final match = regex.firstMatch(description);
-          if (match != null && match.group(1) != null) {
-            final balanceAmount = double.tryParse(match.group(1)!);
-            if (balanceAmount != null) {
-              totalBalanceAdded += balanceAmount;
-            }
-          }
-        }
-      }
-
-      // Update member balance
-      await dataSource.updateMember(memberId, {'unpaid_balance': totalBalanceAdded});
+      await dataSource.recalculateBalance(memberId);
 
       if (mounted) {
         ref.invalidate(adminMembersProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Balance recalculated successfully. New balance: ${CurrencyFormatter.format(totalBalanceAdded)}'),
+          const SnackBar(
+            content: Text(
+                'Balance recalculated successfully based on transaction history.'),
           ),
         );
       }
@@ -143,7 +116,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset Balance'),
-        content: const Text('This will reset the member\'s balance to 0. Continue?'),
+        content:
+            const Text('This will reset the member\'s balance to 0. Continue?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -162,7 +136,7 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     setState(() => _loadingMemberId = memberId);
     try {
       final dataSource = ref.read(supabaseDataSourceProvider);
-      await dataSource.updateMember(memberId, {'unpaid_balance': 0});
+      await dataSource.resetMemberBalance(memberId);
 
       if (mounted) {
         ref.invalidate(adminMembersProvider);
@@ -186,7 +160,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     }
   }
 
-  void _showApproveDialog(String memberId, String memberName, double? currentBalance) {
+  void _showApproveDialog(
+      String memberId, String memberName, double? currentBalance) {
     _balanceController.text = (currentBalance ?? 0).toString();
     setState(() {
       _approveMemberId = memberId;
@@ -204,7 +179,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
             const SizedBox(height: 8),
             TextField(
               controller: _balanceController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Initial Unpaid Balance',
                 hintText: '0.00',
@@ -233,7 +209,8 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
             onPressed: () async {
               final balance = double.tryParse(_balanceController.text) ?? 0;
               Navigator.pop(context);
-              await _updateMemberStatus(memberId, 'active', unpaidBalance: balance);
+              await _updateMemberStatus(memberId, 'active',
+                  unpaidBalance: balance);
               setState(() {
                 _approveMemberId = null;
                 _approveMemberName = null;
@@ -259,13 +236,15 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     }
   }
 
-  List<Map<String, dynamic>> _filterMembers(List<Map<String, dynamic>> members) {
+  List<Map<String, dynamic>> _filterMembers(
+      List<Map<String, dynamic>> members) {
     if (_searchQuery.trim().isEmpty) return members;
-    
+
     final query = _searchQuery.toLowerCase().trim();
     return members.where((member) {
       final name = (member['full_name'] ?? '').toString().toLowerCase();
-      final membershipId = (member['membership_id'] ?? '').toString().toLowerCase();
+      final membershipId =
+          (member['membership_id'] ?? '').toString().toLowerCase();
       return name.contains(query) || membershipId.contains(query);
     }).toList();
   }
@@ -275,363 +254,153 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
     final membersAsync = ref.watch(adminMembersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Members Management'),
-      ),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: membersAsync.when(
         data: (members) {
           final filteredMembers = _filterMembers(members);
-          
-          if (members.isEmpty) {
-            return Center(
-              child: Text(
-                'No members yet',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-              ),
-            );
-          }
 
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(adminMembersProvider);
             },
-            child: Column(
-              children: [
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search by name or membership ID...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).primaryColor,
+                          const Color(0xFF1E40AF),
+                        ],
                       ),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                      });
-                    },
-                  ),
-                ),
-                // Member count
-                if (_searchQuery.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Showing ${filteredMembers.length} of ${members.length} members',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '${members.length} total members',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                      ),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      MediaQuery.of(context).padding.top + 20,
+                      24,
+                      40,
                     ),
-                  ),
-                // Members list
-                Expanded(
-                  child: filteredMembers.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No members found matching "${_searchQuery}"',
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Colors.grey[600],
-                                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                                  color: Colors.white, size: 20),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.15),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                  });
-                                },
-                                child: const Text('Clear search'),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.people_alt_rounded,
+                                      color: Colors.white, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${members.length} Members',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'Members Registry',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredMembers.length,
-                          itemBuilder: (context, index) {
-                final member = filteredMembers[index];
-                final status = member['status'] as String? ?? 'pending';
-                final isLoading = _loadingMemberId == member['id'];
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ExpansionTile(
-                    title: Text(
-                      member['full_name'] ?? 'N/A',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('ID: ${member['membership_id'] ?? 'N/A'}'),
-                        Text('Email: ${member['email'] ?? 'N/A'}'),
-                        if (member['phone_number'] != null)
-                          Text('Phone: ${member['phone_number']}'),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (v) => setState(() => _searchQuery = v),
+                            decoration: InputDecoration(
+                              hintText: 'Search by name or ID...',
+                              prefixIcon: const Icon(Icons.search_rounded),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close_rounded),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    trailing: Chip(
-                      label: Text(status.toUpperCase()),
-                      backgroundColor: _getStatusColor(status).withOpacity(0.2),
-                      labelStyle: TextStyle(
-                        color: _getStatusColor(status),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('Unpaid Balance:'),
-                                Text(
-                                  CurrencyFormatter.format(
-                                      (member['unpaid_balance'] ?? 0).toDouble()),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            if (status == 'pending') ...[
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _showApproveDialog(
-                                                member['id'],
-                                                member['full_name'] ?? 'Member',
-                                                (member['unpaid_balance'] ?? 0).toDouble(),
-                                              ),
-                                      icon: const Icon(Icons.check, size: 18),
-                                      label: const Text('Approve'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _updateMemberStatus(
-                                                member['id'],
-                                                'inactive',
-                                              ),
-                                      icon: const Icon(Icons.close, size: 18),
-                                      label: const Text('Reject'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ] else if (status == 'active') ...[
-                              ElevatedButton.icon(
-                                onPressed: isLoading
-                                    ? null
-                                    : () => _updateMemberStatus(
-                                          member['id'],
-                                          'suspended',
-                                        ),
-                                icon: const Icon(Icons.pause, size: 18),
-                                label: const Text('Suspend'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ElevatedButton.icon(
-                                onPressed: isLoading
-                                    ? null
-                                    : () async {
-                                        final authAsync = ref.read(authProvider);
-                                        final user = authAsync.value;
-                                        if (user == null) return;
-                                        final dataSource = ref.read(supabaseDataSourceProvider);
-                                        final userProfile = await dataSource.getUserProfile(user.id);
-                                        if (userProfile == null || userProfile['organization_id'] == null) return;
-                                        
-                                        if (context.mounted) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => MemberTabsManager(
-                                                memberId: member['id'],
-                                                memberName: member['full_name'] ?? 'Member',
-                                                organizationId: userProfile['organization_id'],
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                icon: const Icon(Icons.tab, size: 18),
-                                label: const Text('Manage Tabs'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.purple,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _recalculateBalance(member['id']),
-                                      icon: const Icon(Icons.calculate, size: 18),
-                                      label: const Text('Recalc'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _resetBalance(member['id']),
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: const Text('Reset'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ] else if (status == 'suspended') ...[
-                              ElevatedButton.icon(
-                                onPressed: isLoading
-                                    ? null
-                                    : () => _updateMemberStatus(
-                                          member['id'],
-                                          'active',
-                                        ),
-                                icon: const Icon(Icons.play_arrow, size: 18),
-                                label: const Text('Reactivate'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ElevatedButton.icon(
-                                onPressed: isLoading
-                                    ? null
-                                    : () async {
-                                        final authAsync = ref.read(authProvider);
-                                        final user = authAsync.value;
-                                        if (user == null) return;
-                                        final dataSource = ref.read(supabaseDataSourceProvider);
-                                        final userProfile = await dataSource.getUserProfile(user.id);
-                                        if (userProfile == null || userProfile['organization_id'] == null) return;
-                                        
-                                        if (context.mounted) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => MemberTabsManager(
-                                                memberId: member['id'],
-                                                memberName: member['full_name'] ?? 'Member',
-                                                organizationId: userProfile['organization_id'],
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                icon: const Icon(Icons.tab, size: 18),
-                                label: const Text('Manage Tabs'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.purple,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _recalculateBalance(member['id']),
-                                      icon: const Icon(Icons.calculate, size: 18),
-                                      label: const Text('Recalc'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : () => _resetBalance(member['id']),
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: const Text('Reset'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (isLoading)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 8),
-                                child: Center(child: CircularProgressIndicator()),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
-                );
-                          },
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
+                  sliver: filteredMembers.isEmpty
+                      ? SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _buildEmptyState(),
+                        )
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final member = filteredMembers[index];
+                              return _buildMemberListItem(member);
+                            },
+                            childCount: filteredMembers.length,
+                          ),
                         ),
                 ),
               ],
@@ -643,15 +412,16 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              const Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              Text('Error loading members'),
+              const Text('Connection interrupted',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text(error.toString()),
+              Text(error.toString(), textAlign: TextAlign.center),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => ref.invalidate(adminMembersProvider),
-                child: const Text('Retry'),
+                child: const Text('Try Refreshing'),
               ),
             ],
           ),
@@ -659,5 +429,298 @@ class _MembersManagementPageState extends ConsumerState<MembersManagementPage> {
       ),
     );
   }
-}
 
+  Widget _buildEmptyState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.person_search_rounded,
+            size: 80, color: Colors.grey.shade300),
+        const SizedBox(height: 20),
+        Text(
+          _searchQuery.isEmpty
+              ? 'No members registered yet'
+              : 'No result for "$_searchQuery"',
+          style: TextStyle(
+              color: Colors.blueGrey.shade400,
+              fontSize: 16,
+              fontWeight: FontWeight.w600),
+        ),
+        if (_searchQuery.isNotEmpty)
+          TextButton(
+            onPressed: () {
+              _searchController.clear();
+              setState(() => _searchQuery = '');
+            },
+            child: const Text('Clear Search'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMemberListItem(Map<String, dynamic> member) {
+    final status = member['status'] as String? ?? 'pending';
+    final isLoading = _loadingMemberId == member['id'];
+    final balance = (member['unpaid_balance'] ?? 0).toDouble();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.blueGrey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blueGrey.shade900.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Theme(
+          data: ThemeData().copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: CircleAvatar(
+              backgroundColor: _getStatusColor(status).withOpacity(0.1),
+              child: Text(
+                (member['full_name'] as String? ?? '?')[0].toUpperCase(),
+                style: TextStyle(
+                    color: _getStatusColor(status),
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            title: Text(
+              member['full_name'] ?? 'Unknown Member',
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: Color(0xFF0F172A)),
+            ),
+            subtitle: Row(
+              children: [
+                const Icon(Icons.qr_code_rounded,
+                    size: 12, color: Colors.blueGrey),
+                const SizedBox(width: 4),
+                Text(
+                  member['membership_id'] ?? 'N/A',
+                  style: const TextStyle(
+                      color: Colors.blueGrey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: TextStyle(
+                      color: _getStatusColor(status),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey.shade50.withOpacity(0.5),
+                  border:
+                      Border(top: BorderSide(color: Colors.blueGrey.shade100)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Oustanding Balance',
+                                style: TextStyle(
+                                    color: Colors.blueGrey,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(
+                              CurrencyFormatter.format(balance),
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                        if (isLoading)
+                          const CircularProgressIndicator(strokeWidth: 2)
+                        else
+                          _buildQuickActionButton(
+                            icon: Icons.refresh_rounded,
+                            onTap: () => _recalculateBalance(member['id']),
+                            tooltip: 'Recalculate',
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Column(
+                      children: [
+                        if (status == 'pending')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Approve Member',
+                                  icon: Icons.check_circle_rounded,
+                                  color: Colors.green,
+                                  onPressed: () => _showApproveDialog(
+                                    member['id'],
+                                    member['full_name'] ?? 'Member',
+                                    balance,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Reject',
+                                  icon: Icons.cancel_rounded,
+                                  color: Colors.red,
+                                  onPressed: () => _updateMemberStatus(
+                                      member['id'], 'inactive'),
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (status == 'active')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Tabs',
+                                  icon: Icons.tab_rounded,
+                                  color: Colors.purple,
+                                  onPressed: () => _handleManageTabs(member),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Suspend',
+                                  icon: Icons.pause_circle_filled_rounded,
+                                  color: Colors.orange,
+                                  onPressed: () => _updateMemberStatus(
+                                      member['id'], 'suspended'),
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (status == 'suspended')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Reactivate',
+                                  icon: Icons.play_circle_filled_rounded,
+                                  color: Colors.green,
+                                  onPressed: () => _updateMemberStatus(
+                                      member['id'], 'active'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Reset',
+                                  icon: Icons.lock_reset_rounded,
+                                  color: Colors.blueGrey,
+                                  onPressed: () => _resetBalance(member['id']),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(
+      {required IconData icon,
+      required VoidCallback onTap,
+      required String tooltip}) {
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.blueGrey, size: 20),
+      tooltip: tooltip,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white,
+        hoverColor: Colors.blueGrey.shade50,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.blueGrey.shade100)),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+      {required String label,
+      required IconData icon,
+      required Color color,
+      required VoidCallback onPressed}) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Future<void> _handleManageTabs(Map<String, dynamic> member) async {
+    final authAsync = ref.read(authProvider);
+    final user = authAsync.value;
+    if (user == null) return;
+
+    final dataSource = ref.read(supabaseDataSourceProvider);
+    final userProfile = await dataSource.getUserProfile(user.id);
+    if (userProfile == null || userProfile['organization_id'] == null) return;
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MemberTabsManager(
+            memberId: member['id'],
+            memberName: member['full_name'] ?? 'Member',
+            organizationId: userProfile['organization_id'],
+          ),
+        ),
+      );
+    }
+  }
+}

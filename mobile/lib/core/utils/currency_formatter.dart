@@ -9,4 +9,3 @@ class CurrencyFormatter {
     return 'Le ${NumberFormat('#,##0').format(amount)}';
   }
 }
-

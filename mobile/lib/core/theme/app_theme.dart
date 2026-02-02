@@ -13,26 +13,27 @@ class AppTheme {
   static const Color primary700 = Color(0xFF0369A1);
   static const Color primary800 = Color(0xFF075985);
   static const Color primary900 = Color(0xFF0C4A6E);
-  
+
   // Legacy aliases for backward compatibility
   static const Color primaryBlue = primary500;
   static const Color primaryBlueDark = primary700;
   static const Color primaryBlueLight = primary400;
   static const Color secondaryBlue = primary600;
   static const Color accentBlue = primary300;
-  
+
   static const Color successGreen = Color(0xFF10B981);
   static const Color warningOrange = Color(0xFFF59E0B);
   static const Color errorRed = Color(0xFFEF4444);
-  
+
   // Light theme colors - matching web globals.css
-  static const Color backgroundLight = Color(0xFFEFF6FF); // rgb(239, 246, 255) - light blue background
+  static const Color backgroundLight =
+      Color(0xFFEFF6FF); // rgb(239, 246, 255) - light blue background
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surfaceSecondary = Color(0xFFF0F9FF); // primary-50
   static const Color textPrimary = Color(0xFF1E293B);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color borderLight = Color(0xFFE5E7EB); // gray-200 equivalent
-  
+
   // Dark theme colors - matching web globals.css dark mode
   static const Color backgroundDark = Color(0xFF111827); // rgb(17, 24, 39)
   static const Color surfaceDark = Color(0xFF1E293B);
@@ -45,7 +46,8 @@ class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: primary500,
       brightness: Brightness.light,
-      primary: primary600, // Use primary-600 for buttons (matches web bg-primary-600)
+      primary:
+          primary600, // Use primary-600 for buttons (matches web bg-primary-600)
       secondary: primary500,
       tertiary: primary400,
       error: errorRed,
@@ -147,7 +149,8 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primary500, width: 2), // Match web focus:border-primary-500
+        borderSide: const BorderSide(
+            color: primary500, width: 2), // Match web focus:border-primary-500
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -187,7 +190,8 @@ class AppTheme {
           if (states.contains(WidgetState.disabled)) {
             return primary600.withOpacity(0.4);
           }
-          if (states.contains(WidgetState.hovered) || states.contains(WidgetState.pressed)) {
+          if (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.pressed)) {
             return primary700; // Match web hover:bg-primary-700
           }
           return primary600;
@@ -394,7 +398,8 @@ class AppTheme {
           if (states.contains(WidgetState.disabled)) {
             return primary500.withOpacity(0.4);
           }
-          if (states.contains(WidgetState.hovered) || states.contains(WidgetState.pressed)) {
+          if (states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.pressed)) {
             return primary600;
           }
           return primary500;
@@ -454,4 +459,3 @@ class AppTheme {
     ),
   );
 }
-

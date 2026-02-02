@@ -1,5 +1,5 @@
 name: multitenant_payment_system
-description: KNS MultiRail - Multi-Tenant Payment Management Platform - Mobile App
+description: KnsPaymentRail - Multi-Tenant Payment Management Platform - Mobile App
 publish_to: 'none'
 version: 1.0.0+1
 

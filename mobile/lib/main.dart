@@ -11,7 +11,7 @@ void main() async {
     url: AppConfig.supabaseUrl,
     anonKey: AppConfig.supabaseAnonKey,
   );
-  
+
   runApp(
     const ProviderScope(
       child: MyApp(),
@@ -25,9 +25,9 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    
+
     return MaterialApp.router(
-      title: 'KNS MultiRail',
+      title: 'KnsPaymentRail',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
@@ -36,4 +36,3 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
-

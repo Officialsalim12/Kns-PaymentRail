@@ -22,7 +22,8 @@ class SupabaseDataSource {
     }
   }
 
-  Future<AuthResponse> signUp(String email, String password, {String? fullName}) {
+  Future<AuthResponse> signUp(String email, String password,
+      {String? fullName}) {
     return _client.auth.signUp(
       email: email,
       password: password,
@@ -38,42 +39,28 @@ class SupabaseDataSource {
 
   Future<List<Map<String, dynamic>>> getOrganizations({String? status}) {
     var query = _client.from('organizations').select();
-    
+
     if (status != null) {
       query = query.eq('status', status);
     }
-    
+
     return query.order('created_at', ascending: false);
   }
 
   Future<Map<String, dynamic>?> getOrganization(String id) {
-    return _client
-        .from('organizations')
-        .select()
-        .eq('id', id)
-        .single();
+    return _client.from('organizations').select().eq('id', id).single();
   }
 
   Future<Map<String, dynamic>> createOrganization(Map<String, dynamic> data) {
-    return _client
-        .from('organizations')
-        .insert(data)
-        .select()
-        .single();
+    return _client.from('organizations').insert(data).select().single();
   }
 
   Future<void> updateOrganization(String id, Map<String, dynamic> data) {
-    return _client
-        .from('organizations')
-        .update(data)
-        .eq('id', id);
+    return _client.from('organizations').update(data).eq('id', id);
   }
 
   Future<void> deleteOrganization(String id) {
-    return _client
-        .from('organizations')
-        .delete()
-        .eq('id', id);
+    return _client.from('organizations').delete().eq('id', id);
   }
 
   Future<Map<String, dynamic>?> getUserProfile(String userId) {
@@ -87,12 +74,12 @@ class SupabaseDataSource {
   Future<void> createUserProfile(Map<String, dynamic> data) async {
     const maxRetries = 8;
     const retryDelay = Duration(milliseconds: 400);
-    
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       if (attempt > 1) {
         await Future.delayed(retryDelay);
       }
-      
+
       try {
         // Try RPC function first if it exists
         try {
@@ -108,7 +95,7 @@ class SupabaseDataSource {
         } catch (rpcError) {
           // If RPC doesn't exist or fails, fall through to direct insert
         }
-        
+
         // Direct insert with retry logic
         final response = await _client.from('users').insert({
           'id': data['id'],
@@ -118,33 +105,36 @@ class SupabaseDataSource {
           'organization_id': data['organization_id'],
           'phone_number': data['phone_number'],
         }).select();
-        
+
         if (response.isNotEmpty) {
           return; // Success
         }
       } catch (e) {
         final errorString = e.toString();
-        
+
         // If duplicate key error (user already exists), consider it success
-        if (errorString.contains('23505') || errorString.contains('duplicate')) {
+        if (errorString.contains('23505') ||
+            errorString.contains('duplicate')) {
           return;
         }
-        
+
         // If foreign key constraint error, retry (user might not be confirmed yet)
-        if (errorString.contains('23503') || errorString.contains('foreign key')) {
+        if (errorString.contains('23503') ||
+            errorString.contains('foreign key')) {
           if (attempt == maxRetries) {
-            throw Exception('Failed to create user profile after $maxRetries attempts. User may not be confirmed in auth system.');
+            throw Exception(
+                'Failed to create user profile after $maxRetries attempts. User may not be confirmed in auth system.');
           }
           continue; // Retry
         }
-        
+
         // For other errors, throw immediately
         if (attempt == maxRetries) {
           throw Exception('Failed to create user profile: $errorString');
         }
       }
     }
-    
+
     throw Exception('Failed to create user profile after $maxRetries attempts');
   }
 
@@ -156,12 +146,12 @@ class SupabaseDataSource {
         .maybeSingle();
   }
 
+  Future<Map<String, dynamic>?> getMemberById(String id) {
+    return _client.from('members').select('*').eq('id', id).maybeSingle();
+  }
+
   Future<Map<String, dynamic>> createMember(Map<String, dynamic> data) {
-    return _client
-        .from('members')
-        .insert(data)
-        .select()
-        .single();
+    return _client.from('members').insert(data).select().single();
   }
 
   Future<List<Map<String, dynamic>>> getMembers(String organizationId) {
@@ -172,7 +162,8 @@ class SupabaseDataSource {
         .order('created_at', ascending: false);
   }
 
-  Future<List<Map<String, dynamic>>> getActiveMembersForMessaging(String organizationId) {
+  Future<List<Map<String, dynamic>>> getActiveMembersForMessaging(
+      String organizationId) {
     // Include both active and pending members for consistency across all organizations
     // Note: Still requires user_id to be set (members must have accounts)
     return _client
@@ -184,36 +175,64 @@ class SupabaseDataSource {
         .order('full_name');
   }
 
-  Future<void> updateMemberStatus(String memberId, String status, {double? unpaidBalance}) {
+  Future<void> updateMemberStatus(String memberId, String status,
+      {double? unpaidBalance}) {
     final updateData = <String, dynamic>{'status': status};
     if (unpaidBalance != null) {
       updateData['unpaid_balance'] = unpaidBalance;
     }
-    return _client
-        .from('members')
-        .update(updateData)
-        .eq('id', memberId);
+    return _client.from('members').update(updateData).eq('id', memberId);
   }
 
   Future<void> updateMember(String memberId, Map<String, dynamic> data) {
+    return _client.from('members').update(data).eq('id', memberId);
+  }
+
+  Future<void> recalculateBalance(String memberId) async {
+    try {
+      final payments = await _client
+          .from('payments')
+          .select('description, amount')
+          .eq('member_id', memberId);
+
+      double totalBalanceAdded = 0;
+      if (payments.isNotEmpty) {
+        final regExp = RegExp(r'\[BALANCE_ADDED:\s*([\d]+\.?[\d]*)\]',
+            caseSensitive: false);
+        for (final payment in payments) {
+          final description = payment['description'] as String?;
+          if (description != null) {
+            final match = regExp.firstMatch(description);
+            if (match != null && match.group(1) != null) {
+              final balanceAmount = double.tryParse(match.group(1)!);
+              if (balanceAmount != null) {
+                totalBalanceAdded += balanceAmount;
+              }
+            }
+          }
+        }
+      }
+
+      await _client
+          .from('members')
+          .update({'unpaid_balance': totalBalanceAdded}).eq('id', memberId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resetMemberBalance(String memberId) {
     return _client
         .from('members')
-        .update(data)
-        .eq('id', memberId);
+        .update({'unpaid_balance': 0}).eq('id', memberId);
   }
 
   Future<void> deletePayment(String paymentId) {
-    return _client
-        .from('payments')
-        .delete()
-        .eq('id', paymentId);
+    return _client.from('payments').delete().eq('id', paymentId);
   }
 
   Future<void> deleteReceipt(String paymentId) {
-    return _client
-        .from('receipts')
-        .delete()
-        .eq('payment_id', paymentId);
+    return _client.from('receipts').delete().eq('payment_id', paymentId);
   }
 
   Future<void> deleteReceiptGenerationLogs(String paymentId) {
@@ -223,21 +242,23 @@ class SupabaseDataSource {
         .eq('payment_id', paymentId);
   }
 
-  Future<List<Map<String, dynamic>>> getPayments(String organizationId, {String? memberId}) {
+  Future<List<Map<String, dynamic>>> getPayments(String organizationId,
+      {String? memberId}) {
     var query = _client
         .from('payments')
-        .select('*, member:members(full_name, membership_id), receipt:receipts(receipt_number, pdf_url)')
-        .eq('organization_id', organizationId)
-        .eq('payment_status', 'completed'); // Only return completed payments
-    
+        .select(
+            '*, member:members(full_name, membership_id), receipt:receipts(receipt_number, pdf_url)')
+        .eq('organization_id', organizationId);
+
     if (memberId != null) {
       query = query.eq('member_id', memberId);
     }
-    
+
     return query.order('created_at', ascending: false);
   }
 
-  Future<List<Map<String, dynamic>>> getPaymentsByStatus(String organizationId, String status) {
+  Future<List<Map<String, dynamic>>> getPaymentsByStatus(
+      String organizationId, String status) {
     return _client
         .from('payments')
         .select('amount')
@@ -247,11 +268,7 @@ class SupabaseDataSource {
   }
 
   Future<Map<String, dynamic>> createPayment(Map<String, dynamic> data) {
-    return _client
-        .from('payments')
-        .insert(data)
-        .select()
-        .single();
+    return _client.from('payments').insert(data).select().single();
   }
 
   Future<List<Map<String, dynamic>>> getReceipts(String memberId) {
@@ -271,23 +288,18 @@ class SupabaseDataSource {
   }
 
   Future<void> markNotificationAsRead(String notificationId) {
-    return _client
-        .from('notifications')
-        .update({
-          'is_read': true,
-          'read_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', notificationId);
+    return _client.from('notifications').update({
+      'is_read': true,
+      'read_at': DateTime.now().toIso8601String(),
+    }).eq('id', notificationId);
   }
 
   Future<void> deleteNotification(String notificationId) {
-    return _client
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
+    return _client.from('notifications').delete().eq('id', notificationId);
   }
 
-  Future<List<Map<String, dynamic>>> getMessagesSentByAdmin(String organizationId, String senderId) {
+  Future<List<Map<String, dynamic>>> getMessagesSentByAdmin(
+      String organizationId, String senderId) {
     return _client
         .from('notifications')
         .select('*, recipient:users(full_name, email)')
@@ -349,11 +361,13 @@ class SupabaseDataSource {
         .order('created_at', ascending: false);
   }
 
-  Future<List<Map<String, dynamic>>> getMemberTabs(String memberId) {
+  Future<List<Map<String, dynamic>>> getMemberTabs(
+      String memberId, String organizationId) {
     return _client
         .from('member_tabs')
         .select()
-        .eq('member_id', memberId)
+        .eq('organization_id', organizationId)
+        .or('member_id.eq.$memberId,member_id.is.null')
         .eq('is_active', true)
         .order('created_at', ascending: false);
   }
@@ -366,26 +380,41 @@ class SupabaseDataSource {
         .order('created_at', ascending: false);
   }
 
-  Future<Map<String, dynamic>> createMemberTab(Map<String, dynamic> data) {
+  Future<List<Map<String, dynamic>>> getOrganizationTabs(
+      String organizationId) {
     return _client
         .from('member_tabs')
-        .insert(data)
         .select()
-        .single();
+        .eq('organization_id', organizationId)
+        .order('created_at', ascending: false);
+  }
+
+  Future<Map<String, dynamic>> createMemberTab(Map<String, dynamic> data) {
+    return _client.from('member_tabs').insert(data).select().single();
   }
 
   Future<void> updateMemberTab(String tabId, Map<String, dynamic> data) {
-    return _client
-        .from('member_tabs')
-        .update(data)
-        .eq('id', tabId);
+    return _client.from('member_tabs').update(data).eq('id', tabId);
   }
 
   Future<void> deleteMemberTab(String tabId) {
+    return _client.from('member_tabs').delete().eq('id', tabId);
+  }
+
+  Future<List<Map<String, dynamic>>> getOrganizationUsers(
+      String organizationId) {
     return _client
-        .from('member_tabs')
-        .delete()
-        .eq('id', tabId);
+        .from('users')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('created_at', ascending: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getActivityLogs(String organizationId) {
+    return _client
+        .from('activity_logs')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('created_at', ascending: false);
   }
 }
-

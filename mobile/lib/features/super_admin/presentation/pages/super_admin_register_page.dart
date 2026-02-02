@@ -9,15 +9,17 @@ class SuperAdminRegisterPage extends ConsumerStatefulWidget {
   const SuperAdminRegisterPage({super.key});
 
   @override
-  ConsumerState<SuperAdminRegisterPage> createState() => _SuperAdminRegisterPageState();
+  ConsumerState<SuperAdminRegisterPage> createState() =>
+      _SuperAdminRegisterPageState();
 }
 
-class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage> {
+class _SuperAdminRegisterPageState
+    extends ConsumerState<SuperAdminRegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _error;
   bool _success = false;
@@ -67,7 +69,8 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Super Admin account created! Redirecting to login...'),
+            content:
+                Text('Super Admin account created! Redirecting to login...'),
             backgroundColor: Colors.green,
           ),
         );
@@ -146,7 +149,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
               if (_error != null)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -161,7 +163,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                     style: TextStyle(color: Colors.red.shade700),
                   ),
                 ),
-
               TextFormField(
                 controller: _fullNameController,
                 decoration: const InputDecoration(
@@ -176,7 +177,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                 },
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -195,7 +195,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                 },
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -215,7 +214,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                 },
               ),
               const SizedBox(height: 32),
-
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
@@ -230,7 +228,6 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
                     : const Text('Create Super Admin Account'),
               ),
               const SizedBox(height: 16),
-
               TextButton(
                 onPressed: () => context.push('/login'),
                 child: const Text('Already have an account? Sign in'),
@@ -242,4 +239,3 @@ class _SuperAdminRegisterPageState extends ConsumerState<SuperAdminRegisterPage>
     );
   }
 }
-

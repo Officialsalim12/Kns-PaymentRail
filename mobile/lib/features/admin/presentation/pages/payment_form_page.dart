@@ -21,7 +21,7 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
   final _balanceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _paymentDateController = TextEditingController();
-  
+
   String _selectedMemberId = '';
   String _selectedPaymentMethod = 'afrimoney';
   bool _isLoading = false;
@@ -30,7 +30,8 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
   @override
   void initState() {
     super.initState();
-    _paymentDateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    _paymentDateController.text =
+        DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
   @override
@@ -107,8 +108,10 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
             'amount': amount,
             'currency': 'SLE',
             'description': paymentDescription,
-            'successUrl': '${AppConfig.webAppUrl}/payment-success?payment_id=${payment['id']}',
-            'cancelUrl': '${AppConfig.webAppUrl}/payment-cancelled?payment_id=${payment['id']}',
+            'successUrl':
+                '${AppConfig.webAppUrl}/payment-success?payment_id=${payment['id']}',
+            'cancelUrl':
+                '${AppConfig.webAppUrl}/payment-cancelled?payment_id=${payment['id']}',
             'metadata': {
               'payment_id': payment['id'],
               'organization_id': userProfile['organization_id'],
@@ -125,26 +128,31 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             } else {
-              try { await dataSource.deletePayment(payment['id']); } catch (e) {}
+              try {
+                await dataSource.deletePayment(payment['id']);
+              } catch (e) {}
               throw Exception('Could not launch checkout URL');
             }
           }
         } else {
-          try { await dataSource.deletePayment(payment['id']); } catch (e) {}
+          try {
+            await dataSource.deletePayment(payment['id']);
+          } catch (e) {}
           throw Exception('Failed to create checkout session');
         }
       } catch (e) {
         print('Checkout creation error: $e');
-        
+
         // Clean up payment if any error occurred during checkout creation
         try {
           await dataSource.deletePayment(payment['id']);
         } catch (cleanupError) {
           print('Error cleaning up payment after error: $cleanupError');
         }
-        
+
         if (balanceToAdd > 0) {
-          final members = await dataSource.getMembers(userProfile['organization_id']);
+          final members =
+              await dataSource.getMembers(userProfile['organization_id']);
           final member = members.firstWhere(
             (m) => m['id'] == _selectedMemberId,
             orElse: () => <String, dynamic>{},
@@ -172,7 +180,8 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Payment recorded (checkout unavailable, using manual mode)'),
+              content: Text(
+                  'Payment recorded (checkout unavailable, using manual mode)'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -262,7 +271,8 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
                   border: OutlineInputBorder(),
                   helperText: 'Amount for this payment',
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter payment amount';
@@ -282,7 +292,8 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
                   border: OutlineInputBorder(),
                   helperText: 'Additional balance to add to member\'s account',
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -309,8 +320,10 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
                 ),
                 value: _selectedPaymentMethod,
                 items: const [
-                  DropdownMenuItem(value: 'afrimoney', child: Text('Afrimoney')),
-                  DropdownMenuItem(value: 'orangemoney', child: Text('Orangemoney')),
+                  DropdownMenuItem(
+                      value: 'afrimoney', child: Text('Afrimoney')),
+                  DropdownMenuItem(
+                      value: 'orangemoney', child: Text('Orangemoney')),
                 ],
                 onChanged: (value) {
                   setState(() => _selectedPaymentMethod = value ?? 'afrimoney');
@@ -346,4 +359,3 @@ class _PaymentFormPageState extends ConsumerState<PaymentFormPage> {
     );
   }
 }
-

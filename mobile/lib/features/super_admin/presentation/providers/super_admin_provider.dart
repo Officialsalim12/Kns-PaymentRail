@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/data/datasources/supabase_datasource.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-final superAdminDashboardProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+final superAdminDashboardProvider =
+    FutureProvider<Map<String, dynamic>?>((ref) async {
   final dataSource = ref.read(supabaseDataSourceProvider);
 
   // Get all organizations
@@ -19,7 +20,8 @@ final superAdminDashboardProvider = FutureProvider<Map<String, dynamic>?>((ref) 
 
   final stats = {
     'totalOrganizations': organizations.length,
-    'pendingApprovals': organizations.where((o) => o['status'] == 'pending').length,
+    'pendingApprovals':
+        organizations.where((o) => o['status'] == 'pending').length,
     'totalUsers': allUsers.length,
     'totalPayments': totalPayments,
   };
@@ -29,5 +31,3 @@ final superAdminDashboardProvider = FutureProvider<Map<String, dynamic>?>((ref) 
     'stats': stats,
   };
 });
-
-

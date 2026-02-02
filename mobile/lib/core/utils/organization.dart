@@ -5,11 +5,15 @@ class OrganizationUtils {
   /// Matches web: getOrganizationAbbreviation
   static String getOrganizationAbbreviation(String name) {
     if (name.isEmpty) return 'O';
-    
-    final words = name.trim().split(RegExp(r'\s+')).where((word) => word.isNotEmpty).toList();
-    
+
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+
     if (words.isEmpty) return 'O';
-    
+
     if (words.length == 1) {
       final word = words[0];
       if (word.length <= 3) {
@@ -17,7 +21,7 @@ class OrganizationUtils {
       }
       return word.substring(0, 3).toUpperCase();
     }
-    
+
     return words
         .take(3)
         .map((word) => word.isNotEmpty ? word[0].toUpperCase() : '')
@@ -38,11 +42,12 @@ class OrganizationUtils {
     final trimmedName = name.trim();
     final trimmedOrgType = organizationType.trim();
     final trimmedAdminEmail = adminEmail.trim();
-    
+
     final phone = phoneNumber?.trim();
     final desc = description?.trim();
-    final orgStatus = (status?.trim().isNotEmpty ?? false) ? status!.trim() : 'pending';
-    
+    final orgStatus =
+        (status?.trim().isNotEmpty ?? false) ? status!.trim() : 'pending';
+
     return {
       'name': trimmedName,
       'organization_type': trimmedOrgType,

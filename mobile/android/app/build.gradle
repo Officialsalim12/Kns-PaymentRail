@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.mobile"
-    compileSdk = 35
+    compileSdk = 34
     // Use the NDK version required by plugins (backward compatible)
     ndkVersion = "25.1.8937393"
 

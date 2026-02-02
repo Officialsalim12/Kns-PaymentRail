@@ -69,30 +69,34 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
       final dataSource = ref.read(supabaseDataSourceProvider);
       final authAsync = ref.read(authProvider);
       final user = authAsync.value;
-      if (user == null) throw Exception('User not found');
+      if (user == null) throw Exception('User not found. Please log in again.');
 
-      final member = await dataSource.getMemberByUserId(user.id);
+      // Fetch member by record ID directly (standardized with web version)
+      final member = await dataSource.getMemberById(widget.memberId);
       if (member == null || member['organization_id'] == null) {
-        throw Exception('Member not found');
+        throw Exception(
+            'Member record not found or organization ID is missing.');
       }
 
       final paymentDescription = widget.tabName;
-      final paymentAmount = widget.tabType == 'payment' && widget.monthlyCost != null
-          ? _totalAmount
-          : double.parse(_amountController.text);
+      final paymentAmount =
+          widget.tabType == 'payment' && widget.monthlyCost != null
+              ? _totalAmount
+              : double.parse(_amountController.text);
 
       final payment = await dataSource.createPayment({
         'organization_id': member['organization_id'],
         'member_id': widget.memberId,
         'amount': paymentAmount,
-        'payment_date': DateTime.now().toIso8601String(),
-        'payment_method': 'online', // Using integrated gateway for online payments
+        'payment_date': _paymentDate.toIso8601String(), // Use the selected date
+        'payment_method': 'online',
         'description': paymentDescription,
         'created_by': user.id,
         'payment_status': 'pending',
       });
 
       try {
+        debugPrint('Invoking create-monime-checkout edge function...');
         final response = await dataSource.client.functions.invoke(
           'create-monime-checkout',
           body: {
@@ -100,58 +104,77 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
             'amount': paymentAmount,
             'currency': 'SLE',
             'description': paymentDescription,
-            'successUrl': '${AppConfig.webAppUrl}/payment-success?payment_id=${payment['id']}',
-            'cancelUrl': '${AppConfig.webAppUrl}/payment-cancelled?payment_id=${payment['id']}',
+            'successUrl':
+                '${AppConfig.webAppUrl}/payment-success?payment_id=${payment['id']}',
+            'cancelUrl':
+                '${AppConfig.webAppUrl}/payment-cancelled?payment_id=${payment['id']}',
             'metadata': {
               'payment_id': payment['id'],
               'organization_id': member['organization_id'],
               'member_id': widget.memberId,
               'tab_name': widget.tabName,
               'tab_type': widget.tabType,
-              if (widget.tabType == 'payment' && widget.monthlyCost != null && _months.isNotEmpty)
-                ...{
-                  'months': _months,
-                  'monthly_cost': widget.monthlyCost!.toString(),
-                  'quantity': _months,
-                  'unit_price': widget.monthlyCost!.toString(),
-                },
+              if (widget.tabType == 'payment' &&
+                  widget.monthlyCost != null &&
+                  _months.isNotEmpty) ...{
+                'months': _months,
+                'monthly_cost': widget.monthlyCost!.toString(),
+                'quantity': _months,
+                'unit_price': widget.monthlyCost!.toString(),
+              },
             },
           },
         );
 
-        if (response.data != null && response.data['checkoutSession'] != null) {
-          final checkoutUrl = response.data['checkoutSession']['url'];
-          
-          if (mounted) {
-            Navigator.pop(context);
-            final uri = Uri.parse(checkoutUrl);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            } else {
-              // Clean up payment if checkout URL launch fails
-              try {
-                await dataSource.deletePayment(payment['id']);
-              } catch (cleanupError) {
-                print('Error cleaning up payment after launch failure: $cleanupError');
+        debugPrint('Edge function response: ${response.data}');
+
+        if (response.data != null) {
+          // The edge function might return redirectUrl directly or inside checkoutSession
+          final String? checkoutUrl = response.data['redirectUrl'] ??
+              (response.data['checkoutSession'] != null
+                  ? response.data['checkoutSession']['url']
+                  : null);
+
+          if (checkoutUrl != null) {
+            debugPrint('Launching checkout URL: $checkoutUrl');
+            if (mounted) {
+              Navigator.pop(context);
+              final uri = Uri.parse(checkoutUrl);
+
+              // Use externalApplication to ensure it opens in the device browser
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                debugPrint(
+                    'Could not launch URL via canLaunchUrl. Attempting launchUrl anyway.');
+                try {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } catch (launchError) {
+                  debugPrint('Launch fallback failed: $launchError');
+                  // Clean up payment if launch fails
+                  await dataSource.deletePayment(payment['id']);
+                  throw Exception(
+                      'Could not launch checkout URL: $launchError');
+                }
               }
-              throw Exception('Could not launch checkout URL');
             }
+          } else {
+            debugPrint('Error: Checkout session URL not found in response');
+            await dataSource.deletePayment(payment['id']);
+            throw Exception('Failed to create checkout session: URL missing');
           }
         } else {
-          // Clean up payment if checkout session creation failed
-          try {
-            await dataSource.deletePayment(payment['id']);
-          } catch (cleanupError) {
-            print('Error cleaning up payment after checkout failure: $cleanupError');
-          }
-          throw Exception('Failed to create checkout session');
+          debugPrint('Error: Edge function returned null data');
+          await dataSource.deletePayment(payment['id']);
+          throw Exception('Failed to create checkout session: Empty response');
         }
       } catch (e) {
+        debugPrint('Error during checkout creation/launch: $e');
         // Clean up payment if any error occurred during checkout creation
         try {
           await dataSource.deletePayment(payment['id']);
         } catch (cleanupError) {
-          print('Error cleaning up payment after error: $cleanupError');
+          debugPrint('Error cleaning up payment after error: $cleanupError');
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +206,7 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenHeight < 700;
-    
+
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
@@ -205,8 +228,8 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
                       child: Text(
                         '${widget.tabType == 'payment' ? 'Pay Now' : 'Donate Here'} - ${widget.tabName}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: isSmallScreen ? 18 : 20,
-                        ),
+                              fontSize: isSmallScreen ? 18 : 20,
+                            ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -220,176 +243,180 @@ class _MemberPaymentFormState extends ConsumerState<MemberPaymentForm> {
                   ],
                 ),
                 SizedBox(height: isSmallScreen ? 16 : 24),
-              if (widget.tabType == 'payment' && widget.monthlyCost != null) ...[
-                DropdownButtonFormField<String>(
-                  value: _months,
-                  decoration: InputDecoration(
-                    labelText: 'Number of Months *',
-                    border: const OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: isSmallScreen ? 12 : 16,
+                if (widget.tabType == 'payment' &&
+                    widget.monthlyCost != null) ...[
+                  DropdownButtonFormField<String>(
+                    value: _months,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Months *',
+                      border: const OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: isSmallScreen ? 12 : 16,
+                      ),
                     ),
+                    items: List.generate(12, (index) {
+                      final num = index + 1;
+                      return DropdownMenuItem(
+                        value: num.toString(),
+                        child: Text('$num ${num == 1 ? 'Month' : 'Months'}'),
+                      );
+                    }),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _months = value);
+                      }
+                    },
                   ),
-                  items: List.generate(12, (index) {
-                    final num = index + 1;
-                    return DropdownMenuItem(
-                      value: num.toString(),
-                      child: Text('$num ${num == 1 ? 'Month' : 'Months'}'),
-                    );
-                  }),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _months = value);
-                    }
-                  },
-                ),
-                SizedBox(height: isSmallScreen ? 12 : 16),
-                Container(
-                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              'Total Amount:',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 13 : 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
+                  SizedBox(height: isSmallScreen ? 12 : 16),
+                  Container(
+                    padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Total Amount:',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 13 : 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
                               ),
                             ),
-                          ),
-                          Flexible(
-                            child: Text(
-                              CurrencyFormatter.format(_totalAmount),
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 18 : 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[700],
+                            Flexible(
+                              child: Text(
+                                CurrencyFormatter.format(_totalAmount),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 18 : 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[700],
+                                ),
+                                textAlign: TextAlign.right,
                               ),
-                              textAlign: TextAlign.right,
                             ),
+                          ],
+                        ),
+                        SizedBox(height: isSmallScreen ? 4 : 6),
+                        Text(
+                          '$_months ${int.parse(_months) == 1 ? 'month' : 'months'} × ${CurrencyFormatter.format(widget.monthlyCost!)}',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 11 : 12,
+                            color: Colors.grey[600],
                           ),
-                        ],
-                      ),
-                      SizedBox(height: isSmallScreen ? 4 : 6),
-                      Text(
-                        '$_months ${int.parse(_months) == 1 ? 'month' : 'months'} × ${CurrencyFormatter.format(widget.monthlyCost!)}',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 11 : 12,
-                          color: Colors.grey[600],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 12 : 16),
-              ] else ...[
-                TextFormField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: 'Amount *',
-                    border: const OutlineInputBorder(),
-                    prefixText: 'Le ',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: isSmallScreen ? 12 : 16,
+                      ],
                     ),
                   ),
-                  style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Amount is required';
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return 'Please enter a valid amount';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: isSmallScreen ? 12 : 16),
-              ],
-              InkWell(
-                onTap: () => _selectDate(context),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Payment Date *',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: const Icon(Icons.calendar_today),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: isSmallScreen ? 12 : 16,
-                    ),
-                  ),
-                  child: Text(
-                    DateFormat('yyyy-MM-dd').format(_paymentDate),
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 14 : 16,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: isSmallScreen ? 16 : 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          vertical: isSmallScreen ? 12 : 14,
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+                  SizedBox(height: isSmallScreen ? 12 : 16),
+                ] else ...[
+                  TextFormField(
+                    controller: _amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Amount *',
+                      border: const OutlineInputBorder(),
+                      prefixText: 'Le ',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: isSmallScreen ? 12 : 16,
                       ),
                     ),
+                    style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Amount is required';
+                      }
+                      final amount = double.tryParse(value);
+                      if (amount == null || amount <= 0) {
+                        return 'Please enter a valid amount';
+                      }
+                      return null;
+                    },
                   ),
-                  SizedBox(width: isSmallScreen ? 12 : 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                          vertical: isSmallScreen ? 12 : 14,
-                        ),
-                      ),
-                      child: _isLoading
-                          ? SizedBox(
-                              height: isSmallScreen ? 18 : 20,
-                              width: isSmallScreen ? 18 : 20,
-                              child: const CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              widget.tabType == 'payment'
-                                  ? 'Submit Payment'
-                                  : 'Submit Donation',
-                              style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-                            ),
-                    ),
-                  ),
+                  SizedBox(height: isSmallScreen ? 12 : 16),
                 ],
-              ),
-            ],
+                InkWell(
+                  onTap: () => _selectDate(context),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Payment Date *',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: isSmallScreen ? 12 : 16,
+                      ),
+                    ),
+                    child: Text(
+                      DateFormat('yyyy-MM-dd').format(_paymentDate),
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 14 : 16,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 16 : 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed:
+                            _isLoading ? null : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            vertical: isSmallScreen ? 12 : 14,
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: isSmallScreen ? 12 : 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            vertical: isSmallScreen ? 12 : 14,
+                          ),
+                        ),
+                        child: _isLoading
+                            ? SizedBox(
+                                height: isSmallScreen ? 18 : 20,
+                                width: isSmallScreen ? 18 : 20,
+                                child: const CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              )
+                            : Text(
+                                widget.tabType == 'payment'
+                                    ? 'Submit Payment'
+                                    : 'Submit Donation',
+                                style: TextStyle(
+                                    fontSize: isSmallScreen ? 14 : 16),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
 }
-

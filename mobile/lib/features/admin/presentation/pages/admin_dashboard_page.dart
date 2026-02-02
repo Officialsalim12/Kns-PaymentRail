@@ -7,6 +7,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/admin_provider.dart';
 import '../widgets/admin_stats_card.dart';
+import '../../../../core/presentation/widgets/main_drawer.dart';
 
 class AdminDashboardPage extends ConsumerWidget {
   const AdminDashboardPage({super.key});
@@ -16,52 +17,13 @@ class AdminDashboardPage extends ConsumerWidget {
     final dashboardAsync = ref.watch(adminDashboardProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: dashboardAsync.when(
-          data: (dashboard) => Text(dashboard?['organization']?['name'] ?? 'KNS MultiRail'),
-          loading: () => const Text('Loading...'),
-          error: (error, stack) => const Text('Error'),
+      drawer: dashboardAsync.when(
+        data: (dashboard) => MainDrawer(
+          role: 'org_admin',
+          organizationName: dashboard?['organization']?['name'],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.people),
-            tooltip: 'Members',
-            onPressed: () {
-              context.push('/admin/members');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.payment),
-            tooltip: 'Payments',
-            onPressed: () {
-              context.push('/admin/payments');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.message_outlined),
-            tooltip: 'Messages',
-            onPressed: () {
-              context.push('/admin/messages');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: () {
-              context.push('/admin/settings');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            tooltip: 'Sign Out',
-            onPressed: () async {
-              await ref.read(authProvider.notifier).signOut();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
+        loading: () => null,
+        error: (_, __) => const MainDrawer(role: 'org_admin'),
       ),
       body: dashboardAsync.when(
         data: (dashboard) {
@@ -69,223 +31,281 @@ class AdminDashboardPage extends ConsumerWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
+          final org = dashboard['organization'];
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(adminDashboardProvider);
             },
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final padding = constraints.maxWidth > 600 ? 24.0 : 16.0;
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.all(padding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (dashboard['organization'] != null)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          const Color(0xFF1E40AF),
+                        ],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      MediaQuery.of(context).padding.top + 20,
+                      24,
+                      40,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            if (dashboard['organization']['logo_url'] != null)
-                              Image.network(
-                                dashboard['organization']['logo_url'],
-                                width: 64,
-                                height: 64,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    _buildLogoPlaceholder(
-                                        context, dashboard['organization']['name']),
-                              )
-                            else
-                              _buildLogoPlaceholder(
-                                  context, dashboard['organization']['name']),
+                            Text(
+                              'Admin Suite',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
+                            ),
+                            Builder(
+                              builder: (context) => IconButton(
+                                onPressed: () =>
+                                    Scaffold.of(context).openDrawer(),
+                                icon: const Icon(Icons.menu_rounded,
+                                    color: Colors.white),
+                                style: IconButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.15),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(17),
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  color: Colors.white,
+                                  child: org?['logo_url'] != null
+                                      ? Image.network(org['logo_url'],
+                                          fit: BoxFit.contain)
+                                      : Center(
+                                          child: Text(
+                                            (org?['name'] as String?)
+                                                    ?.substring(0, 1)
+                                                    .toUpperCase() ??
+                                                'O',
+                                            style: TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary),
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    dashboard['organization']['name'] ?? 'Organization',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                    org?['name'] ?? 'Organization',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Administrative Dashboard',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                  SizedBox(height: padding),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isSmallScreen = constraints.maxWidth < 400;
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: AdminStatsCard(
-                              title: 'Total Members',
-                              value: '${dashboard['stats']['totalMembers'] ?? 0}',
-                              subtitle: '${dashboard['stats']['activeMembers'] ?? 0} active',
-                              icon: Icons.people,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          SizedBox(width: isSmallScreen ? 8 : 12),
-                          Expanded(
-                        child: AdminStatsCard(
-                          title: 'Total Payments',
-                          value: CurrencyFormatter.format(
-                              (dashboard['stats']['totalPayments'] ?? 0).toDouble()),
-                          icon: Icons.payments,
-                          color: Colors.green,
+                  ),
+                ),
+                SliverPadding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Quick Actions Row
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildQuickAction(
+                                context,
+                                'Members',
+                                Icons.people_rounded,
+                                () => context.push('/admin/members')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Payments',
+                                Icons.payments_rounded,
+                                () => context.push('/admin/payments')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Support',
+                                Icons.headset_mic_rounded,
+                                () => context.push('/admin/messages')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Users',
+                                Icons.admin_panel_settings_rounded,
+                                () => context.push('/admin/users')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Logs',
+                                Icons.history_rounded,
+                                () => context.push('/admin/activity-logs')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Reports',
+                                Icons.analytics_rounded,
+                                () => context.push('/admin/reports')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Payment Tabs',
+                                Icons.tab_rounded,
+                                () => context.push('/admin/payment-tabs')),
+                            const SizedBox(width: 12),
+                            _buildQuickAction(
+                                context,
+                                'Settings',
+                                Icons.settings_rounded,
+                                () => context.push('/admin/settings')),
+                          ],
                         ),
                       ),
-                    ],
-                  );
-                    },
-                  ),
-                  SizedBox(height: padding / 1.3),
-                  AdminStatsCard(
-                    title: 'Pending Approvals',
-                    value: '${dashboard['pendingMembers']?.length ?? 0}',
-                    icon: Icons.pending_actions,
-                    color: Colors.orange,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Payment Record',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          context.push('/admin/payments');
-                        },
-                        child: const Text('View All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (dashboard['recentPayments'] == null ||
-                      (dashboard['recentPayments'] as List).isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Text(
-                            'No payments yet',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...(dashboard['recentPayments'] as List).map((payment) {
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(
-                            CurrencyFormatter.format(
-                                (payment['amount'] ?? 0).toDouble()),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(payment['reference_number'] ?? ''),
-                              if (payment['member'] != null)
-                                Text(
-                                  '${payment['member']['full_name']} (${payment['member']['membership_id']})',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              Text(
-                                DateFormat('MMM dd, yyyy').format(
-                                    DateTime.parse(payment['payment_date'] ?? DateTime.now().toIso8601String())),
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                      const SizedBox(height: 32),
 
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Pending Approvals',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      // Metrics Grid
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.9,
+                        children: [
+                          _buildAdminMetric(
+                            context,
+                            'Total Revenue',
+                            CurrencyFormatter.format(
+                                (dashboard['stats']['totalPayments'] ?? 0)
+                                    .toDouble()),
+                            Icons.account_balance_rounded,
+                            Colors.blue.shade600,
+                          ),
+                          _buildAdminMetric(
+                            context,
+                            'Monthly Rev.',
+                            CurrencyFormatter.format(
+                                (dashboard['stats']['monthlyRevenue'] ?? 0)
+                                    .toDouble()),
+                            Icons.analytics_rounded,
+                            Colors.green.shade600,
+                          ),
+                          _buildAdminMetric(
+                            context,
+                            'Total Members',
+                            '${dashboard['stats']['totalMembers'] ?? 0}',
+                            Icons.groups_rounded,
+                            Colors.purple.shade600,
+                          ),
+                          _buildAdminMetric(
+                            context,
+                            'Pending',
+                            '${dashboard['pendingMembers']?.length ?? 0}',
+                            Icons.pending_actions_rounded,
+                            Colors.orange.shade600,
+                          ),
+                        ],
                       ),
-                      TextButton(
-                        onPressed: () {
-                          context.push('/admin/members');
-                        },
-                        child: const Text('Manage'),
-                      ),
-                    ],
+                      const SizedBox(height: 32),
+
+                      // Recent activity section
+                      _buildSectionHeader(
+                          context, 'Recent Activity', Icons.history_rounded),
+                      const SizedBox(height: 16),
+                      if (dashboard['recentPayments'] == null ||
+                          (dashboard['recentPayments'] as List).isEmpty)
+                        _buildEmptyState(context, 'No recent payments found.')
+                      else
+                        ...(dashboard['recentPayments'] as List)
+                            .map((p) => _buildPaymentListItem(context, p)),
+
+                      const SizedBox(height: 32),
+
+                      // Pending Approvals section
+                      _buildSectionHeader(context, 'Registration Requests',
+                          Icons.person_add_rounded),
+                      const SizedBox(height: 16),
+                      if (dashboard['pendingMembers'] == null ||
+                          (dashboard['pendingMembers'] as List).isEmpty)
+                        _buildEmptyState(context, 'No pending approvals.')
+                      else
+                        ...(dashboard['pendingMembers'] as List)
+                            .map((m) => _buildMemberListItem(context, m)),
+
+                      const SizedBox(height: 48),
+                    ]),
                   ),
-                  const SizedBox(height: 12),
-                  if (dashboard['pendingMembers'] == null ||
-                      (dashboard['pendingMembers'] as List).isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Text(
-                            'No pending approvals',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...(dashboard['pendingMembers'] as List).map((member) {
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(
-                            member['full_name'] ?? 'N/A',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(member['membership_id'] ?? 'N/A'),
-                              Text(
-                                member['email'] ?? 'N/A',
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                          trailing: Chip(
-                            label: const Text(
-                              'Pending',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                            backgroundColor: Colors.orange.shade100,
-                            labelStyle: TextStyle(color: Colors.orange.shade800),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                ],
-              ),
-            );
-              },
+                ),
+              ],
             ),
           );
         },
@@ -298,24 +318,15 @@ class AdminDashboardPage extends ConsumerWidget {
               children: [
                 Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                 const SizedBox(height: 16),
-                Text(
-                  'Error Loading Dashboard',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
+                const Text('Error Loading Dashboard',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
+                Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    ref.invalidate(adminDashboardProvider);
-                  },
-                  child: const Text('Retry'),
-                ),
+                    onPressed: () => ref.invalidate(adminDashboardProvider),
+                    child: const Text('Retry')),
               ],
             ),
           ),
@@ -324,26 +335,203 @@ class AdminDashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogoPlaceholder(BuildContext context, String? orgName) {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Text(
-          orgName?.isNotEmpty == true
-              ? orgName![0].toUpperCase()
-              : 'O',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[600],
-          ),
+  Widget _buildQuickAction(
+      BuildContext context, String label, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.blue.shade50),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.blue.shade900.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
+            const SizedBox(height: 8),
+            Text(label,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildAdminMetric(BuildContext context, String title, String value,
+      IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+              color: color.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const Spacer(),
+          Text(title,
+              style: TextStyle(
+                  color: Colors.blueGrey.shade400,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.blue.shade900),
+        const SizedBox(width: 8),
+        Text(title,
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.blue.shade900,
+                letterSpacing: -0.5)),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.shade50.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color: Colors.blueGrey.shade50, style: BorderStyle.solid),
+      ),
+      child: Center(
+          child: Text(message,
+              style: TextStyle(
+                  color: Colors.blueGrey.shade400,
+                  fontWeight: FontWeight.w500))),
+    );
+  }
+
+  Widget _buildPaymentListItem(BuildContext context, dynamic payment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade50),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+              color: Colors.green.shade50, shape: BoxShape.circle),
+          child: Icon(Icons.north_east_rounded,
+              color: Colors.green.shade600, size: 20),
+        ),
+        title: Text(payment['member']?['full_name'] ?? 'Member',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+            DateFormat('MMM dd, yyyy').format(DateTime.parse(
+                payment['payment_date'] ?? DateTime.now().toIso8601String())),
+            style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade400)),
+        trailing: Text(
+            CurrencyFormatter.format((payment['amount'] ?? 0).toDouble()),
+            style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                color: Colors.black)),
+      ),
+    );
+  }
+
+  Widget _buildMemberListItem(BuildContext context, dynamic member) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade50),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: CircleAvatar(
+          backgroundColor: Colors.orange.shade100,
+          child: Text(
+              (member['full_name'] as String?)?.substring(0, 1).toUpperCase() ??
+                  'M',
+              style: TextStyle(
+                  color: Colors.orange.shade800, fontWeight: FontWeight.bold)),
+        ),
+        title: Text(member['full_name'] ?? 'N/A',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(member['membership_id'] ?? 'N/A',
+            style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade400)),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+              color: Colors.orange.shade100,
+              borderRadius: BorderRadius.circular(8)),
+          child: Text('PENDING',
+              style: TextStyle(
+                  color: Colors.orange.shade800,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+}
+
+Widget _buildLogoPlaceholder(BuildContext context, String? orgName) {
+  return Container(
+    width: 64,
+    height: 64,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Center(
+      child: Text(
+        orgName?.isNotEmpty == true ? orgName![0].toUpperCase() : 'O',
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[600],
+        ),
+      ),
+    ),
+  );
 }

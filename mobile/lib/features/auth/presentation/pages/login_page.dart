@@ -26,39 +26,43 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   String _getErrorMessage(dynamic error) {
     if (error == null) return 'An unknown error occurred';
-    
+
     try {
       final errorStr = error.toString();
-      if (errorStr.contains('AuthException') || errorStr.contains('AuthApiError')) {
+      if (errorStr.contains('AuthException') ||
+          errorStr.contains('AuthApiError')) {
         final match = RegExp(r':\s*(.+)$').firstMatch(errorStr);
         if (match != null) return match.group(1) ?? errorStr;
       }
     } catch (_) {}
-    
+
     final errorStr = error.toString().toLowerCase();
-    
-    if (errorStr.contains('invalid login credentials') || 
+
+    if (errorStr.contains('invalid login credentials') ||
         errorStr.contains('invalid_credentials') ||
         errorStr.contains('wrong password') ||
         errorStr.contains('user not found') ||
         errorStr.contains('email not found')) {
       return 'Invalid email or password. Please check your credentials and try again.';
     }
-    
+
     if (errorStr.contains('email not confirmed')) {
       return 'Please confirm your email address before logging in.';
     }
-    
-    if (errorStr.contains('email rate limit exceeded') || errorStr.contains('too many requests')) {
+
+    if (errorStr.contains('email rate limit exceeded') ||
+        errorStr.contains('too many requests')) {
       return 'Too many login attempts. Please try again later.';
     }
-    
-    if (errorStr.contains('network') || errorStr.contains('connection') ||
-        errorStr.contains('timeout') || errorStr.contains('failed host lookup') ||
+
+    if (errorStr.contains('network') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('timeout') ||
+        errorStr.contains('failed host lookup') ||
         errorStr.contains('socket')) {
       return 'Network error. Please check your internet connection and try again.';
     }
-    
+
     try {
       if (error is Exception) {
         final message = error.toString();
@@ -66,11 +70,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           final clean = message.substring(11).trim();
           if (clean.isNotEmpty) return clean;
         }
-        final clean = message.replaceFirst(RegExp(r'^[A-Za-z]+Exception:\s*'), '').trim();
+        final clean =
+            message.replaceFirst(RegExp(r'^[A-Za-z]+Exception:\s*'), '').trim();
         if (clean.isNotEmpty && clean != message) return clean;
       }
     } catch (_) {}
-    
+
     return 'Login failed. Please check your credentials and try again.';
   }
 
@@ -86,58 +91,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             _emailController.text.trim(),
             _passwordController.text,
           );
-
-      if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 200));
-        
-        try {
-          final dataSource = ref.read(supabaseDataSourceProvider);
-          final authState = ref.read(authProvider);
-          
-          if (authState.hasError) throw authState.error!;
-          
-          final user = authState.value;
-          if (user != null) {
-            final profile = await dataSource.getUserProfile(user.id);
-            final role = profile?['role'];
-            
-            switch (role) {
-              case 'super_admin':
-                context.go('/super-admin');
-                break;
-              case 'org_admin':
-                context.go('/admin');
-                break;
-              case 'member':
-                context.go('/member');
-                break;
-              default:
-                context.go('/');
-            }
-          } else if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Login successful but user data not found. Please try again.'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Login successful but could not load profile: ${_getErrorMessage(e)}'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-            context.go('/');
-          }
-        }
-      }
+      // Successful login will trigger auth state change
+      // AppRouter will handle the redirection automatically
     } catch (e, stackTrace) {
       print('Login error: $e');
       print('Stack trace: $stackTrace');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -160,27 +119,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            gradient: isDark
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF111827), // Match web dark background
-                      const Color(0xFF111827),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [const Color(0xFF111827), const Color(0xFF1E293B)]
+                  : [
+                      const Color(0xFFF0F9FF),
+                      Colors.white,
+                      const Color(0xFFF0F9FF)
                     ],
-                  )
-                : LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFEFF6FF), // Match web background-start-rgb: rgb(239, 246, 255)
-                      Colors.white, // Match web background-end-rgb: rgb(255, 255, 255)
-                    ],
-                  ),
+            ),
           ),
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -278,28 +232,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               },
                             ),
                             const SizedBox(height: 24),
-                            SizedBox(
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleLogin,
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: _isLoading
-                                    ? SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Text('Sign in'),
                               ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text('Sign in'),
                             ),
                           ],
                         ),
@@ -314,7 +266,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: Text(
                             'OR',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.5),
                             ),
                           ),
                         ),
@@ -424,4 +377,3 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 }
-

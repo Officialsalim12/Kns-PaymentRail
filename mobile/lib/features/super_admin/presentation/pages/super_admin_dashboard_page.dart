@@ -5,15 +5,18 @@ import '../../../../core/data/datasources/supabase_datasource.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/super_admin_provider.dart';
+import '../../../../core/presentation/widgets/main_drawer.dart';
 
 class SuperAdminDashboardPage extends ConsumerStatefulWidget {
   const SuperAdminDashboardPage({super.key});
 
   @override
-  ConsumerState<SuperAdminDashboardPage> createState() => _SuperAdminDashboardPageState();
+  ConsumerState<SuperAdminDashboardPage> createState() =>
+      _SuperAdminDashboardPageState();
 }
 
-class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPage> {
+class _SuperAdminDashboardPageState
+    extends ConsumerState<SuperAdminDashboardPage> {
   String? _loadingOrgId;
   String? _deleteConfirmOrgId;
 
@@ -83,112 +86,212 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
     final dashboardAsync = ref.watch(superAdminDashboardProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('KNS MultiRail'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            tooltip: 'Sign Out',
-            onPressed: () async {
-              await ref.read(authProvider.notifier).signOut();
-            },
-          ),
-        ],
-      ),
+      drawer: const MainDrawer(
+          role: 'super_admin', organizationName: 'Global Overview'),
       body: dashboardAsync.when(
         data: (dashboard) {
           if (dashboard == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final organizations = dashboard['organizations'] as List<Map<String, dynamic>>;
+          final organizations =
+              dashboard['organizations'] as List<Map<String, dynamic>>;
           final stats = dashboard['stats'] as Map<String, dynamic>;
 
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(superAdminDashboardProvider);
             },
-            child: SingleChildScrollView(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Stats Cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Total Organizations',
-                          '${stats['totalOrganizations'] ?? 0}',
-                          Icons.business,
-                          Colors.blue,
-                        ),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue.shade800,
+                          Colors.blue.shade900,
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Pending Approvals',
-                          '${stats['pendingApprovals'] ?? 0}',
-                          Icons.pending_actions,
-                          Colors.orange,
-                        ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
                       ),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.shade900.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      MediaQuery.of(context).padding.top + 20,
+                      24,
+                      40,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Super Admin',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            Builder(
+                              builder: (context) => IconButton(
+                                onPressed: () =>
+                                    Scaffold.of(context).openDrawer(),
+                                icon: const Icon(Icons.menu_rounded,
+                                    color: Colors.white),
+                                style: IconButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.15),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.shield_rounded,
+                                  color: Colors.white, size: 32),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Global Overview',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    'KnsPaymentRail Network Management',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Total Users',
-                          '${stats['totalUsers'] ?? 0}',
-                          Icons.people,
-                          Colors.green,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          context,
-                          'Total Payments',
-                          CurrencyFormatter.format((stats['totalPayments'] ?? 0).toDouble()),
-                          Icons.payments,
-                          Colors.purple,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Organizations List
-                  Text(
-                    'Organizations',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  if (organizations.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Text(
-                            'No organizations yet',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[600]),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(24),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Stats Grid
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.1,
+                        children: [
+                          _buildStatCard(
+                            context,
+                            'Organizations',
+                            '${stats['totalOrganizations'] ?? 0}',
+                            Icons.business_rounded,
+                            Colors.blue.shade600,
                           ),
-                        ),
+                          _buildStatCard(
+                            context,
+                            'Pending Approvals',
+                            '${stats['pendingApprovals'] ?? 0}',
+                            Icons.pending_actions_rounded,
+                            Colors.orange.shade600,
+                          ),
+                          _buildStatCard(
+                            context,
+                            'Total Users',
+                            '${stats['totalUsers'] ?? 0}',
+                            Icons.groups_rounded,
+                            Colors.green.shade600,
+                          ),
+                          _buildStatCard(
+                            context,
+                            'Total Volume',
+                            CurrencyFormatter.format(
+                                (stats['totalPayments'] ?? 0).toDouble()),
+                            Icons.analytics_rounded,
+                            Colors.purple.shade600,
+                          ),
+                        ],
                       ),
-                    )
-                  else
-                    ...organizations.map((org) => _buildOrganizationCard(context, org)),
-                ],
-              ),
+                      const SizedBox(height: 32),
+
+                      // Organizations section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Network Entities',
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.blue.shade900,
+                                letterSpacing: -0.5),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Text('${organizations.length} Active',
+                                style: TextStyle(
+                                    color: Colors.blue.shade900,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (organizations.isEmpty)
+                        _buildEmptyState(context,
+                            'No organizations registered in the network.')
+                      else
+                        ...organizations
+                            .map((org) => _buildOrganizationCard(context, org)),
+
+                      const SizedBox(height: 48),
+                    ]),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -201,24 +304,16 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
               children: [
                 Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                 const SizedBox(height: 16),
-                Text(
-                  'Error Loading Dashboard',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
+                const Text('Network Sync Error',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
+                Text(error.toString(), textAlign: TextAlign.center),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    ref.invalidate(superAdminDashboardProvider);
-                  },
-                  child: const Text('Retry'),
-                ),
+                    onPressed: () =>
+                        ref.invalidate(superAdminDashboardProvider),
+                    child: const Text('Retry Connection')),
               ],
             ),
           ),
@@ -227,7 +322,33 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildEmptyState(BuildContext context, String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.shade50.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+            color: Colors.blueGrey.shade100, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.business_rounded,
+              color: Colors.blueGrey.shade200, size: 64),
+          const SizedBox(height: 16),
+          Text(message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.blueGrey.shade400,
+                  fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, String title, String value,
+      IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -269,7 +390,8 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
     );
   }
 
-  Widget _buildOrganizationCard(BuildContext context, Map<String, dynamic> org) {
+  Widget _buildOrganizationCard(
+      BuildContext context, Map<String, dynamic> org) {
     final status = org['status'] as String? ?? 'pending';
     final isLoading = _loadingOrgId == org['id'];
     final isDeleteConfirm = _deleteConfirmOrgId == org['id'];
@@ -289,9 +411,10 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
                     children: [
                       Text(
                         org['name'] ?? 'N/A',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -430,12 +553,14 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         TextButton(
-                          onPressed: () => setState(() => _deleteConfirmOrgId = null),
+                          onPressed: () =>
+                              setState(() => _deleteConfirmOrgId = null),
                           child: const Text('Cancel'),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: isLoading ? null : () => _handleDelete(org['id']),
+                          onPressed:
+                              isLoading ? null : () => _handleDelete(org['id']),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
@@ -462,4 +587,3 @@ class _SuperAdminDashboardPageState extends ConsumerState<SuperAdminDashboardPag
     );
   }
 }
-

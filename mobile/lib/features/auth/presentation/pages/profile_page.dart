@@ -78,21 +78,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (user == null) throw Exception('User not found');
 
       final dataSource = ref.read(supabaseDataSourceProvider);
-      await dataSource.client
-          .from('users')
-          .update({
-            'full_name': _fullNameController.text.trim(),
-            'phone_number': _phoneController.text.trim().isEmpty 
-                ? null 
-                : _phoneController.text.trim(),
-            'address': _addressController.text.trim().isEmpty 
-                ? null 
-                : _addressController.text.trim(),
-            'id_number': _idNumberController.text.trim().isEmpty 
-                ? null 
-                : _idNumberController.text.trim(),
-          })
-          .eq('id', user.id);
+      await dataSource.client.from('users').update({
+        'full_name': _fullNameController.text.trim(),
+        'phone_number': _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        'address': _addressController.text.trim().isEmpty
+            ? null
+            : _addressController.text.trim(),
+        'id_number': _idNumberController.text.trim().isEmpty
+            ? null
+            : _idNumberController.text.trim(),
+      }).eq('id', user.id);
 
       await _loadProfile();
       setState(() => _isEditing = false);
@@ -141,31 +138,34 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final dataSource = ref.read(supabaseDataSourceProvider);
       final file = File(image.path);
       final fileExt = image.path.split('.').last;
-      final fileName = '${user.id}-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final fileName =
+          '${user.id}-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'profiles/$fileName';
 
       if (_userProfile?['profile_photo_url'] != null) {
         try {
           final oldUrl = _userProfile!['profile_photo_url'] as String;
           final oldPath = oldUrl.split('/').last;
-          await dataSource.client.storage.from('avatars').remove(['profiles/$oldPath']);
+          await dataSource.client.storage
+              .from('avatars')
+              .remove(['profiles/$oldPath']);
         } catch (_) {}
       }
       final fileBytes = await file.readAsBytes();
       await dataSource.client.storage.from('avatars').uploadBinary(
-        filePath,
-        fileBytes,
-        fileOptions: const FileOptions(
-          cacheControl: '3600',
-          upsert: true,
-        ),
-      );
+            filePath,
+            fileBytes,
+            fileOptions: const FileOptions(
+              cacheControl: '3600',
+              upsert: true,
+            ),
+          );
 
-      final publicUrl = dataSource.client.storage.from('avatars').getPublicUrl(filePath);
+      final publicUrl =
+          dataSource.client.storage.from('avatars').getPublicUrl(filePath);
       await dataSource.client
           .from('users')
-          .update({'profile_photo_url': publicUrl})
-          .eq('id', user.id);
+          .update({'profile_photo_url': publicUrl}).eq('id', user.id);
 
       await _loadProfile();
 
@@ -276,17 +276,29 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                          Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                          Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.2),
+                          Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withOpacity(0.2),
                         ],
                       ),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.3),
                         width: 4,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -299,10 +311,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Icon(
-                                    Icons.person_rounded,
-                                    size: 65,
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
+                                Icons.person_rounded,
+                                size: 65,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           )
                         : Icon(
@@ -322,14 +334,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             end: Alignment.bottomRight,
                             colors: [
                               Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                              Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.8),
                             ],
                           ),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -342,11 +360,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
                                 )
-                              : const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 22),
-                          onPressed: _isUploadingPhoto ? null : _pickAndUploadImage,
+                              : const Icon(Icons.camera_alt_rounded,
+                                  color: Colors.white, size: 22),
+                          onPressed:
+                              _isUploadingPhoto ? null : _pickAndUploadImage,
                         ),
                       ),
                     ),
@@ -364,7 +385,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 ),
               const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -376,7 +398,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _getRoleColor(_userProfile!['role']).withOpacity(0.3),
+                    color:
+                        _getRoleColor(_userProfile!['role']).withOpacity(0.3),
                     width: 1.5,
                   ),
                 ),
@@ -450,4 +473,3 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 }
-

@@ -22,7 +22,8 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content: const Text('Are you sure you want to delete this notification?'),
+        content:
+            const Text('Are you sure you want to delete this notification?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -77,7 +78,8 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error marking notification as read: ${e.toString()}'),
+            content:
+                Text('Error marking notification as read: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -113,7 +115,10 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
               Text(
                 'No notifications',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
               ),
             ],
@@ -129,19 +134,19 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
       itemBuilder: (context, index) {
         final notification = notifications[index];
         final isRead = notification['is_read'] ?? false;
-        
+
         final theme = Theme.of(context);
-        final notificationColor = isRead 
+        final notificationColor = isRead
             ? theme.colorScheme.primary.withOpacity(0.1)
             : theme.colorScheme.primary;
-        
+
         return Card(
           elevation: isRead ? 1 : 2,
           shadowColor: notificationColor.withOpacity(0.15),
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             side: BorderSide(
-              color: isRead 
+              color: isRead
                   ? theme.colorScheme.primary.withOpacity(0.1)
                   : notificationColor.withOpacity(0.3),
               width: isRead ? 1.5 : 2,
@@ -178,7 +183,9 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                             notificationColor.withOpacity(0.7),
                           ],
                         ),
-                  color: isRead ? theme.colorScheme.primary.withOpacity(0.1) : null,
+                  color: isRead
+                      ? theme.colorScheme.primary.withOpacity(0.1)
+                      : null,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: isRead
                       ? null
@@ -192,19 +199,17 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                 ),
                 child: Icon(
                   Icons.notifications_rounded,
-                  color: isRead 
-                      ? theme.colorScheme.primary 
-                      : Colors.white,
+                  color: isRead ? theme.colorScheme.primary : Colors.white,
                   size: 28,
                 ),
               ),
               title: Text(
                 notification['title'] ?? 'Notification',
                 style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                      letterSpacing: -0.2,
-                    ),
+                  fontWeight: isRead ? FontWeight.w600 : FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                  letterSpacing: -0.2,
+                ),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -214,8 +219,8 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                     Text(
                       notification['message'] ?? '',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -230,12 +235,13 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                         const SizedBox(width: 4),
                         Text(
                           DateFormat('MMM dd, yyyy HH:mm').format(
-                            DateTime.parse(notification['created_at'] ?? DateTime.now().toIso8601String()),
+                            DateTime.parse(notification['created_at'] ??
+                                DateTime.now().toIso8601String()),
                           ),
                           style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                                fontSize: 12,
-                              ),
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -274,7 +280,8 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.red),
                               ),
                             )
                           : const Icon(
@@ -297,4 +304,3 @@ class _NotificationsListState extends ConsumerState<NotificationsList> {
     );
   }
 }
-

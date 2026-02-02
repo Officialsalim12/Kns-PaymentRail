@@ -169,14 +169,16 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _monthlyCostController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Monthly Cost *',
                       border: OutlineInputBorder(),
                       prefixText: 'Le ',
                     ),
                     validator: (value) {
-                      if (_tabType == 'payment' && (value == null || value.trim().isEmpty)) {
+                      if (_tabType == 'payment' &&
+                          (value == null || value.trim().isEmpty)) {
                         return 'Monthly cost is required for payment tabs';
                       }
                       if (value != null && value.trim().isNotEmpty) {
@@ -249,7 +251,7 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
               : _descriptionController.text.trim(),
           'is_active': _isActive,
         };
-        
+
         // Only include monthly_cost if tab_type is payment
         if (_tabType == 'payment') {
           final monthlyCost = _monthlyCostController.text.trim().isEmpty
@@ -259,7 +261,7 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
         } else {
           updateData['monthly_cost'] = null;
         }
-        
+
         await dataSource.updateMemberTab(_editingTab!['id'], updateData);
       } else {
         // Create new tab
@@ -274,7 +276,7 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
           'is_active': _isActive,
           'created_by': user.id,
         };
-        
+
         // Only include monthly_cost if tab_type is payment
         if (_tabType == 'payment') {
           final monthlyCost = _monthlyCostController.text.trim().isEmpty
@@ -282,7 +284,7 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
               : double.tryParse(_monthlyCostController.text.trim());
           insertData['monthly_cost'] = monthlyCost;
         }
-        
+
         await dataSource.createMemberTab(insertData);
       }
 
@@ -290,7 +292,9 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_editingTab != null ? 'Tab updated successfully' : 'Tab created successfully'),
+            content: Text(_editingTab != null
+                ? 'Tab updated successfully'
+                : 'Tab created successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -405,9 +409,10 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                           child: Text(
                             'No tabs created yet.\nClick "Create Tab" to add one.',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Colors.grey[600],
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Colors.grey[600],
+                                    ),
                           ),
                         )
                       : ListView.builder(
@@ -426,7 +431,8 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                                     Expanded(
                                       child: Text(
                                         tab['tab_name'] ?? 'Unnamed Tab',
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     Container(
@@ -441,7 +447,9 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
-                                        tabType == 'payment' ? 'Payment' : 'Donation',
+                                        tabType == 'payment'
+                                            ? 'Payment'
+                                            : 'Donation',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: tabType == 'payment'
@@ -460,7 +468,8 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.grey.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                         child: const Text(
                                           'Inactive',
@@ -478,10 +487,12 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                                   children: [
                                     if (tab['description'] != null)
                                       Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
+                                        padding:
+                                            const EdgeInsets.only(bottom: 4),
                                         child: Text(tab['description']),
                                       ),
-                                    if (tabType == 'payment' && tab['monthly_cost'] != null)
+                                    if (tabType == 'payment' &&
+                                        tab['monthly_cost'] != null)
                                       Text(
                                         'Monthly Cost: ${CurrencyFormatter.format((tab['monthly_cost'] as num).toDouble())}',
                                         style: const TextStyle(
@@ -495,7 +506,8 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
                                   itemBuilder: (context) => [
                                     PopupMenuItem(
                                       onTap: () => _toggleActive(tab),
-                                      child: Text(isActive ? 'Deactivate' : 'Activate'),
+                                      child: Text(
+                                          isActive ? 'Deactivate' : 'Activate'),
                                     ),
                                     PopupMenuItem(
                                       onTap: () => _showEditDialog(tab),
@@ -524,4 +536,3 @@ class _MemberTabsManagerState extends ConsumerState<MemberTabsManager> {
     );
   }
 }
-

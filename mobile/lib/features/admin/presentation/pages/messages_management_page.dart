@@ -9,10 +9,12 @@ class MessagesManagementPage extends ConsumerStatefulWidget {
   const MessagesManagementPage({super.key});
 
   @override
-  ConsumerState<MessagesManagementPage> createState() => _MessagesManagementPageState();
+  ConsumerState<MessagesManagementPage> createState() =>
+      _MessagesManagementPageState();
 }
 
-class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage> {
+class _MessagesManagementPageState
+    extends ConsumerState<MessagesManagementPage> {
   bool _showForm = false;
   bool _isLoading = false;
   String? _error;
@@ -30,7 +32,8 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
   }
 
   Future<void> _sendMessage() async {
-    if (_titleController.text.trim().isEmpty || _messageController.text.trim().isEmpty) {
+    if (_titleController.text.trim().isEmpty ||
+        _messageController.text.trim().isEmpty) {
       setState(() {
         _error = 'Please fill in all fields';
       });
@@ -65,13 +68,15 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
 
       final organizationId = userProfile['organization_id'];
       final messagesData = await ref.read(adminMessagesProvider.future);
-      final members = messagesData?['members'] as List<Map<String, dynamic>>? ?? [];
+      final members =
+          messagesData?['members'] as List<Map<String, dynamic>>? ?? [];
 
       int sentCount = 0;
 
       if (_recipientType == 'all') {
         // Send to all active members
-        final activeMembers = members.where((m) => m['user_id'] != null).toList();
+        final activeMembers =
+            members.where((m) => m['user_id'] != null).toList();
         if (activeMembers.isEmpty) {
           throw Exception('No active members found with user accounts');
         }
@@ -96,7 +101,8 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
 
         sentCount = activeMembers.length;
         setState(() {
-          _success = 'Message sent successfully to $sentCount member(s)! They will see it in their notifications.';
+          _success =
+              'Message sent successfully to $sentCount member(s)! They will see it in their notifications.';
         });
       } else {
         // Send to individual member
@@ -121,7 +127,8 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
 
         sentCount = 1;
         setState(() {
-          _success = 'Message sent successfully to ${selectedMember['full_name']}! They will see it in their notifications.';
+          _success =
+              'Message sent successfully to ${selectedMember['full_name']}! They will see it in their notifications.';
         });
       }
 
@@ -227,7 +234,8 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                               decoration: BoxDecoration(
                                 color: Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.green.shade200),
+                                border:
+                                    Border.all(color: Colors.green.shade200),
                               ),
                               child: Text(
                                 _success!,
@@ -323,7 +331,8 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                                       ? const SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
                                         )
                                       : const Text('Send Message'),
                                 ),
@@ -378,7 +387,13 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                   )
                 else
                   ...messages.map((msg) {
-                    final recipient = msg['recipient'] as Map<String, dynamic>?;
+                    final recipientData = msg['recipient'];
+                    final recipient =
+                        (recipientData is List && recipientData.isNotEmpty)
+                            ? recipientData.first as Map<String, dynamic>
+                            : (recipientData is Map<String, dynamic>
+                                ? recipientData
+                                : null);
                     final isRead = msg['is_read'] ?? false;
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -391,9 +406,10 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                         ),
                         title: Text(
                           msg['title'] ?? 'Notification',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +420,10 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                               const SizedBox(height: 4),
                               Text(
                                 'To: ${recipient['full_name']} (${recipient['email']})',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
                                       color: Colors.grey[600],
                                     ),
                               ),
@@ -413,10 +432,14 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                             Text(
                               DateFormat('MMM dd, yyyy HH:mm').format(
                                 DateTime.parse(
-                                  msg['created_at'] ?? DateTime.now().toIso8601String(),
+                                  msg['created_at'] ??
+                                      DateTime.now().toIso8601String(),
                                 ),
                               ),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
                                     color: Colors.grey[500],
                                     fontSize: 12,
                                   ),
@@ -425,9 +448,11 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
                         ),
                         trailing: !isRead
                             ? Chip(
-                                label: const Text('Unread', style: TextStyle(fontSize: 11)),
+                                label: const Text('Unread',
+                                    style: TextStyle(fontSize: 11)),
                                 backgroundColor: Colors.blue.shade100,
-                                labelStyle: TextStyle(color: Colors.blue.shade800),
+                                labelStyle:
+                                    TextStyle(color: Colors.blue.shade800),
                               )
                             : null,
                       ),
@@ -472,5 +497,3 @@ class _MessagesManagementPageState extends ConsumerState<MessagesManagementPage>
     );
   }
 }
-
-
