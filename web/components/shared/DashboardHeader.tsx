@@ -108,7 +108,7 @@ export default function DashboardHeader({
 
                             <button
                                 onClick={handleSignOut}
-                                className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group"
+                                className="hidden lg:flex p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group"
                                 title="Sign Out"
                             >
                                 <LogOut className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-0.5 transition-transform" />

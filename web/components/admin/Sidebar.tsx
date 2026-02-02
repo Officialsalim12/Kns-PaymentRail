@@ -58,7 +58,7 @@ export default function AdminSidebar({
     { href: '/admin/payment-tabs', label: 'Payment Tabs', icon: CreditCard },
     { href: '/admin/reports', label: 'Reports', icon: FileText },
     { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/admin/settings', label: 'Settings', icon: Settings, hiddenOnDesktop: true },
   ]
 
   const isActive = (href: string) => {
@@ -132,6 +132,7 @@ export default function AdminSidebar({
                       ? 'bg-primary-50 text-primary-700 font-bold border border-primary-100/50 shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
                     }
+                    ${item.hiddenOnDesktop ? 'hidden' : ''}
                   `}
                 >
                   <Icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${active ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'}`} />
@@ -140,7 +141,16 @@ export default function AdminSidebar({
               )
             })}
           </nav>
-
+          {/* Sidebar Sign Out (Mobile) */}
+          <div className="lg:hidden p-4 border-t border-gray-50 mt-auto">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-600 hover:bg-red-50 w-full group"
+            >
+              <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+              <span className="text-sm font-semibold">Sign Out</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>

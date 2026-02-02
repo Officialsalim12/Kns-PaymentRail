@@ -48,7 +48,7 @@ export default function SuperAdminSidebar({
         { href: '/super-admin', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/super-admin/organizations', label: 'Organizations', icon: Building2 },
         { href: '/super-admin/users', label: 'Users', icon: Users },
-        { href: '/super-admin/password-resets', label: 'Password Resets', icon: ShieldCheck },
+        { href: '/super-admin/password-resets', label: 'Password Resets', icon: ShieldCheck, hiddenOnDesktop: true },
         { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity },
     ]
 
@@ -111,6 +111,7 @@ export default function SuperAdminSidebar({
                                             ? 'bg-blue-50 text-blue-700 font-bold shadow-sm border border-blue-100'
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
                                         }
+                    ${item.hiddenOnDesktop ? 'hidden' : ''}
                   `}
                                 >
                                     <Icon className={`h-5 w-5 transition-transform group-hover:scale-110 ${active ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600'}`} />
@@ -120,7 +121,16 @@ export default function SuperAdminSidebar({
                             )
                         })}
                     </nav>
-
+                    {/* Sidebar Sign Out (Mobile) */}
+                    <div className="lg:hidden p-4 border-t border-gray-50 mt-auto">
+                        <button
+                            onClick={handleSignOut}
+                            className="flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 text-red-600 hover:bg-red-50 w-full group"
+                        >
+                            <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+                            <span className="text-sm font-semibold">Sign Out</span>
+                        </button>
+                    </div>
                 </div>
             </aside>
         </>

@@ -25,7 +25,7 @@ export default async function MemberNavbar() {
       .select('*')
       .eq('id', organizationId)
       .single()
-    
+
     if (!error && data) {
       organization = {
         id: data.id,
@@ -91,7 +91,7 @@ export default async function MemberNavbar() {
                     src={profilePhotoUrl}
                     alt={member?.full_name || 'Member'}
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ 
+                    style={{
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }}
@@ -103,7 +103,9 @@ export default async function MemberNavbar() {
               </div>
               <span className="hidden sm:block">{member?.full_name || 'Member'}</span>
             </Link>
-            <LogoutButton />
+            <div className="hidden sm:block">
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </div>
