@@ -1,3 +1,5 @@
+'use server'
+
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { generateReport } from './generate-report'
 import { convertToCSV, type ReportData } from '@/lib/csv'
