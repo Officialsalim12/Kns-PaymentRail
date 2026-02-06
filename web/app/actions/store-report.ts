@@ -1,7 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { generateReport, convertToCSV, type ReportData } from './generate-report'
+import { generateReport } from './generate-report'
+import { convertToCSV, type ReportData } from '@/lib/csv'
 
 export interface StoredReport {
   path: string
@@ -262,8 +263,8 @@ export async function deleteStoredReport(organizationId: string, path: string): 
   const supabase = await createClient()
 
   // Remove organization ID prefix if present
-  const filePath = path.startsWith(organizationId) 
-    ? path 
+  const filePath = path.startsWith(organizationId)
+    ? path
     : `${organizationId}/${path}`
 
   const { error } = await supabase.storage

@@ -2,19 +2,7 @@
 
 import { requireOrgAdmin } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
-
-export interface ReportData {
-  id: string
-  payment_date: string
-  created_at: string
-  member_name: string
-  membership_id: string
-  amount: number
-  payment_method: string
-  payment_status: string
-  reference_number: string
-  description: string
-}
+import { type ReportData } from '@/lib/csv'
 
 export async function generateReport(type: 'monthly' | 'yearly' | 'all', month?: number, year?: number) {
   const user = await requireOrgAdmin()
