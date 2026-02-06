@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, ChevronRight, FileText, Shield, Lock, Scale, AlertTriangle, Users, Mail, Phone, Gavel } from 'lucide-react'
+import { ChevronRight, FileText, Shield, Lock, Scale, AlertTriangle, Users, Mail, Phone, Gavel } from 'lucide-react'
 import { useState } from 'react'
 
 const sections = [
@@ -398,11 +398,8 @@ export default function TermsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8 sm:mb-12">
             <div>
-              <div className="flex items-center mb-4">
-                <span className="text-xl font-bold text-white">KNS MultiRail</span>
-              </div>
               <p className="text-sm text-gray-400">
-                KNS MultiRail helps thousands of organizations collect payments, manage members, and track transactions. Built for Sierra Leone.
+                Helping thousands of organizations collect payments, manage members, and track transactions. Built for Sierra Leone.
               </p>
             </div>
 
@@ -435,7 +432,7 @@ export default function TermsPage() {
               </Link>
             </div>
             <p className="text-sm text-gray-400 mt-4 md:mt-0">
-              © {new Date().getFullYear()} KNS MultiRail. All rights reserved.
+              © {new Date().getFullYear()}. All rights reserved.
             </p>
           </div>
         </div>
