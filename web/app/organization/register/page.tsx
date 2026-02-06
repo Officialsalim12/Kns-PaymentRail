@@ -9,7 +9,7 @@ export default function OrganizationRegisterPage() {
         <div className="absolute inset-0 flex flex-col">
           <div className="relative h-1/2 w-full">
             <img
-              src="/e375fa1f6a3d5077449a0dadd20fae66.jpg"
+              src="/organization-preview.jpg"
               alt="Registration Preview 1"
               className="w-full h-full object-cover"
             />
@@ -17,7 +17,7 @@ export default function OrganizationRegisterPage() {
           </div>
           <div className="relative h-1/2 w-full">
             <img
-              src="/a1fde4dd0d05b36b54f147c584162a3b.jpg"
+              src="/donation-preview.jpg"
               alt="Registration Preview 2"
               className="w-full h-full object-cover"
             />
