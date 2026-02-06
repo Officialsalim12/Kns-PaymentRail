@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Download, Bell, Wallet, Calendar, CheckCircle, Trash2, FileText, ExternalLink, Sparkles, ArrowUpRight, User as UserIcon, Settings, LogOut } from 'lucide-react'
+import { Download, Bell, Wallet, Calendar, CheckCircle, Trash2, FileText, ExternalLink, Sparkles, ArrowUpRight, User as UserIcon, Settings, LogOut, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
