@@ -7,159 +7,116 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Create Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
 
-    // Get current date
-    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const threeMonthsAgo = new Date()
+    threeMonthsAgo.setMonth(now.getMonth() - 3)
 
-    // Find all members whose grace period has ended and haven't paid
-    const { data: overdueMembers, error: queryError } = await supabase
-      .from('member_payment_status')
-      .select(`
-        *,
-        member:members!inner(
-          id,
-          user_id,
-          full_name,
-          email,
-          phone_number,
-          status,
-          organization_id,
-          organization:organizations(name)
-        ),
-        tab:member_tabs(tab_name, monthly_cost)
-      `)
-      .eq('is_suspended', false)
-      .lte('grace_period_end_date', today)
-      .or('last_payment_date.is.null,last_payment_date.lt.activation_date')
+    // Only check members who aren't already inactive
+    const { data: members, error: queryError } = await supabase
+      .from('members')
+      .select('id, full_name, user_id, email, phone_number, status, organization_id, activated_at, unpaid_balance')
+      .not('status', 'in', '("suspended","inactive")')
 
-    if (queryError) {
-      throw new Error(`Error querying members: ${queryError.message}`)
+    if (queryError) throw queryError
+
+    if (!members?.length) {
+      return new Response(JSON.stringify({ message: 'No members to check', checked: 0, suspended: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
     }
 
-    if (!overdueMembers || overdueMembers.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          message: 'No members to suspend',
-          checked: 0,
-          suspended: 0
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      )
-    }
+    const results = []
 
-    const suspendedMembers = []
-    const errors = []
+    for (const member of members) {
+      const { data: lastPayment } = await supabase
+        .from('payments')
+        .select('created_at')
+        .eq('member_id', member.id)
+        .eq('payment_status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-    // Process each overdue member
-    for (const paymentStatus of overdueMembers) {
-      try {
-        const member = paymentStatus.member
-        if (!member || member.status === 'suspended') {
-          continue // Skip if already suspended
+      let shouldSuspend = false
+      let reason = ""
+
+      if (lastPayment) {
+        const lastPaymentDate = new Date(lastPayment.created_at)
+        if (lastPaymentDate < threeMonthsAgo) {
+          shouldSuspend = true
+          reason = `No payment since ${lastPaymentDate.toLocaleDateString()}`
         }
+      } else {
+        // Fallback: check the oldest active payment tab
+        const { data: oldestTab } = await supabase
+          .from('member_tabs')
+          .select('created_at')
+          .eq('member_id', member.id)
+          .eq('is_active', true)
+          .eq('tab_type', 'payment')
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
 
-        // Calculate total due amount
-        let totalDue = 0
-        if (paymentStatus.tab && paymentStatus.tab.monthly_cost) {
-          const activationDate = new Date(paymentStatus.activation_date)
-          const graceEndDate = new Date(paymentStatus.grace_period_end_date)
-          const monthsDiff = Math.max(0, 
-            (graceEndDate.getTime() - activationDate.getTime()) / (1000 * 60 * 60 * 24 * 30)
-          )
-          totalDue = paymentStatus.tab.monthly_cost * Math.ceil(monthsDiff)
+        const referenceDate = oldestTab ? new Date(oldestTab.created_at) : (member.activated_at ? new Date(member.activated_at) : null)
+
+        if (referenceDate && referenceDate < threeMonthsAgo) {
+          shouldSuspend = true
+          reason = oldestTab
+            ? `No payment since first tab created on ${referenceDate.toLocaleDateString()}`
+            : `No payment since activation on ${referenceDate.toLocaleDateString()}`
         }
+      }
 
-        // Suspend the member
+      if (shouldSuspend) {
         const { error: suspendError } = await supabase
           .from('members')
-          .update({ 
-            status: 'suspended',
-          })
+          .update({ status: 'inactive', updated_at: now.toISOString() })
           .eq('id', member.id)
 
         if (suspendError) {
-          errors.push(`Failed to suspend member ${member.id}: ${suspendError.message}`)
+          console.error(`[check-member-suspensions] Error inactivating ${member.id}:`, suspendError)
           continue
         }
 
-        // Update payment status
-        await supabase
-          .from('member_payment_status')
-          .update({
-            is_suspended: true,
-            suspension_reason: `Automatic suspension: Payment overdue after 3-month grace period. Total due: $${totalDue.toFixed(2)}`,
-            total_due_amount: totalDue,
-          })
-          .eq('id', paymentStatus.id)
-
-        // Create dashboard notification
         if (member.user_id) {
-          await supabase
-            .from('notifications')
-            .insert({
-              organization_id: member.organization_id,
-              recipient_id: member.user_id,
-              sender_id: null, // System notification
-              title: 'Account Suspended',
-              message: `Your account has been suspended due to overdue payments. Total amount due: $${totalDue.toFixed(2)}. Please contact your administrator to resolve this issue.`,
-              type: 'warning',
-              member_id: member.id,
-            })
+          await supabase.from('notifications').insert({
+            organization_id: member.organization_id,
+            recipient_id: member.user_id,
+            member_id: member.id,
+            title: 'Account Inactive',
+            message: `Your account is now inactive due to 3+ months of non-payment. Balance due: ${member.unpaid_balance || 0}. Please pay to regain access.`,
+            type: 'warning',
+          })
         }
 
-        // Send email notification (if email service is configured)
-        if (member.email) {
-          // You can integrate with an email service here (SendGrid, Resend, etc.)
-          // For now, we'll just log it
-          console.log(`Email notification would be sent to: ${member.email}`)
-        }
-
-        // Send SMS notification (if SMS service is configured)
-        if (member.phone_number) {
-          // You can integrate with an SMS service here (Twilio, etc.)
-          // For now, we'll just log it
-          console.log(`SMS notification would be sent to: ${member.phone_number}`)
-        }
-
-        suspendedMembers.push({
-          memberId: member.id,
-          memberName: member.full_name,
-          email: member.email,
-          phoneNumber: member.phone_number,
-          totalDue: totalDue,
-        })
-
-      } catch (error) {
-        errors.push(`Error processing member ${paymentStatus.member?.id}: ${error.message}`)
+        results.push({ id: member.id, name: member.full_name, reason })
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        message: 'Suspension check completed',
-        checked: overdueMembers.length,
-        suspended: suspendedMembers.length,
-        suspendedMembers,
-        errors: errors.length > 0 ? errors : undefined,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    )
+    return new Response(JSON.stringify({
+      message: 'Suspension check completed',
+      checked: members.length,
+      suspended: results.length,
+      suspendedMembers: results,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
 
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    console.error("[check-member-suspensions] Fatal error:", error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
+    })
   }
 })
-

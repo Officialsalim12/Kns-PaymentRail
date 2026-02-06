@@ -38,7 +38,7 @@ const getNotificationIcon = (type: string) => {
 
 const getNotificationColor = (type: string, isRead: boolean) => {
   if (isRead) return 'text-gray-400'
-  
+
   switch (type) {
     case 'payment':
       return 'text-green-600'
@@ -57,7 +57,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
   const [notifications, setNotifications] = useState(initialNotifications)
   const [markingAsRead, setMarkingAsRead] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  
+
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   // Set up real-time subscriptions for notifications
@@ -106,7 +106,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
       const supabase = createClient()
       const { error } = await supabase
         .from('notifications')
-        .update({ 
+        .update({
           is_read: true,
           read_at: new Date().toISOString()
         })
@@ -114,7 +114,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
 
       if (error) throw error
 
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       )
     } catch (error: any) {
@@ -154,7 +154,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
       const supabase = createClient()
       const { error } = await supabase
         .from('notifications')
-        .update({ 
+        .update({
           is_read: true,
           read_at: new Date().toISOString()
         })
@@ -162,7 +162,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
 
       if (error) throw error
 
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => ({ ...n, is_read: true }))
       )
       router.refresh()
@@ -173,19 +173,19 @@ export default function MemberNotificationsList({ notifications: initialNotifica
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="max-w-md">
           <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
           <p className="text-sm text-gray-500 mt-1">Stay updated with your payment and account notifications</p>
         </div>
         {unreadCount > 0 && (
-          <div className="flex items-center gap-3">
-            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
               {unreadCount} unread
             </span>
             <button
               onClick={markAllAsRead}
-              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors whitespace-nowrap"
             >
               Mark All Read
             </button>
@@ -204,43 +204,41 @@ export default function MemberNotificationsList({ notifications: initialNotifica
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 ${
-                  !notification.is_read 
-                    ? 'bg-blue-50' 
+                className={`p-4 ${!notification.is_read
+                    ? 'bg-blue-50'
                     : 'hover:bg-blue-50'
-                } transition-colors`}
+                  } transition-colors`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 flex-shrink-0 ${getNotificationColor(notification.type, notification.is_read)}`}>
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-900">{notification.title}</p>
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                      <div className="flex-1 w-full">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-gray-900 break-words">{notification.title}</p>
                           {notification.type && (
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                              notification.type === 'payment' ? 'bg-green-100 text-green-700' :
-                              notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
-                              notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap ${notification.type === 'payment' ? 'bg-green-100 text-green-700' :
+                                notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
+                                  notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
+                              }`}>
                               {notification.type}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                        <p className="text-sm text-gray-600 mt-1 break-words">{notification.message}</p>
                         <p className="text-xs text-gray-400 mt-2">
                           {format(new Date(notification.created_at), 'MMM dd, yyyy HH:mm')}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="flex items-center gap-2 sm:ml-4 flex-shrink-0">
                         {!notification.is_read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
                             disabled={markingAsRead === notification.id}
-                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50"
+                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                           >
                             {markingAsRead === notification.id ? 'Marking...' : 'Mark Read'}
                           </button>

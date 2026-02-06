@@ -70,11 +70,11 @@ export default function MembersManagement({ members: initialMembers, organizatio
     try {
       const supabase = createClient()
       const updateData: { status: string; unpaid_balance?: number } = { status: newStatus }
-      
+
       if (newStatus === 'active' && balance !== undefined) {
         updateData.unpaid_balance = balance
       }
-      
+
       const { error } = await supabase
         .from('members')
         .update(updateData)
@@ -82,7 +82,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
 
       if (error) throw error
 
-      setMembers(members.map(m => 
+      setMembers(members.map(m =>
         m.id === memberId ? { ...m, status: newStatus, unpaid_balance: balance !== undefined ? balance : m.unpaid_balance } : m
       ))
       setApproveModal(null)
@@ -104,7 +104,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
   const handleApproveSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!approveModal) return
-    
+
     const balance = parseFloat(initialBalance) || 0
     updateMemberStatus(approveModal.memberId, 'active', balance)
   }
@@ -153,7 +153,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
         throw new Error(`Failed to update balance: ${updateError.message}`)
       }
 
-      setMembers(members.map(m => 
+      setMembers(members.map(m =>
         m.id === memberId ? { ...m, unpaid_balance: totalBalanceAdded } : m
       ))
 
@@ -174,7 +174,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
     setLoading(memberId)
     try {
       const supabase = createClient()
-      
+
       const { error: updateError } = await supabase
         .from('members')
         .update({ unpaid_balance: 0 })
@@ -184,7 +184,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
         throw new Error(`Failed to reset balance: ${updateError.message}`)
       }
 
-      setMembers(members.map(m => 
+      setMembers(members.map(m =>
         m.id === memberId ? { ...m, unpaid_balance: 0 } : m
       ))
 
@@ -226,58 +226,55 @@ export default function MembersManagement({ members: initialMembers, organizatio
   // Filter members based on search query
   const filteredMembers = members.filter((member) => {
     if (!searchQuery.trim()) return true
-    
+
     const query = searchQuery.toLowerCase().trim()
     const nameMatch = member.full_name?.toLowerCase().includes(query)
     const idMatch = member.membership_id?.toLowerCase().includes(query)
-    
+
     return nameMatch || idMatch
   })
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Members Management</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Members</h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">Directory and membership management</p>
+        </div>
         <button
           onClick={() => setShowBulkTabCreator(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm sm:text-base"
+          className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-100 active:scale-95 text-sm"
         >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Create Payment Tab</span>
-          <span className="sm:hidden">Create Tab</span>
+          Create Payment Tab
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-4 sm:p-6 lg:p-8 xl:p-10 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4">
-            <h2 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-semibold text-gray-900">All Members</h2>
-            <div className="text-xs sm:text-sm lg:text-base xl:text-lg text-gray-500">
-              {searchQuery ? (
-                <span>
-                  Showing {filteredMembers.length} of {members.length} members
-                </span>
-              ) : (
-                <span>{members.length} total members</span>
-              )}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-lg font-bold text-gray-900">All Members</h2>
+            <div className="px-3 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg uppercase tracking-wider">
+              {searchQuery ? `${filteredMembers.length} Found` : `${members.length} Total`}
             </div>
           </div>
+
           {/* Search Box */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 xl:pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 xl:h-6 xl:w-6 text-gray-400" />
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-600 text-gray-400">
+              <Search className="h-5 w-5" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or membership ID..."
-              className="block w-full pl-10 xl:pl-12 pr-10 xl:pr-12 py-2 xl:py-3 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base xl:text-lg"
+              className="block w-full pl-12 pr-12 py-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 text-sm font-medium transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -300,103 +297,88 @@ export default function MembersManagement({ members: initialMembers, organizatio
             </div>
           ) : (
             <>
-              {/* Mobile Card View */}
-              <div className="block md:hidden space-y-4">
+              <div className="md:hidden divide-y divide-gray-50">
                 {filteredMembers.map((member) => (
-                  <div key={member.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div key={member.id} className="p-5 space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">{member.full_name}</h3>
-                        <p className="text-sm text-gray-500 mt-1">ID: {member.membership_id}</p>
+                        <h3 className="text-base font-bold text-gray-900 truncate">{member.full_name}</h3>
+                        <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">ID: {member.membership_id}</p>
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold flex-shrink-0 ${getStatusColor(member.status)}`}>
-                        {getStatusIcon(member.status)}
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getStatusColor(member.status)}`}>
                         {member.status}
                       </span>
                     </div>
-                    <div className="space-y-2 text-sm">
+
+                    <div className="grid grid-cols-2 gap-4 text-[11px]">
                       <div>
-                        <span className="text-gray-500">Email: </span>
-                        <span className="text-gray-900">{member.email || 'N/A'}</span>
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">Email</p>
+                        <p className="text-gray-900 truncate">{member.email || 'N/A'}</p>
                       </div>
-                      {member.phone_number && (
-                        <div>
-                          <span className="text-gray-500">Phone: </span>
-                          <span className="text-gray-900">{member.phone_number}</span>
+                      <div>
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">Balance</p>
+                        <p className="text-gray-900 font-bold">{formatCurrency(member.unpaid_balance || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {member.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveClick(member.id, member.full_name)}
+                            className="flex-1 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => updateMemberStatus(member.id, 'inactive')}
+                            className="flex-1 py-2 bg-red-50 text-red-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      {member.status === 'active' && (
+                        <button
+                          onClick={() => updateMemberStatus(member.id, 'suspended')}
+                          className="flex-1 py-2 bg-orange-50 text-orange-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                        >
+                          Suspend
+                        </button>
+                      )}
+                      {member.status === 'suspended' && (
+                        <button
+                          onClick={() => updateMemberStatus(member.id, 'active')}
+                          className="flex-1 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                        >
+                          Reactivate
+                        </button>
+                      )}
+                      {(member.status === 'active' || member.status === 'suspended') && (
+                        <div className="flex w-full gap-2">
+                          <button
+                            onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
+                            className="flex-1 py-2 bg-purple-50 text-purple-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          >
+                            Tabs
+                          </button>
+                          <button
+                            onClick={() => recalculateBalance(member.id)}
+                            className="flex-1 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          >
+                            Recalc
+                          </button>
+                          <button
+                            onClick={() => resetBalance(member.id)}
+                            className="py-2 px-4 bg-gray-50 text-gray-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          >
+                            Reset
+                          </button>
                         </div>
                       )}
-                      <div>
-                        <span className="text-gray-500">Balance: </span>
-                        <span className="font-semibold text-gray-900">{formatCurrency(member.unpaid_balance || 0)}</span>
-                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-                          {member.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => handleApproveClick(member.id, member.full_name)}
-                                disabled={loading === member.id}
-                                className="text-green-600 hover:text-green-900 disabled:opacity-50"
-                              >
-                                {loading === member.id ? 'Updating...' : 'Approve'}
-                              </button>
-                              <button
-                                onClick={() => updateMemberStatus(member.id, 'inactive')}
-                                disabled={loading === member.id}
-                                className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {member.status === 'active' && (
-                            <button
-                              onClick={() => updateMemberStatus(member.id, 'suspended')}
-                              disabled={loading === member.id}
-                              className="text-orange-600 hover:text-orange-900 disabled:opacity-50"
-                            >
-                              {loading === member.id ? 'Updating...' : 'Suspend'}
-                            </button>
-                          )}
-                          {member.status === 'suspended' && (
-                            <button
-                              onClick={() => updateMemberStatus(member.id, 'active')}
-                              disabled={loading === member.id}
-                              className="text-green-600 hover:text-green-900 disabled:opacity-50"
-                            >
-                              {loading === member.id ? 'Updating...' : 'Reactivate'}
-                            </button>
-                          )}
-                          {(member.status === 'active' || member.status === 'suspended') && (
-                            <>
-                              <button
-                                onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
-                                className="text-purple-600 hover:text-purple-900 disabled:opacity-50 text-xs"
-                                title="Manage tabs for this member"
-                              >
-                                Tabs
-                              </button>
-                              <button
-                                onClick={() => recalculateBalance(member.id)}
-                                disabled={loading === member.id}
-                                className="text-blue-600 hover:text-blue-900 disabled:opacity-50 text-xs"
-                                title="Recalculate balance from payments"
-                              >
-                                {loading === member.id ? '...' : 'Recalc'}
-                              </button>
-                              <button
-                                onClick={() => resetBalance(member.id)}
-                                disabled={loading === member.id}
-                                className="text-gray-600 hover:text-gray-900 disabled:opacity-50 text-xs"
-                                title="Reset balance to 0"
-                              >
-                                {loading === member.id ? '...' : 'Reset'}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                    </div>
-                  ))}
+                  </div>
+                ))}
               </div>
 
               {/* Desktop Table View */}
@@ -440,73 +422,73 @@ export default function MembersManagement({ members: initialMembers, organizatio
                           </td>
                           <td className="px-4 lg:px-6 xl:px-8 2xl:px-10 py-4 xl:py-5 whitespace-nowrap text-sm lg:text-base xl:text-lg font-medium">
                             <div className="flex flex-wrap gap-2 xl:gap-3">
-                            {member.status === 'pending' && (
-                              <>
+                              {member.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleApproveClick(member.id, member.full_name)}
+                                    disabled={loading === member.id}
+                                    className="text-green-600 hover:text-green-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                  >
+                                    {loading === member.id ? 'Updating...' : 'Approve'}
+                                  </button>
+                                  <button
+                                    onClick={() => updateMemberStatus(member.id, 'inactive')}
+                                    disabled={loading === member.id}
+                                    className="text-red-600 hover:text-red-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                              {member.status === 'active' && (
                                 <button
-                                  onClick={() => handleApproveClick(member.id, member.full_name)}
+                                  onClick={() => updateMemberStatus(member.id, 'suspended')}
+                                  disabled={loading === member.id}
+                                  className="text-orange-600 hover:text-orange-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                >
+                                  {loading === member.id ? 'Updating...' : 'Suspend'}
+                                </button>
+                              )}
+                              {member.status === 'suspended' && (
+                                <button
+                                  onClick={() => updateMemberStatus(member.id, 'active')}
                                   disabled={loading === member.id}
                                   className="text-green-600 hover:text-green-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
                                 >
-                                  {loading === member.id ? 'Updating...' : 'Approve'}
+                                  {loading === member.id ? 'Updating...' : 'Reactivate'}
                                 </button>
-                                <button
-                                  onClick={() => updateMemberStatus(member.id, 'inactive')}
-                                  disabled={loading === member.id}
-                                  className="text-red-600 hover:text-red-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                            {member.status === 'active' && (
-                              <button
-                                onClick={() => updateMemberStatus(member.id, 'suspended')}
-                                disabled={loading === member.id}
-                                className="text-orange-600 hover:text-orange-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                              >
-                                {loading === member.id ? 'Updating...' : 'Suspend'}
-                              </button>
-                            )}
-                            {member.status === 'suspended' && (
-                              <button
-                                onClick={() => updateMemberStatus(member.id, 'active')}
-                                disabled={loading === member.id}
-                                className="text-green-600 hover:text-green-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                              >
-                                {loading === member.id ? 'Updating...' : 'Reactivate'}
-                              </button>
-                            )}
-                            {(member.status === 'active' || member.status === 'suspended') && (
-                              <>
-                                <button
-                                  onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
-                                  className="text-purple-600 hover:text-purple-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                  title="Manage tabs for this member"
-                                >
-                                  Tabs
-                                </button>
-                                <button
-                                  onClick={() => recalculateBalance(member.id)}
-                                  disabled={loading === member.id}
-                                  className="text-blue-600 hover:text-blue-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                  title="Recalculate balance from payments"
-                                >
-                                  {loading === member.id ? '...' : 'Recalc'}
-                                </button>
-                                <button
-                                  onClick={() => resetBalance(member.id)}
-                                  disabled={loading === member.id}
-                                  className="text-gray-600 hover:text-gray-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                  title="Reset balance to 0"
-                                >
-                                  {loading === member.id ? '...' : 'Reset'}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              )}
+                              {(member.status === 'active' || member.status === 'suspended') && (
+                                <>
+                                  <button
+                                    onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
+                                    className="text-purple-600 hover:text-purple-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                    title="Manage tabs for this member"
+                                  >
+                                    Tabs
+                                  </button>
+                                  <button
+                                    onClick={() => recalculateBalance(member.id)}
+                                    disabled={loading === member.id}
+                                    className="text-blue-600 hover:text-blue-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                    title="Recalculate balance from payments"
+                                  >
+                                    {loading === member.id ? '...' : 'Recalc'}
+                                  </button>
+                                  <button
+                                    onClick={() => resetBalance(member.id)}
+                                    disabled={loading === member.id}
+                                    className="text-gray-600 hover:text-gray-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
+                                    title="Reset balance to 0"
+                                  >
+                                    {loading === member.id ? '...' : 'Reset'}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

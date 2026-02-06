@@ -141,7 +141,7 @@ export default function LoginForm() {
             id="email"
             type="email"
             label="Email address"
-            placeholder="you@example.com"
+            placeholder=""
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -154,7 +154,7 @@ export default function LoginForm() {
               id="password"
               type="password"
               label="Password"
-              placeholder="••••••••"
+              placeholder=""
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -259,7 +259,7 @@ export default function LoginForm() {
                           label="Full Name"
                           value={resetName}
                           onChange={(e) => setResetName(e.target.value)}
-                          placeholder="John Doe"
+                          placeholder=""
                           required
                           leftIcon={<User className="h-4 w-4" />}
                         />
@@ -269,7 +269,7 @@ export default function LoginForm() {
                           type="email"
                           value={resetEmail}
                           onChange={(e) => setResetEmail(e.target.value)}
-                          placeholder="john@example.com"
+                          placeholder=""
                           required
                           leftIcon={<Mail className="h-4 w-4" />}
                         />
@@ -279,7 +279,7 @@ export default function LoginForm() {
                           type="tel"
                           value={resetPhone}
                           onChange={(e) => setResetPhone(e.target.value)}
-                          placeholder="+1234567890"
+                          placeholder=""
                           required
                         />
 

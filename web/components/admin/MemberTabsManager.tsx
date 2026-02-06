@@ -12,6 +12,7 @@ interface MemberTab {
   tab_type: 'payment' | 'donation'
   description: string | null
   monthly_cost: number | null
+  billing_cycle: 'weekly' | 'monthly'
   is_active: boolean
   created_at: string
 }
@@ -34,6 +35,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
     tab_type: 'payment' as 'payment' | 'donation',
     description: '',
     monthly_cost: '',
+    billing_cycle: 'monthly' as 'weekly' | 'monthly',
     is_active: true,
   })
   const [error, setError] = useState<string | null>(null)
@@ -69,6 +71,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
       tab_type: 'payment',
       description: '',
       monthly_cost: '',
+      billing_cycle: 'monthly',
       is_active: true,
     })
     setShowCreateModal(true)
@@ -82,6 +85,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
       tab_type: tab.tab_type,
       description: tab.description || '',
       monthly_cost: tab.monthly_cost?.toString() || '',
+      billing_cycle: tab.billing_cycle || 'monthly',
       is_active: tab.is_active,
     })
     setShowCreateModal(true)
@@ -106,14 +110,16 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
           description: formData.description || null,
           is_active: formData.is_active,
         }
-        
+
         // Only include monthly_cost if tab_type is payment
         if (formData.tab_type === 'payment') {
           updateData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
+          updateData.billing_cycle = formData.billing_cycle
         } else {
           updateData.monthly_cost = null
+          updateData.billing_cycle = 'monthly' // Default for donations
         }
-        
+
         const { error } = await supabase
           .from('member_tabs')
           .update(updateData)
@@ -131,12 +137,13 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
           is_active: formData.is_active,
           created_by: user.id,
         }
-        
+
         // Only include monthly_cost if tab_type is payment
         if (formData.tab_type === 'payment') {
           insertData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
+          insertData.billing_cycle = formData.billing_cycle
         }
-        
+
         const { error } = await supabase
           .from('member_tabs')
           .insert(insertData)
@@ -239,11 +246,10 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h5 className="font-semibold text-gray-900">{tab.tab_name}</h5>
-                            <span className={`px-2 py-1 text-xs rounded ${
-                              tab.tab_type === 'payment' 
-                                ? 'bg-blue-100 text-blue-700' 
+                            <span className={`px-2 py-1 text-xs rounded ${tab.tab_type === 'payment'
+                                ? 'bg-blue-100 text-blue-700'
                                 : 'bg-purple-100 text-purple-700'
-                            }`}>
+                              }`}>
                               {tab.tab_type === 'payment' ? 'Payment' : 'Donation'}
                             </span>
                             {!tab.is_active && (
@@ -257,18 +263,17 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
                           )}
                           {tab.tab_type === 'payment' && tab.monthly_cost && (
                             <p className="text-sm font-medium text-gray-900 mt-1">
-                              Monthly Cost: {formatCurrency(tab.monthly_cost)}
+                              {formatCurrency(tab.monthly_cost)} / {tab.billing_cycle || 'month'}
                             </p>
                           )}
                         </div>
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleToggleActive(tab)}
-                            className={`px-3 py-1 text-xs rounded ${
-                              tab.is_active
+                            className={`px-3 py-1 text-xs rounded ${tab.is_active
                                 ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 : 'bg-green-200 text-green-700 hover:bg-green-300'
-                            }`}
+                              }`}
                           >
                             {tab.is_active ? 'Deactivate' : 'Activate'}
                           </button>
@@ -351,23 +356,42 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
                   />
                 </div>
                 {formData.tab_type === 'payment' && (
-                  <div>
-                    <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
-                      Monthly Cost *
-                    </label>
-                    <input
-                      id="monthly_cost"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required={formData.tab_type === 'payment'}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                      value={formData.monthly_cost}
-                      onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
-                      placeholder="0.00"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">Amount per month for this payment tab</p>
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
+                          Cost Amount *
+                        </label>
+                        <input
+                          id="monthly_cost"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required={formData.tab_type === 'payment'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                          value={formData.monthly_cost}
+                          onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="billing_cycle" className="block text-sm font-medium text-gray-700 mb-1">
+                          Billing Cycle *
+                        </label>
+                        <select
+                          id="billing_cycle"
+                          required={formData.tab_type === 'payment'}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                          value={formData.billing_cycle}
+                          onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                        >
+                          <option value="monthly">Monthly</option>
+                          <option value="weekly">Weekly</option>
+                        </select>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">How often the member should pay this amount</p>
+                  </>
                 )}
                 <div className="flex items-center">
                   <input

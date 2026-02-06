@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
@@ -19,6 +19,7 @@ interface Props {
 
 export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
   const router = useRouter()
+  const isSubmitting = useRef(false)
   const [formData, setFormData] = useState({
     member_id: '',
     amount: '',
@@ -32,8 +33,13 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Prevent double submissions via the ref
+    if (isSubmitting.current) return
+
     setError(null)
     setLoading(true)
+    isSubmitting.current = true
 
     try {
       const supabase = createClient()
@@ -68,23 +74,50 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
         throw new Error('Please enter a valid payment amount')
       }
 
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          organization_id: profile.organization_id,
-          member_id: formData.member_id,
-          amount: paymentAmount,
-          payment_date: new Date().toISOString(),
-          payment_method: formData.payment_method,
-          description: paymentDescription,
-          created_by: user.id,
-          payment_status: 'pending',
-        })
-        .select()
-        .single()
+      // Check for an existing pending payment for the same member, amount, and description
+      // created within the last 5 minutes to prevent duplicates
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-      if (paymentError) {
-        throw new Error(paymentError.message)
+      const { data: existingPayment } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('member_id', formData.member_id)
+        .eq('amount', paymentAmount)
+        .eq('description', paymentDescription)
+        .eq('payment_status', 'pending')
+        .eq('organization_id', profile.organization_id)
+        .gte('created_at', fiveMinutesAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let paymentId: string
+
+      if (existingPayment) {
+        console.log('Reusing existing pending payment:', existingPayment.id)
+        paymentId = existingPayment.id
+      } else {
+        // Insert new pending payment record
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            organization_id: profile.organization_id,
+            member_id: formData.member_id,
+            amount: paymentAmount,
+            payment_date: new Date().toISOString(),
+            payment_method: formData.payment_method,
+            description: paymentDescription,
+            created_by: user.id,
+            payment_status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (paymentError) {
+          throw new Error(paymentError.message)
+        }
+
+        paymentId = payment.id
       }
 
       const { data: checkoutData, error: checkoutError } = await invokeEdgeFunction<{
@@ -99,18 +132,18 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
         'create-monime-checkout',
         {
           body: {
-            paymentId: payment.id,
+            paymentId: paymentId,
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription || `Payment for member`,
             successUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-success?payment_id=${payment.id}`
-              : `/payment-success?payment_id=${payment.id}`,
+              ? `${window.location.origin}/payment-success?payment_id=${paymentId}`
+              : `/payment-success?payment_id=${paymentId}`,
             cancelUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-cancelled?payment_id=${payment.id}`
-              : `/payment-cancelled?payment_id=${payment.id}`,
+              ? `${window.location.origin}/payment-cancelled?payment_id=${paymentId}`
+              : `/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
-              payment_id: payment.id,
+              payment_id: paymentId,
               organization_id: profile.organization_id,
               member_id: formData.member_id,
             },
@@ -119,27 +152,30 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
       )
 
       if (checkoutError) {
-        // Clean up the payment if checkout creation failed
-        try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
+        // Only delete if we JUST created it (not if we reused an existing one)
+        if (!existingPayment) {
+          try {
+            await supabase
+              .from('payments')
+              .delete()
+              .eq('id', paymentId)
+          } catch (cleanupError) {
+            console.error('Error cleaning up payment after checkout failure:', cleanupError)
+          }
         }
         throw new Error(checkoutError.message || 'Failed to create checkout session')
       }
 
       if (!checkoutData?.checkoutSession) {
-        // Clean up the payment if checkout creation failed
-        try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
+        if (!existingPayment) {
+          try {
+            await supabase
+              .from('payments')
+              .delete()
+              .eq('id', paymentId)
+          } catch (cleanupError) {
+            console.error('Error cleaning up payment after checkout failure:', cleanupError)
+          }
         }
         throw new Error('Failed to create checkout session: Invalid response from payment service')
       }
@@ -147,20 +183,23 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
       if (checkoutData.checkoutSession.url) {
         window.location.href = checkoutData.checkoutSession.url
       } else {
-        // Clean up the payment if checkout URL is missing
-        try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
+        // Clean up the payment if checkout URL is missing and we just created it
+        if (!existingPayment) {
+          try {
+            await supabase
+              .from('payments')
+              .delete()
+              .eq('id', paymentId)
+          } catch (cleanupError) {
+            console.error('Error cleaning up payment after checkout failure:', cleanupError)
+          }
         }
         throw new Error('Checkout session URL not received')
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred')
       setLoading(false)
+      isSubmitting.current = false
     }
   }
 

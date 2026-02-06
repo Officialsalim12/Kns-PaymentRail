@@ -8,126 +8,107 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
   try {
-    // Create Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    )
 
     const url = new URL(req.url)
-    const memberId = url.searchParams.get("memberId") // Optional: recalculate specific member
+    const memberId = url.searchParams.get("memberId")
 
-    // Get all members or specific one
-    let membersQuery = supabaseClient.from("members").select("id, organization_id")
-    
-    if (memberId) {
-      membersQuery = membersQuery.eq("id", memberId)
-    }
+    let query = supabase.from("members").select("id, full_name, activated_at, total_paid")
+    if (memberId) query = query.eq("id", memberId)
 
-    const { data: members, error: membersError } = await membersQuery
+    const { data: members, error: membersError } = await query
+    if (membersError) throw membersError
 
-    if (membersError) {
-      throw membersError
-    }
-
-    if (!members || members.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "No members found to recalculate",
-          updatedCount: 0,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      )
+    if (!members?.length) {
+      return new Response(JSON.stringify({ success: true, message: "No members found", updatedCount: 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      })
     }
 
     let updatedCount = 0
-    const updates: Array<{ memberId: string; oldTotalPaid: number; newTotalPaid: number }> = []
+    const results = []
+    const now = new Date()
 
-    // Recalculate total_paid for each member based on completed payments only
     for (const member of members) {
-      // Get all completed payments for this member
-      const { data: payments, error: paymentsError } = await supabaseClient
+      // 1. Calculate actual paid amount
+      const { data: payments } = await supabase
         .from("payments")
-        .select("amount, payment_status")
+        .select("amount")
         .eq("member_id", member.id)
         .eq("payment_status", "completed")
 
-      if (paymentsError) {
-        console.error(`Error fetching payments for member ${member.id}:`, paymentsError)
-        continue
-      }
-
-      // Calculate total_paid from completed payments only
-      const newTotalPaid = payments?.reduce((sum, p) => {
-        const amount = typeof p.amount === "string" 
-          ? parseFloat(p.amount) 
-          : (p.amount || 0)
+      const totalPaid = payments?.reduce((sum, p) => {
+        const amount = typeof p.amount === "string" ? parseFloat(p.amount) : (p.amount || 0)
         return sum + amount
       }, 0) || 0
 
-      // Get current total_paid for comparison
-      const { data: currentMember } = await supabaseClient
-        .from("members")
-        .select("total_paid")
-        .eq("id", member.id)
-        .single()
+      // 2. Sum up expected totals from all active payment tabs
+      let expectedTotal = 0
+      const { data: tabs } = await supabase
+        .from("member_tabs")
+        .select("monthly_cost, billing_cycle, created_at")
+        .eq("member_id", member.id)
+        .eq("is_active", true)
+        .eq("tab_type", "payment")
 
-      const oldTotalPaid = currentMember?.total_paid || 0
+      if (tabs) {
+        for (const tab of tabs) {
+          const cost = tab.monthly_cost || 0
+          const cycle = tab.billing_cycle || 'monthly'
+          const diffMs = now.getTime() - new Date(tab.created_at).getTime()
 
-      // Only update if different
-      if (Math.abs(oldTotalPaid - newTotalPaid) > 0.01) {
-        const { error: updateError } = await supabaseClient
-          .from("members")
-          .update({ total_paid: Math.max(0, newTotalPaid) })
-          .eq("id", member.id)
+          if (diffMs < 0) continue
 
-        if (updateError) {
-          console.error(`Error updating member ${member.id}:`, updateError)
-          continue
+          const msPerPeriod = cycle === 'weekly'
+            ? 1000 * 60 * 60 * 24 * 7
+            : 1000 * 60 * 60 * 24 * 30.4375
+
+          const periods = Math.floor(diffMs / msPerPeriod) + 1
+          expectedTotal += (periods * cost)
         }
-
-        updatedCount++
-        updates.push({
-          memberId: member.id,
-          oldTotalPaid,
-          newTotalPaid,
-        })
-        console.log(`Updated member ${member.id}: ${oldTotalPaid} → ${newTotalPaid}`)
       }
+
+      const unpaidBalance = Math.max(0, expectedTotal - totalPaid)
+
+      const { error: updateError } = await supabase
+        .from("members")
+        .update({
+          total_paid: Math.max(0, totalPaid),
+          unpaid_balance: unpaidBalance,
+          updated_at: now.toISOString()
+        })
+        .eq("id", member.id)
+
+      if (updateError) {
+        console.error(`[recalculate-member-totals] Update failed for ${member.id}:`, updateError)
+        continue
+      }
+
+      updatedCount++
+      results.push({ id: member.id, name: member.full_name, totalPaid, expectedTotal, unpaidBalance })
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Successfully recalculated total_paid for ${updatedCount} member(s)`,
-        updatedCount,
-        updates,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    )
+    return new Response(JSON.stringify({
+      success: true,
+      message: `Recalculated ${updatedCount} member(s)`,
+      updatedCount,
+      results,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 })
+
   } catch (error) {
-    console.error("Error recalculating member totals:", error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "Failed to recalculate member totals",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    )
+    console.error("[recalculate-member-totals] Fatal error:", error)
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    })
   }
 })

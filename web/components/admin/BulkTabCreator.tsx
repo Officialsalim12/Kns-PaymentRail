@@ -22,6 +22,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
     tab_type: 'payment' as 'payment' | 'donation',
     description: '',
     monthly_cost: '',
+    billing_cycle: 'monthly' as 'weekly' | 'monthly',
     is_active: true,
   })
   const [error, setError] = useState<string | null>(null)
@@ -30,40 +31,40 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
 
   const loadMembers = async () => {
     if (scope !== 'single') return
-    
+
     if (!organizationId) {
       setError('Organization ID is missing')
       return
     }
-    
+
     setLoadingMembers(true)
     setError(null)
     try {
       const supabase = createClient()
-      
+
       // First, try to get all members to see what we have
       const { data: allMembers, error: allError } = await supabase
         .from('members')
         .select('id, full_name, membership_id, status')
         .eq('organization_id', organizationId)
         .order('full_name')
-      
+
       console.log('All members for org:', organizationId, ':', allMembers?.length || 0, allMembers)
-      
+
       if (allError) {
         console.error('Error loading all members:', allError)
         throw allError
       }
-      
+
       // Filter to active and pending
-      const filteredMembers = (allMembers || []).filter(m => 
+      const filteredMembers = (allMembers || []).filter(m =>
         m.status === 'active' || m.status === 'pending'
       )
-      
+
       console.log('Filtered members (active/pending):', filteredMembers.length, filteredMembers)
-      
+
       setMembers(filteredMembers)
-      
+
       if (filteredMembers.length === 0) {
         if (allMembers && allMembers.length > 0) {
           const statuses = Array.from(new Set(allMembers.map(m => m.status)))
@@ -115,7 +116,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
 
       // Get member IDs to create tabs for
       let memberIds: string[] = []
-      
+
       if (scope === 'all') {
         // Get all active and pending members (for consistency across all organizations)
         const { data: allMembers, error: membersError } = await supabase
@@ -131,8 +132,8 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
       }
 
       if (memberIds.length === 0) {
-        throw new Error(scope === 'all' 
-          ? 'No active or pending members found in your organization' 
+        throw new Error(scope === 'all'
+          ? 'No active or pending members found in your organization'
           : 'Selected member not found')
       }
 
@@ -148,6 +149,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
 
       if (formData.tab_type === 'payment') {
         insertData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
+        insertData.billing_cycle = formData.billing_cycle
       }
 
       // Create tabs for all selected members
@@ -159,7 +161,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
       // Insert in batches to avoid payload size issues
       const batchSize = 100
       let created = 0
-      
+
       for (let i = 0; i < tabsToInsert.length; i += batchSize) {
         const batch = tabsToInsert.slice(i, i + batchSize)
         const { error: insertError } = await supabase
@@ -221,11 +223,10 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => handleScopeChange('all')}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    scope === 'all'
+                  className={`p-4 border-2 rounded-lg transition-all ${scope === 'all'
                       ? 'border-primary-500 bg-primary-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <Users className="h-6 w-6 mx-auto mb-2 text-primary-600" />
                   <p className="font-semibold text-gray-900">All Members</p>
@@ -234,11 +235,10 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => handleScopeChange('single')}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    scope === 'single'
+                  className={`p-4 border-2 rounded-lg transition-all ${scope === 'single'
                       ? 'border-primary-500 bg-primary-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <User className="h-6 w-6 mx-auto mb-2 text-primary-600" />
                   <p className="font-semibold text-gray-900">Single Member</p>
@@ -333,22 +333,38 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
 
             {/* Monthly Cost (for payment type) */}
             {formData.tab_type === 'payment' && (
-              <div>
-                <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
-                  Monthly Cost *
-                </label>
-                <input
-                  id="monthly_cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required={formData.tab_type === 'payment'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  value={formData.monthly_cost}
-                  onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
-                  placeholder="0.00"
-                />
-                <p className="mt-1 text-xs text-gray-500">Amount per month for this payment tab</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
+                    Cost Amount *
+                  </label>
+                  <input
+                    id="monthly_cost"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required={formData.tab_type === 'payment'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    value={formData.monthly_cost}
+                    onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="billing_cycle" className="block text-sm font-medium text-gray-700 mb-1">
+                    Billing Cycle *
+                  </label>
+                  <select
+                    id="billing_cycle"
+                    required={formData.tab_type === 'payment'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    value={formData.billing_cycle}
+                    onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </div>
               </div>
             )}
 

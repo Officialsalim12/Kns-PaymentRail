@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -18,6 +18,7 @@ interface Props {
 
 export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyCost, onSuccess, onCancel }: Props) {
   const router = useRouter()
+  const isSubmitting = useRef(false)
   const [formData, setFormData] = useState({
     months: tabType === 'payment' && monthlyCost ? '1' : '',
     amount: '',
@@ -38,8 +39,13 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Prevent double submissions via the ref
+    if (isSubmitting.current) return
+
     setError(null)
     setLoading(true)
+    isSubmitting.current = true
 
     try {
       const supabase = createClient()
@@ -68,23 +74,50 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
         throw new Error('Please enter a valid payment amount')
       }
 
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          organization_id: member.organization_id,
-          member_id: memberId,
-          amount: paymentAmount,
-          payment_date: new Date().toISOString(),
-          payment_method: 'online',
-          description: paymentDescription,
-          created_by: user.id,
-          payment_status: 'pending',
-        })
-        .select()
-        .single()
+      // Check for an existing pending payment for the same member, amount, and description
+      // created within the last 5 minutes to prevent duplicates
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-      if (paymentError) {
-        throw new Error(paymentError.message)
+      const { data: existingPayment } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('member_id', memberId)
+        .eq('amount', paymentAmount)
+        .eq('description', paymentDescription)
+        .eq('payment_status', 'pending')
+        .eq('organization_id', member.organization_id)
+        .gte('created_at', fiveMinutesAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      let paymentId: string
+
+      if (existingPayment) {
+        console.log('Reusing existing pending payment:', existingPayment.id)
+        paymentId = existingPayment.id
+      } else {
+        // Insert new pending payment record
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            organization_id: member.organization_id,
+            member_id: memberId,
+            amount: paymentAmount,
+            payment_date: new Date().toISOString(),
+            payment_method: 'online',
+            description: paymentDescription,
+            created_by: user.id,
+            payment_status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (paymentError) {
+          throw new Error(paymentError.message)
+        }
+
+        paymentId = payment.id
       }
 
       const { data: checkoutData, error: checkoutError } = await invokeEdgeFunction<{
@@ -99,18 +132,18 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
         'create-monime-checkout',
         {
           body: {
-            paymentId: payment.id,
+            paymentId: paymentId,
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription,
             successUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-success?payment_id=${payment.id}`
-              : `/payment-success?payment_id=${payment.id}`,
+              ? `${window.location.origin}/payment-success?payment_id=${paymentId}`
+              : `/payment-success?payment_id=${paymentId}`,
             cancelUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-cancelled?payment_id=${payment.id}`
-              : `/payment-cancelled?payment_id=${payment.id}`,
+              ? `${window.location.origin}/payment-cancelled?payment_id=${paymentId}`
+              : `/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
-              payment_id: payment.id,
+              payment_id: paymentId,
               organization_id: member.organization_id,
               member_id: memberId,
               tab_name: tabName,
@@ -127,49 +160,60 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
       )
 
       if (checkoutError) {
-        try {
-          await supabase.from('payments').delete().eq('id', payment.id)
-        } catch (e) { }
+        // Only delete if we JUST created it (not if we reused an existing one)
+        if (!existingPayment) {
+          try {
+            await supabase.from('payments').delete().eq('id', paymentId)
+          } catch (e) { }
+        }
         throw new Error(checkoutError.message || 'Failed to create checkout')
       }
 
       if (!checkoutData?.checkoutSession) {
-        try {
-          await supabase.from('payments').delete().eq('id', payment.id)
-        } catch (e) { }
+        if (!existingPayment) {
+          try {
+            await supabase.from('payments').delete().eq('id', paymentId)
+          } catch (e) { }
+        }
         throw new Error('Invalid checkout session')
       }
 
       if (checkoutData.checkoutSession.url) {
         window.location.href = checkoutData.checkoutSession.url
       } else {
-        // Clean up the payment if checkout URL is missing
-        try {
-          await supabase
-            .from('payments')
-            .delete()
-            .eq('id', payment.id)
-        } catch (cleanupError) {
-          console.error('Error cleaning up payment after checkout failure:', cleanupError)
+        // Clean up the payment if checkout URL is missing and we just created it
+        if (!existingPayment) {
+          try {
+            await supabase
+              .from('payments')
+              .delete()
+              .eq('id', paymentId)
+          } catch (cleanupError) {
+            console.error('Error cleaning up payment after checkout failure:', cleanupError)
+          }
         }
         throw new Error('Checkout session URL not received')
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred')
       setLoading(false)
+      isSubmitting.current = false
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full my-auto">
-        <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 pr-2">
-            {tabType === 'payment' ? 'Pay Now' : 'Donate Here'} - {tabName}
-          </h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-md w-full animate-in slide-in-from-bottom duration-300">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-3xl sm:rounded-t-2xl">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+              {tabType === 'payment' ? 'Checkout' : 'Donation'}
+            </h3>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">{tabName}</p>
+          </div>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="p-2 bg-gray-50 text-gray-400 hover:text-gray-600 rounded-xl transition-all"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -186,85 +230,92 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
           {tabType === 'payment' && monthlyCost ? (
             <>
               <div>
-                <label htmlFor="months" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Number of Months *
+                <label htmlFor="months" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  Duration *
                 </label>
-                <select
-                  id="months"
-                  required
-                  className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                  value={formData.months}
-                  onChange={(e) => setFormData({ ...formData, months: e.target.value })}
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                    <option key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'Month' : 'Months'}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1.5 text-xs sm:text-sm text-gray-500">
-                  Monthly cost: {formatCurrency(monthlyCost)}
+                <div className="relative">
+                  <select
+                    id="months"
+                    required
+                    className="w-full px-5 py-3.5 text-base border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 appearance-none cursor-pointer font-bold transition-all"
+                    value={formData.months}
+                    onChange={(e) => setFormData({ ...formData, months: e.target.value })}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                      <option key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'Month' : 'Months'}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
+                    <span className="text-xs font-bold uppercase tracking-widest">Select</span>
+                  </div>
+                </div>
+                <p className="mt-2.5 text-xs text-primary-600 font-bold uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary-600 animate-pulse"></span>
+                  Unit Price: {formatCurrency(monthlyCost)}
                 </p>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">Total Amount:</span>
-                  <span className="text-lg sm:text-xl font-bold text-blue-700">
-                    {formatCurrency(parseFloat(totalAmount))}
-                  </span>
+              <div className="bg-primary-50/50 rounded-2xl p-6 border border-primary-100/50">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Total Payable</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-gray-900 leading-none">
+                      {formatCurrency(parseFloat(totalAmount))}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 break-words">
-                  {formData.months} {parseInt(formData.months || '0') === 1 ? 'month' : 'months'} × {formatCurrency(monthlyCost)}
-                </p>
+                <div className="mt-4 pt-4 border-t border-primary-100/50 flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <span>Breakdown</span>
+                  <span>{formData.months} × {formatCurrency(monthlyCost)}</span>
+                </div>
               </div>
             </>
           ) : (
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Amount *
+              <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-2">
+                Amount to Pay *
               </label>
-              <input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="0.00"
-              />
+              <div className="relative">
+                <input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  className="w-full pl-4 pr-12 py-3 text-sm sm:text-base border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder="0.00"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm font-bold">SLE</span>
+                </div>
+              </div>
             </div>
           )}
 
-          <div>
-            <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Payment Date *
-            </label>
-            <input
-              id="payment_date"
-              type="date"
-              required
-              className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              value={formData.payment_date}
-              onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-            />
-          </div>
+          {/* Hidden Date - Auto Stamped */}
+          <input
+            type="hidden"
+            name="payment_date"
+            value={new Date().toISOString().split('T')[0]}
+          />
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-col gap-3 pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 text-sm sm:text-base font-medium transition-colors"
+              className="w-full py-4 bg-primary-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary-100 hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-50"
             >
-              {loading ? 'Processing...' : tabType === 'payment' ? 'Submit Payment' : 'Submit Donation'}
+              {loading ? 'Processing...' : `Confirm ${tabType === 'payment' ? 'Payment' : 'Donation'}`}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm sm:text-base font-medium transition-colors"
+              className="w-full py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
             >
-              Cancel
+              Back to Dashboard
             </button>
           </div>
         </form>

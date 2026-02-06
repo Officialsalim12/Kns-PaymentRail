@@ -48,7 +48,7 @@ const getNotificationIcon = (type: string) => {
 
 const getNotificationColor = (type: string, isRead: boolean) => {
   if (isRead) return 'text-gray-400'
-  
+
   switch (type) {
     case 'payment':
       return 'text-green-600'
@@ -69,7 +69,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
   const [deletingAll, setDeletingAll] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
-  
+
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   // Set up real-time subscriptions for notifications
@@ -128,10 +128,10 @@ export default function NotificationsManagement({ notifications: initialNotifica
       const supabase = createClient()
       const notification = notifications.find(n => n.id === notificationId)
       const newReadStatus = !notification?.is_read
-      
+
       const { error } = await supabase
         .from('notifications')
-        .update({ 
+        .update({
           is_read: newReadStatus,
           read_at: newReadStatus ? new Date().toISOString() : null
         })
@@ -139,7 +139,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
 
       if (error) throw error
 
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, is_read: newReadStatus } : n)
       )
       router.refresh()
@@ -158,7 +158,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
       const supabase = createClient()
       const { error } = await supabase
         .from('notifications')
-        .update({ 
+        .update({
           is_read: true,
           read_at: new Date().toISOString()
         })
@@ -166,7 +166,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
 
       if (error) throw error
 
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => ({ ...n, is_read: true }))
       )
       router.refresh()
@@ -201,7 +201,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
 
   const deleteAllNotifications = async () => {
     if (notifications.length === 0) return
-    
+
     if (!confirm(`Are you sure you want to delete all ${notifications.length} notification(s)? This action cannot be undone.`)) {
       return
     }
@@ -209,7 +209,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
     setDeletingAll(true)
     try {
       const supabase = createClient()
-      
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -247,21 +247,21 @@ export default function NotificationsManagement({ notifications: initialNotifica
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="max-w-md">
           <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
           <p className="text-sm text-gray-500 mt-1">All your payment, approval, and system notifications</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {unreadCount > 0 && (
-            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+            <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
               {unreadCount} unread
             </span>
           )}
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors whitespace-nowrap"
             >
               Mark All Read
             </button>
@@ -270,7 +270,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
             <button
               onClick={deleteAllNotifications}
               disabled={deletingAll}
-              className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
             >
               <Trash2 className="h-4 w-4" />
               {deletingAll ? 'Deleting...' : 'Delete All'}
@@ -294,40 +294,38 @@ export default function NotificationsManagement({ notifications: initialNotifica
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`border rounded-lg p-4 ${
-                    !notification.is_read 
-                      ? 'bg-blue-50 border-blue-200' 
+                  className={`border rounded-lg p-4 ${!notification.is_read
+                      ? 'bg-blue-50 border-blue-200'
                       : 'border-blue-200 hover:bg-blue-50'
-                  } transition-colors`}
+                    } transition-colors`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`mt-0.5 flex-shrink-0 ${getNotificationColor(notification.type, notification.is_read)}`}>
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-gray-900">{notification.title}</p>
+                      <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                        <div className="flex-1 w-full">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-gray-900 break-words">{notification.title}</p>
                             {notification.type && (
-                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                notification.type === 'payment' ? 'bg-green-100 text-green-700' :
-                                notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
-                                notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                              }`}>
+                              <span className={`px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap ${notification.type === 'payment' ? 'bg-green-100 text-green-700' :
+                                  notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
+                                    notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
+                                      'bg-gray-100 text-gray-700'
+                                }`}>
                                 {notification.type}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          <p className="text-sm text-gray-600 mt-1 break-words">{notification.message}</p>
                           {notification.member && (
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="text-xs text-gray-500 mt-2 break-words">
                               Member: {notification.member.full_name} ({notification.member.membership_id})
                             </p>
                           )}
                           {notification.sender && notification.sender_id && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 mt-1 break-words">
                               From: {notification.sender.full_name}
                             </p>
                           )}
@@ -335,17 +333,17 @@ export default function NotificationsManagement({ notifications: initialNotifica
                             {format(new Date(notification.created_at), 'MMM dd, yyyy HH:mm')}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
+                        <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0 md:ml-4 flex-shrink-0">
                           {!notification.is_read && (
                             <>
-                              <span className="flex items-center gap-1 text-xs text-orange-600">
+                              <span className="flex items-center gap-1 text-xs text-orange-600 whitespace-nowrap">
                                 <XCircle className="h-4 w-4" />
                                 Unread
                               </span>
                               <button
                                 onClick={() => markAsRead(notification.id)}
                                 disabled={markingAsRead === notification.id}
-                                className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50"
+                                className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                               >
                                 {markingAsRead === notification.id ? 'Marking...' : 'Mark Read'}
                               </button>
@@ -355,7 +353,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
                             <button
                               onClick={() => markAsRead(notification.id)}
                               disabled={markingAsRead === notification.id}
-                              className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                              className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 whitespace-nowrap"
                               title="Mark as unread"
                             >
                               {markingAsRead === notification.id ? 'Updating...' : 'Mark Unread'}

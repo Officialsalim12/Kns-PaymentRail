@@ -152,7 +152,7 @@ export default function Reports() {
       }
 
       const storedReport = await generateAndStoreReport(organizationId, reportType, month, year)
-      
+
       // Reload stored reports
       const reports = await getStoredReports(organizationId)
       setStoredReports(reports)
@@ -204,37 +204,35 @@ export default function Reports() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Payment Reports</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Generate and download transaction reports as CSV files. Reports are automatically updated when payments are completed.
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payment Reports</h1>
+        <p className="mt-2 text-sm text-gray-500 max-w-2xl">
+          Comprehensive financial reporting at your fingertips. Generate, store, and manage transaction records with ease.
         </p>
       </div>
 
       {/* View Mode Toggle */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
         <button
           onClick={() => setViewMode('generate')}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
-            viewMode === 'generate'
-              ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${viewMode === 'generate'
+              ? 'bg-white text-primary-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
         >
-          <HardDrive className="h-4 w-4 inline mr-2" />
-          Generate New Report
+          <HardDrive className="h-3.5 w-3.5" />
+          Generate New
         </button>
         <button
           onClick={() => setViewMode('stored')}
-          className={`px-4 py-2 font-medium text-sm transition-colors ${
-            viewMode === 'stored'
-              ? 'text-primary-600 border-b-2 border-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${viewMode === 'stored'
+              ? 'bg-white text-primary-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
         >
-          <Cloud className="h-4 w-4 inline mr-2" />
-          Stored Reports ({storedReports.length})
+          <Cloud className="h-3.5 w-3.5" />
+          Stored ({storedReports.length})
         </button>
       </div>
 
@@ -243,47 +241,53 @@ export default function Reports() {
           <div className="space-y-6">
             {/* Report Type Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
                 Report Type
               </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   onClick={() => setReportType('all')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    reportType === 'all'
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'all'
                       ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-primary-300 text-gray-700'
-                  }`}
+                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    }`}
                 >
-                  <FileText className="h-6 w-6 mx-auto mb-2" />
-                  <div className="font-medium">All Payments</div>
-                  <div className="text-xs text-gray-500 mt-1">Complete transaction history</div>
+                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
+                    }`}>
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="font-bold text-sm">All Payments</div>
+                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Full History</div>
                 </button>
 
                 <button
                   onClick={() => setReportType('yearly')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    reportType === 'yearly'
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'yearly'
                       ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-primary-300 text-gray-700'
-                  }`}
+                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    }`}
                 >
-                  <TrendingUp className="h-6 w-6 mx-auto mb-2" />
-                  <div className="font-medium">Yearly Report</div>
-                  <div className="text-xs text-gray-500 mt-1">Payments for a specific year</div>
+                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'yearly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
+                    }`}>
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <div className="font-bold text-sm">Yearly</div>
+                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Annual Summary</div>
                 </button>
 
                 <button
                   onClick={() => setReportType('monthly')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    reportType === 'monthly'
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'monthly'
                       ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-primary-300 text-gray-700'
-                  }`}
+                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    }`}
                 >
-                  <Calendar className="h-6 w-6 mx-auto mb-2" />
-                  <div className="font-medium">Monthly Report</div>
-                  <div className="text-xs text-gray-500 mt-1">Payments for a specific month</div>
+                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'monthly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
+                    }`}>
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="font-bold text-sm">Monthly</div>
+                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Periodic View</div>
                 </button>
               </div>
             </div>
@@ -344,24 +348,20 @@ export default function Reports() {
 
             {/* Report Statistics */}
             {reportStats && (
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-primary-900 mb-3">Report Summary</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-xs text-primary-600">Total Payments</div>
-                    <div className="text-lg font-semibold text-primary-900">{reportStats.totalPayments}</div>
+              <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
+                <h3 className="text-xs font-bold text-primary-600 uppercase tracking-widest mb-4 text-center">Report Summary</h3>
+                <div className="grid grid-cols-1 xs:grid-cols-3 gap-6 text-center">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Payments</p>
+                    <p className="text-2xl font-bold text-primary-900">{reportStats.totalPayments}</p>
                   </div>
-                  <div>
-                    <div className="text-xs text-primary-600">Total Amount</div>
-                    <div className="text-lg font-semibold text-primary-900">
-                      {formatCurrency(reportStats.totalAmount)}
-                    </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Total Amount</p>
+                    <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.totalAmount)}</p>
                   </div>
-                  <div>
-                    <div className="text-xs text-primary-600">Average Amount</div>
-                    <div className="text-lg font-semibold text-primary-900">
-                      {formatCurrency(reportStats.averageAmount)}
-                    </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Average</p>
+                    <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.averageAmount)}</p>
                   </div>
                 </div>
               </div>

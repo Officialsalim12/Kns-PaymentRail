@@ -42,10 +42,55 @@ body {
   }
 }
 
+/* Base Container for Large Screens */
+.main-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .main-container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .main-container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .main-container {
+    max-width: 1400px; /* Cap width on ultra-wide screens */
+  }
+}
+
+/* Professional Typography and Spacing */
+h1, h2, h3, h4, h5, h6 {
+  @apply tracking-tight font-bold;
+}
+
 /* Prevent horizontal scroll on mobile */
 html, body {
   overflow-x: hidden;
   max-width: 100vw;
+  scroll-behavior: smooth;
 }
 
 /* Ensure text wraps properly on very small screens */
@@ -61,4 +106,19 @@ h1, h2, h3, h4, h5, h6, p, span, a {
     min-width: 44px;
     padding: 0.5rem 0.75rem;
   }
+}
+
+/* Glassmorphism effects */
+.glass-effect {
+  @apply bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20;
+}
+
+/* Professional Card Styles */
+.pro-card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300;
+}
+
+/* Form focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
 }

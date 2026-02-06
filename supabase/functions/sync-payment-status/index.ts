@@ -210,14 +210,19 @@ serve(async (req) => {
         updateData.monime_payment_id = monimePaymentId;
       }
 
+      console.log(`[Sync] Attempting to update payment ${paymentId} to completed. Data:`, JSON.stringify(updateData, null, 2));
+
       const { error: updateError } = await supabaseClient
         .from("payments")
         .update(updateData)
         .eq("id", paymentId);
 
       if (updateError) {
+        console.error(`[Sync] ERROR updating payment ${paymentId}:`, updateError.message);
         throw new Error(`Failed to update payment: ${updateError.message}`);
       }
+
+      console.log(`[Sync] ✅ Payment ${paymentId} updated successfully to completed`);
 
       // Update member's total_paid
       if (payment.member_id) {
@@ -316,40 +321,6 @@ serve(async (req) => {
         console.error("Error stack:", error.stack);
         console.error("Payment sync will continue, but receipt generation failed. Receipt can be generated manually later.");
         // Don't throw - payment sync should still succeed even if receipt generation fails
-      }
-
-      // Send notification to member
-      if (payment.member?.user_id) {
-        await supabaseClient.from("notifications").insert({
-          organization_id: payment.organization_id,
-          recipient_id: payment.member.user_id,
-          member_id: payment.member_id,
-          title: "Payment Completed",
-          message: `Your payment of ${payment.amount} Le has been completed successfully.`,
-          type: "payment",
-        });
-      }
-
-      // Send notification to admin about payment completion
-      if (payment.organization_id) {
-        // Get organization admin
-        const { data: adminUser } = await supabaseClient
-          .from("users")
-          .select("id")
-          .eq("organization_id", payment.organization_id)
-          .eq("role", "org_admin")
-          .single();
-
-        if (adminUser) {
-          await supabaseClient.from("notifications").insert({
-            organization_id: payment.organization_id,
-            recipient_id: adminUser.id,
-            member_id: payment.member_id,
-            title: "New Payment Received",
-            message: `Payment of ${payment.amount} Le from ${payment.member?.full_name || "Member"} (${referenceNumber || payment.id}) has been completed.`,
-            type: "payment",
-          });
-        }
       }
 
       return new Response(

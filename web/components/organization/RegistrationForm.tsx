@@ -177,7 +177,7 @@ export default function OrganizationRegistrationForm() {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base"
-                placeholder="John Doe"
+                placeholder=""
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               />
@@ -193,7 +193,7 @@ export default function OrganizationRegistrationForm() {
                 type="email"
                 required
                 className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base"
-                placeholder="admin@example.com"
+                placeholder=""
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -210,7 +210,7 @@ export default function OrganizationRegistrationForm() {
                 required
                 minLength={6}
                 className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm sm:text-base"
-                placeholder="••••••••"
+                placeholder=""
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
@@ -232,7 +232,7 @@ export default function OrganizationRegistrationForm() {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="My Organization"
+                placeholder=""
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -248,7 +248,7 @@ export default function OrganizationRegistrationForm() {
                 type="text"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="e.g., Non-profit, Club, Association"
+                placeholder=""
                 value={formData.organization_type}
                 onChange={(e) => setFormData({ ...formData, organization_type: e.target.value })}
               />
@@ -263,7 +263,7 @@ export default function OrganizationRegistrationForm() {
                 name="phone_number"
                 type="tel"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="+1 (555) 123-4567"
+                placeholder=""
                 value={formData.phone_number}
                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
               />
@@ -278,7 +278,7 @@ export default function OrganizationRegistrationForm() {
                 name="description"
                 rows={4}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Brief description of your organization..."
+                placeholder=""
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />

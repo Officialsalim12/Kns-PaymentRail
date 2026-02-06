@@ -14,6 +14,8 @@ const MONIME_API_BASE_URL = "https://api.monime.io/v1";
 
 interface MonimeWebhookEvent {
   type: string;
+  event?: string;
+  name?: string;
   data: {
     id: string;
     status?: string;
@@ -30,7 +32,7 @@ interface MonimeWebhookEvent {
   };
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -115,7 +117,7 @@ serve(async (req) => {
         // 2) Legacy / simple formats where the root has type/event and data
         event = parsed;
       }
-    } catch (e) {
+    } catch (e: any) {
       // Try to handle if the entire body is the data object
       try {
         const dataOnly = JSON.parse(rawBody);
@@ -127,7 +129,7 @@ serve(async (req) => {
           data: dataOnly.data || dataOnly,
         };
       } catch (e2) {
-        throw new Error(`Invalid JSON in webhook body: ${e.message}`);
+        throw new Error(`Invalid JSON in webhook body: ${(e as Error).message}`);
       }
     }
 
@@ -225,7 +227,7 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error processing Monime webhook:", error);
     console.error("Error stack:", error.stack);
     return new Response(
@@ -306,6 +308,20 @@ async function handlePaymentCompleted(
 
   console.log(`Found payment ID: ${paymentId}`);
 
+  // Check if payment is already processed to avoid duplicates and race conditions
+  const { data: currentPayment, error: checkError } = await supabaseClient
+    .from("payments")
+    .select("payment_status")
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error("Error checking current payment status:", checkError);
+  } else if (currentPayment?.payment_status === "completed") {
+    console.log(`Payment ${paymentId} is already marked as completed. Skipping redundant webhook processing.`);
+    return;
+  }
+
   // Extract order number from webhook data - Monime sends order number in various fields
   // Check nested structures as well (order.number, payment.order_number, etc.)
   let orderNumber = data.order_number ||
@@ -324,36 +340,26 @@ async function handlePaymentCompleted(
     data.result?.order?.id ||
     null;
 
-  // If still not found, search all fields recursively for anything containing "order"
+  // Fallback: search for anything that looks like an order reference
   if (!orderNumber) {
-    const searchForOrderNumber = (obj: any, depth = 0): string | null => {
-      if (depth > 5 || !obj || typeof obj !== 'object') return null;
-
+    const findOrder = (obj: any, depth = 0): string | null => {
+      if (depth > 5 || !obj || typeof obj !== 'object') return null
       for (const [key, value] of Object.entries(obj)) {
-        const lowerKey = key.toLowerCase();
-        // Check if key contains "order" and value is a string/number
-        if (lowerKey.includes('order') && (typeof value === 'string' || typeof value === 'number')) {
-          const orderVal = String(value);
-          // Make sure it looks like an order number (not empty, not just "order")
-          if (orderVal && orderVal !== 'order' && orderVal.length > 0) {
-            console.log(`Found potential order number in field "${key}": ${orderVal}`);
-            return orderVal;
-          }
+        const k = key.toLowerCase()
+        if (k.includes('order') && (typeof value === 'string' || typeof value === 'number')) {
+          const val = String(value)
+          if (val && val.length > 2) return val
         }
-        // Recursively search nested objects
         if (value && typeof value === 'object' && !Array.isArray(value)) {
-          const found = searchForOrderNumber(value, depth + 1);
-          if (found) return found;
+          const found = findOrder(value, depth + 1)
+          if (found) return found
         }
       }
-      return null;
-    };
-
-    const foundOrderNumber = searchForOrderNumber(data);
-    if (foundOrderNumber) {
-      orderNumber = foundOrderNumber;
-      console.log(`Found order number via recursive search: ${orderNumber}`);
+      return null
     }
+
+    orderNumber = findOrder(data)
+    if (orderNumber) console.log(`[Webhook] Inferred order number: ${orderNumber}`)
   }
 
   // If order number not found in webhook data, fetch it from Monime API
@@ -551,7 +557,7 @@ async function handlePaymentCompleted(
   }
 
   // Update payment by ID (most reliable)
-  console.log(`Updating payment ${paymentId} with data:`, JSON.stringify(updateData, null, 2));
+  console.log(`[Webhook] Attempting to update payment ${paymentId} to completed. Data:`, JSON.stringify(updateData, null, 2));
 
   const { error: updateError, data: updatedPayment } = await supabaseClient
     .from("payments")
@@ -561,18 +567,18 @@ async function handlePaymentCompleted(
     .single();
 
   if (updateError) {
-    console.error("Error updating payment:", updateError);
-    console.error("Update error details:", JSON.stringify(updateError, null, 2));
+    console.error(`[Webhook] ERROR updating payment ${paymentId}:`, updateError);
+    console.error(`[Webhook] Error details:`, JSON.stringify(updateError, null, 2));
     throw updateError;
   }
 
   if (!updatedPayment) {
-    console.error(`Payment ${paymentId} not found after update attempt`);
+    console.error(`[Webhook] Payment ${paymentId} not found after update attempt. Update data was:`, JSON.stringify(updateData));
     throw new Error(`Payment ${paymentId} not found after update`);
   }
 
-  console.log("✅ Payment updated successfully:", JSON.stringify(updatedPayment, null, 2));
-  console.log(`✅ Payment status after update: ${updatedPayment.payment_status}`);
+  console.log(`[Webhook] ✅ Payment ${paymentId} updated successfully to status: ${updatedPayment.payment_status}`);
+  console.log(`[Webhook] Updated payment row:`, JSON.stringify(updatedPayment, null, 2));
 
   // Fetch full payment data with member info (including all fields needed for receipt generation)
   const { data: payment, error: paymentFetchError } = await supabaseClient
@@ -622,8 +628,8 @@ async function handlePaymentCompleted(
     if (!paymentsError && allPayments) {
       // Calculate total_paid from all completed payments
       const totalPaid = allPayments
-        .filter((p) => p.payment_status === "completed")
-        .reduce((sum, p) => {
+        .filter((p: any) => p.payment_status === "completed")
+        .reduce((sum: number, p: any) => {
           const amount = typeof p.amount === "string"
             ? parseFloat(p.amount)
             : (p.amount || 0);
@@ -640,6 +646,44 @@ async function handlePaymentCompleted(
         console.error("Error updating member total_paid:", memberUpdateError);
       } else {
         console.log(`Updated member ${payment.member_id} total_paid to ${totalPaid}`);
+
+        // Trigger full balance recalculation
+        try {
+          console.log(`Triggering recalculate-member-totals for member ${payment.member_id}`);
+          await supabaseClient.functions.invoke("recalculate-member-totals", {
+            body: { memberId: payment.member_id },
+          });
+
+          // Fetch member again to check new unpaid_balance and status
+          const { data: updatedMember } = await supabaseClient
+            .from("members")
+            .select("status, unpaid_balance")
+            .eq("id", payment.member_id)
+            .single();
+
+          // If balance is cleared and member was inactive, reactivate them
+          if (updatedMember?.status === "inactive" && (updatedMember.unpaid_balance ?? 0) <= 0) {
+            console.log(`[Reactivation] Unlocking member ${payment.member_id}`);
+
+            await supabaseClient
+              .from("members")
+              .update({ status: "active", updated_at: new Date().toISOString() })
+              .eq("id", payment.member_id);
+
+            if (payment.member?.user_id) {
+              await supabaseClient.from("notifications").insert({
+                organization_id: payment.organization_id,
+                recipient_id: payment.member.user_id,
+                member_id: payment.member_id,
+                title: "Account Reactivated",
+                message: "Welcome back! Your account has been reactivated since your balance is now cleared.",
+                type: "success",
+              });
+            }
+          }
+        } catch (recalcError) {
+          console.error("Error triggerring recalculation or unsuspension:", recalcError);
+        }
       }
     }
   }

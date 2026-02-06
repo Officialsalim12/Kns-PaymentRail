@@ -65,8 +65,8 @@ export default function DashboardLayoutWrapper({
                 })}
 
                 <main className="flex-1 lg:ml-64 min-h-[calc(100vh-64px)]">
-                    <div className="px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-8 min-h-full">
-                        <div className="max-w-7xl mx-auto">
+                    <div className="py-6 sm:py-8 min-h-full">
+                        <div className="main-container">
                             {children}
                         </div>
                     </div>

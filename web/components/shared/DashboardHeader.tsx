@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Bell, Settings, LogOut, User as UserIcon, Menu } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -17,12 +18,62 @@ interface DashboardHeaderProps {
 export default function DashboardHeader({
     userFullName = 'User',
     profilePhotoUrl = null,
-    unreadNotificationCount = 0,
+    unreadNotificationCount: initialCount = 0,
     role,
     onMenuClick,
     leftContent
 }: DashboardHeaderProps) {
     const router = useRouter()
+    const [unreadCount, setUnreadCount] = useState(initialCount)
+
+    // Sync with prop changes
+    useEffect(() => {
+        setUnreadCount(initialCount)
+    }, [initialCount])
+
+    // Real-time subscription for notification count
+    useEffect(() => {
+        const supabase = createClient()
+        let channel: any
+
+        const setupSubscription = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            channel = supabase
+                .channel('header-notifications')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `recipient_id=eq.${user.id}`
+                    },
+                    async () => {
+                        // Re-fetch the exact count to ensure accuracy
+                        const { count } = await supabase
+                            .from('notifications')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('recipient_id', user.id)
+                            .eq('is_read', false)
+
+                        if (count !== null) {
+                            setUnreadCount(count)
+                        }
+                    }
+                )
+                .subscribe()
+        }
+
+        setupSubscription()
+
+        return () => {
+            if (channel) {
+                supabase.removeChannel(channel)
+            }
+        }
+    }, [])
 
     const handleSignOut = async () => {
         const supabase = createClient()
@@ -87,31 +138,31 @@ export default function DashboardHeader({
                         <div className="flex items-center gap-0.5 sm:gap-2 mr-1 sm:mr-2 border-r border-gray-100 pr-1 sm:pr-2">
                             <Link
                                 href={getNotificationHref()}
-                                className="relative p-1.5 sm:p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all group"
+                                className="relative p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all group"
                                 title="Notifications"
                             >
-                                <Bell className="h-4 w-4 sm:h-5 sm:w-5 group-hover:scale-110 transition-transform" />
-                                {unreadNotificationCount > 0 && (
-                                    <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-1 rounded-full min-w-[14px] sm:min-w-[17px] h-3.5 sm:h-4 flex items-center justify-center shadow-lg border-2 border-white ring-red-200">
-                                        {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                                <Bell className="h-5 w-5 sm:h-6 sm:w-6 group-hover:scale-110 transition-transform" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-0.5 right-0.5 bg-[#f02849] text-white text-[9px] sm:text-[11px] font-bold px-1 rounded-full min-w-[16px] sm:min-w-[22px] h-4 sm:h-5 flex items-center justify-center shadow-sm border-2 border-white z-10">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
                                     </span>
                                 )}
                             </Link>
 
                             <Link
                                 href={getSettingsHref()}
-                                className="p-1.5 sm:p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all group"
+                                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all group"
                                 title="Settings"
                             >
-                                <Settings className="h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-45 transition-transform" />
+                                <Settings className="h-5 w-5 sm:h-6 sm:w-6 group-hover:rotate-45 transition-transform" />
                             </Link>
 
                             <button
                                 onClick={handleSignOut}
-                                className="hidden lg:flex p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group"
+                                className="hidden lg:flex p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group"
                                 title="Sign Out"
                             >
-                                <LogOut className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-0.5 transition-transform" />
+                                <LogOut className="h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-0.5 transition-transform" />
                             </button>
                         </div>
 
@@ -124,7 +175,7 @@ export default function DashboardHeader({
 
                             <Link href={getSettingsHref()} className="relative shrink-0 group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity" />
-                                <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
+                                <div className="relative h-9 w-9 sm:h-11 sm:w-11 rounded-xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
                                     {profilePhotoUrl ? (
                                         <img
                                             src={profilePhotoUrl}
@@ -133,7 +184,7 @@ export default function DashboardHeader({
                                         />
                                     ) : (
                                         <div className="h-full w-full bg-primary-50 flex items-center justify-center">
-                                            <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
+                                            <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
                                         </div>
                                     )}
                                 </div>

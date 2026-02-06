@@ -179,7 +179,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
           id="full_name"
           label="Full Name"
           type="text"
-          placeholder="John Doe"
+          placeholder=""
           required
           value={formData.full_name}
           onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -190,7 +190,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
           id="email"
           label="Email Address"
           type="email"
-          placeholder="you@example.com"
+          placeholder=""
           required
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -202,7 +202,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
             id="password"
             label="Password"
             type="password"
-            placeholder="Min 6 characters"
+            placeholder=""
             required
             minLength={6}
             value={formData.password}

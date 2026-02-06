@@ -71,3 +71,16 @@ deno.lock
 # OS
 .DS_Store
 Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+*_results.txt
+*_log.txt
+build_log.txt
+insert_results.txt
+
+# Private production documentation
+PRODUCTION_CHECKLIST.md
+SECURITY.md
