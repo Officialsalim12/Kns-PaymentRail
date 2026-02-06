@@ -35,7 +35,8 @@ export default function LoginForm() {
       })
 
       if (signInError) {
-        if (signInError.message === 'Invalid login credentials' || (signInError as any).status === 400) {
+        // Broaden the check to catch more 400 errors as "invalid login credentials"
+        if (signInError.status === 400 || signInError.message.toLowerCase().includes('invalid')) {
           setError('invalid login credentials')
         } else {
           setError(signInError.message)
@@ -55,18 +56,21 @@ export default function LoginForm() {
           .eq('id', data.user.id)
           .single()
 
-        // If profile query fails, redirect to home and let server-side handle it
+        // If profile query fails, show error instead of redirecting
         if (profileError) {
-          console.log('Profile query failed, redirecting to home for server-side role detection')
-          window.location.href = '/'
+          console.error('Profile query failed:', profileError)
+          setError('invalid login credentials')
+          setLoading(false)
           return
         }
 
         const role = profile?.role || null
 
+        // If role is missing, show error instead of redirecting
         if (!role) {
-          console.log('User role not found, redirecting to home for server-side handling')
-          window.location.href = '/'
+          console.error('User role not found for user ID:', data.user.id)
+          setError('invalid login credentials')
+          setLoading(false)
           return
         }
 
