@@ -35,80 +35,49 @@ export async function generateReport(type: 'monthly' | 'yearly' | 'all', month?:
   if (type === 'monthly' && month !== undefined && year !== undefined) {
     const startDate = new Date(year, month, 1)
     const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
-    
+
     query = query
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
   } else if (type === 'yearly' && year !== undefined) {
     const startDate = new Date(year, 0, 1)
     const endDate = new Date(year, 11, 31, 23, 59, 59, 999)
-    
+
     query = query
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
   }
 
-  const { data: payments, error } = await query
+  try {
+    const { data: payments, error } = await query
 
-  if (error) {
-    throw new Error(`Failed to fetch payments: ${error.message}`)
+    if (error) {
+      console.error('Supabase error fetching payments:', error)
+      throw new Error(`Failed to fetch payments: ${error.message}`)
+    }
+
+    // Transform data for CSV
+    const reportData: ReportData[] = (payments || []).map((payment: any) => ({
+      id: payment.id,
+      payment_date: payment.payment_date || payment.created_at,
+      created_at: payment.created_at,
+      member_name: payment.member?.full_name || 'N/A',
+      membership_id: payment.member?.membership_id || 'N/A',
+      amount: Number(payment.amount) || 0,
+      payment_method: payment.payment_method || 'N/A',
+      payment_status: payment.payment_status || 'pending',
+      reference_number: payment.reference_number || 'N/A',
+      description: payment.description || '',
+    }))
+
+    return reportData
+  } catch (err: any) {
+    console.error('Error in generateReport:', err)
+    // Re-throw with a clean message to avoid exposing internal details to the client
+    // if it's not already a friendly error
+    if (err.message && !err.message.includes('Failed to fetch payments')) {
+      throw new Error(`Report generation failed: ${err.message}`)
+    }
+    throw err
   }
-
-  // Transform data for CSV
-  const reportData: ReportData[] = (payments || []).map((payment: any) => ({
-    id: payment.id,
-    payment_date: payment.payment_date || payment.created_at,
-    created_at: payment.created_at,
-    member_name: payment.member?.full_name || 'N/A',
-    membership_id: payment.member?.membership_id || 'N/A',
-    amount: Number(payment.amount) || 0,
-    payment_method: payment.payment_method || 'N/A',
-    payment_status: payment.payment_status || 'pending',
-    reference_number: payment.reference_number || 'N/A',
-    description: payment.description || '',
-  }))
-
-  return reportData
-}
-
-export async function convertToCSV(data: ReportData[]): Promise<string> {
-  if (data.length === 0) {
-    return 'No data available'
-  }
-
-  // CSV Headers
-  const headers = [
-    'Payment ID',
-    'Payment Date',
-    'Created At',
-    'Member Name',
-    'Membership ID',
-    'Amount',
-    'Payment Method',
-    'Payment Status',
-    'Reference Number',
-    'Description'
-  ]
-
-  // Convert data to CSV rows
-  const rows = data.map(payment => [
-    payment.id,
-    payment.payment_date,
-    payment.created_at,
-    `"${payment.member_name.replace(/"/g, '""')}"`,
-    payment.membership_id,
-    payment.amount.toString(),
-    payment.payment_method,
-    payment.payment_status,
-    payment.reference_number,
-    `"${payment.description.replace(/"/g, '""')}"`
-  ])
-
-  // Combine headers and rows
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.join(','))
-  ].join('\n')
-
-  return csvContent
 }

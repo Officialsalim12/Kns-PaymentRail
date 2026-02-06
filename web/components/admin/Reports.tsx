@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Download, FileText, Calendar, TrendingUp, RefreshCw, Cloud, HardDrive } from 'lucide-react'
-import { generateReport, convertToCSV, type ReportData } from '@/app/actions/generate-report'
+import { generateReport } from '@/app/actions/generate-report'
+import { convertToCSV, type ReportData } from '@/lib/csv'
 import { generateAndStoreReport, getStoredReports, type StoredReport } from '@/app/actions/store-report'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
@@ -217,8 +218,8 @@ export default function Reports() {
         <button
           onClick={() => setViewMode('generate')}
           className={`px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${viewMode === 'generate'
-              ? 'bg-white text-primary-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-white text-primary-600 shadow-sm'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
         >
           <HardDrive className="h-3.5 w-3.5" />
@@ -227,8 +228,8 @@ export default function Reports() {
         <button
           onClick={() => setViewMode('stored')}
           className={`px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${viewMode === 'stored'
-              ? 'bg-white text-primary-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'bg-white text-primary-600 shadow-sm'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
         >
           <Cloud className="h-3.5 w-3.5" />
@@ -248,8 +249,8 @@ export default function Reports() {
                 <button
                   onClick={() => setReportType('all')}
                   className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'all'
-                      ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    ? 'border-primary-600 bg-primary-50 text-primary-700'
+                    : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
                   <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
@@ -263,8 +264,8 @@ export default function Reports() {
                 <button
                   onClick={() => setReportType('yearly')}
                   className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'yearly'
-                      ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    ? 'border-primary-600 bg-primary-50 text-primary-700'
+                    : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
                   <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'yearly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
@@ -278,8 +279,8 @@ export default function Reports() {
                 <button
                   onClick={() => setReportType('monthly')}
                   className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'monthly'
-                      ? 'border-primary-600 bg-primary-50 text-primary-700'
-                      : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    ? 'border-primary-600 bg-primary-50 text-primary-700'
+                    : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
                   <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'monthly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
