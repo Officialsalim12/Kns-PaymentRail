@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, ChevronRight, Phone, Mail, MessageCircle, Facebook, Twitter, Linkedin, Instagram, Github, MapPin, Clock, Send, HelpCircle } from 'lucide-react'
+import { ChevronRight, Phone, Mail, MessageCircle, Facebook, Twitter, Linkedin, Instagram, Github, MapPin, Clock, Send, HelpCircle } from 'lucide-react'
 import { useState } from 'react'
 
 export default function ContactPage() {
@@ -37,30 +37,6 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <Link href="/" className="flex items-center">
-              <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mr-1.5 sm:mr-2" />
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">KNS MultiRail</span>
-            </Link>
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <Link
-                href="/login"
-                className="text-sm sm:text-base text-gray-700 hover:text-gray-900 font-semibold transition-colors px-1"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/organization/register"
-                className="px-4 py-2 sm:px-5 py-2.5 text-sm sm:text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
@@ -405,12 +381,8 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8 md:mb-12">
             <div>
-              <div className="flex items-center mb-4">
-                <Building2 className="w-8 h-8 text-primary-400 mr-2" />
-                <span className="text-xl font-bold text-white">KNS MultiRail</span>
-              </div>
               <p className="text-sm text-gray-400">
-                KNS MultiRail helps thousands of organizations collect payments, manage members, and track transactions. Built for Sierra Leone.
+                Helping thousands of organizations collect payments, manage members, and track transactions. Built for Sierra Leone.
               </p>
             </div>
 
@@ -443,7 +415,7 @@ export default function ContactPage() {
               </Link>
             </div>
             <p className="text-sm text-gray-400 mt-4 md:mt-0">
-              © {new Date().getFullYear()} KNS MultiRail. All rights reserved.
+              © {new Date().getFullYear()}. All rights reserved.
             </p>
           </div>
         </div>
