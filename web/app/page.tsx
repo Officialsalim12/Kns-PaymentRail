@@ -128,27 +128,11 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
-            {/* Donations */}
-            <div className="group flex flex-col items-center text-center">
-              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
-                <img
-                  src="/organization-preview.jpg"
-                  alt="Donations of any type"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Donations for Any Cause</h3>
-              <p className="text-gray-600 leading-relaxed max-w-md">
-                Whether you're raising funds for a local charity or a global initiative, our platform provides a seamless way to collect and manage donations of any type, ensuring every cent makes a difference.
-              </p>
-            </div>
-
             {/* Religious Organizations */}
             <div className="group flex flex-col items-center text-center">
               <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
                 <img
-                  src="/donation-preview.jpg"
+                  src="/organization-preview.jpg"
                   alt="Churches and Mosques"
                   className="w-full h-full object-cover"
                 />
@@ -157,6 +141,22 @@ export default async function HomePage() {
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Faith-Based Organizations</h3>
               <p className="text-gray-600 leading-relaxed max-w-md">
                 Perfect for churches and mosques to manage offerings, tithes, building project donations, or department contributions. Bring transparency and ease to your community's generous giving.
+              </p>
+            </div>
+
+            {/* Donations */}
+            <div className="group flex flex-col items-center text-center">
+              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                <img
+                  src="/donation-preview.jpg"
+                  alt="Donations of any type"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Donations for Any Cause</h3>
+              <p className="text-gray-600 leading-relaxed max-w-md">
+                Whether you're raising funds for a local charity or a global initiative, our platform provides a seamless way to collect and manage donations of any type, ensuring every cent makes a difference.
               </p>
             </div>
 
