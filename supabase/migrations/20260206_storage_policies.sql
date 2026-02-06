@@ -13,7 +13,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Helper to extract the organization ID from the storage path
 -- Assumes path format: 'organization_id/...'
-CREATE OR REPLACE FUNCTION storage.foldername(name text)
+-- Defined in public schema to avoid permission issues with storage schema
+CREATE OR REPLACE FUNCTION public.foldername(name text)
 RETURNS text[] LANGUAGE plpgsql AS $$
 DECLARE
     _parts text[];
@@ -40,7 +41,7 @@ ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
   bucket_id = 'reports' AND
-  (storage.foldername(name))[1] IN (
+  (public.foldername(name))[1] IN (
     SELECT organization_id::text 
     FROM public.users 
     WHERE id = auth.uid() 
@@ -55,7 +56,7 @@ ON storage.objects FOR SELECT
 TO authenticated
 USING (
   bucket_id = 'reports' AND
-  (storage.foldername(name))[1] IN (
+  (public.foldername(name))[1] IN (
     SELECT organization_id::text 
     FROM public.users 
     WHERE id = auth.uid()
@@ -69,7 +70,7 @@ ON storage.objects FOR UPDATE
 TO authenticated
 USING (
   bucket_id = 'reports' AND
-  (storage.foldername(name))[1] IN (
+  (public.foldername(name))[1] IN (
     SELECT organization_id::text 
     FROM public.users 
     WHERE id = auth.uid() 
@@ -78,7 +79,7 @@ USING (
 )
 WITH CHECK (
   bucket_id = 'reports' AND
-  (storage.foldername(name))[1] IN (
+  (public.foldername(name))[1] IN (
     SELECT organization_id::text 
     FROM public.users 
     WHERE id = auth.uid() 
@@ -93,7 +94,7 @@ ON storage.objects FOR DELETE
 TO authenticated
 USING (
   bucket_id = 'reports' AND
-  (storage.foldername(name))[1] IN (
+  (public.foldername(name))[1] IN (
     SELECT organization_id::text 
     FROM public.users 
     WHERE id = auth.uid() 
