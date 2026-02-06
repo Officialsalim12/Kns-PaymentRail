@@ -35,7 +35,11 @@ export default function LoginForm() {
       })
 
       if (signInError) {
-        setError(signInError.message)
+        if (signInError.message === 'Invalid login credentials' || (signInError as any).status === 400) {
+          setError('invalid login credentials')
+        } else {
+          setError(signInError.message)
+        }
         setLoading(false)
         return
       }
