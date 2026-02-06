@@ -3,8 +3,9 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('reports', 'reports', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on storage.objects if not already enabled (it usually is)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- COMMENTED OUT: ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- This table is managed by Supabase storage API and RLS is already enabled.
+-- Running this command manually can cause permission errors (42501).
 
 -------------------------------------------------------------------------------
 -- HELPER FUNCTIONS
@@ -25,6 +26,12 @@ $$;
 -------------------------------------------------------------------------------
 -- POLICIES
 -------------------------------------------------------------------------------
+
+-- Drop policies if they exist to allow re-running this migration
+DROP POLICY IF EXISTS "Org Admins can upload reports" ON storage.objects;
+DROP POLICY IF EXISTS "Org members can view reports" ON storage.objects;
+DROP POLICY IF EXISTS "Org Admins can update reports" ON storage.objects;
+DROP POLICY IF EXISTS "Org Admins can delete reports" ON storage.objects;
 
 -- 1. UPLOAD (INSERT) Policy
 -- Allow Org Admins to upload files only to their own organization's folder
