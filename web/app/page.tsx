@@ -132,7 +132,7 @@ export default async function HomePage() {
             <div className="group flex flex-col items-center text-center">
               <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
                 <img
-                  src="/donation-preview.jpg"
+                  src="/organization-preview.jpg"
                   alt="Donations of any type"
                   className="w-full h-full object-cover"
                 />
@@ -148,7 +148,7 @@ export default async function HomePage() {
             <div className="group flex flex-col items-center text-center">
               <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
                 <img
-                  src="/organization-preview.jpg"
+                  src="/donation-preview.jpg"
                   alt="Churches and Mosques"
                   className="w-full h-full object-cover"
                 />
