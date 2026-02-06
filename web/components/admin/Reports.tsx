@@ -152,7 +152,7 @@ export default function Reports() {
         year = selectedYear
       }
 
-      const storedReport = await generateAndStoreReport(organizationId, reportType, month, year)
+      const storedReport = await generateAndStoreReport(reportType, month, year)
 
       // Reload stored reports
       const reports = await getStoredReports(organizationId)
@@ -176,7 +176,6 @@ export default function Reports() {
 
     try {
       await generateAndStoreReport(
-        organizationId,
         report.type,
         report.month,
         report.year

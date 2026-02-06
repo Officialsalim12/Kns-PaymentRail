@@ -1,8 +1,7 @@
-'use server'
-
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { generateReport } from './generate-report'
 import { convertToCSV, type ReportData } from '@/lib/csv'
+import { requireOrgAdmin } from '@/lib/auth'
 
 export interface StoredReport {
   path: string
@@ -19,12 +18,19 @@ export interface StoredReport {
  * Generate and store CSV report in Supabase storage
  */
 export async function generateAndStoreReport(
-  organizationId: string,
   type: 'monthly' | 'yearly' | 'all',
   month?: number,
   year?: number
 ): Promise<StoredReport> {
-  const supabase = await createClient()
+  const user = await requireOrgAdmin()
+  const organizationId = user.profile?.organization_id
+
+  if (!organizationId) {
+    throw new Error('Organization not found')
+  }
+
+  // Use Service Role client for storage uploads to bypass RLS policies
+  const supabase = createServiceRoleClient()
 
   // Use current date if not provided
   const now = new Date()
@@ -89,34 +95,7 @@ export async function generateAndStoreReport(
   }
 }
 
-/**
- * Update CSV files when a payment is completed
- * This should be called after a payment status is updated to 'completed'
- */
-export async function updateReportsForPayment(
-  organizationId: string,
-  paymentDate: Date
-): Promise<void> {
-  const supabase = await createClient()
-  const year = paymentDate.getFullYear()
-  const month = paymentDate.getMonth()
 
-  try {
-    // Update all reports CSV (always update)
-    await generateAndStoreReport(organizationId, 'all')
-
-    // Update yearly report for the payment's year
-    await generateAndStoreReport(organizationId, 'yearly', undefined, year)
-
-    // Update monthly report for the payment's month/year
-    await generateAndStoreReport(organizationId, 'monthly', month, year)
-
-    console.log(`Updated reports for payment on ${paymentDate.toISOString()}`)
-  } catch (error: any) {
-    console.error('Error updating reports:', error)
-    // Don't throw - we don't want to fail payment processing if report update fails
-  }
-}
 
 /**
  * Get all stored reports for an organization
