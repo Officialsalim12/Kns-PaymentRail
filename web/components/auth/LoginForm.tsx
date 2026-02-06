@@ -16,9 +16,7 @@ export default function LoginForm() {
   const [showPasswordReset, setShowPasswordReset] = useState(false)
 
   // Password Reset States
-  const [resetName, setResetName] = useState('')
   const [resetEmail, setResetEmail] = useState('')
-  const [resetPhone, setResetPhone] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
   const [resetSuccess, setResetSuccess] = useState(false)
 
@@ -104,17 +102,12 @@ export default function LoginForm() {
 
     try {
       const supabase = createClient()
-      const { error: insertError } = await supabase
-        .from('password_reset_requests')
-        .insert({
-          user_name: resetName,
-          user_email: resetEmail,
-          user_phone: resetPhone,
-          status: 'pending',
-        })
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
 
-      if (insertError) {
-        throw insertError
+      if (resetError) {
+        throw resetError
       }
 
       setResetSuccess(true)
@@ -128,9 +121,7 @@ export default function LoginForm() {
   const closeResetModal = () => {
     setShowPasswordReset(false)
     setResetSuccess(false)
-    setResetName('')
     setResetEmail('')
-    setResetPhone('')
     setError(null)
   }
 
@@ -233,9 +224,9 @@ export default function LoginForm() {
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <h3 className="text-sm font-medium text-green-800">Request Submitted</h3>
+                            <h3 className="text-sm font-medium text-green-800">Email Sent</h3>
                             <div className="mt-2 text-sm text-green-700">
-                              <p>Your password reset request has been submitted. The superadmin will review and approve it. You will receive an email once approved.</p>
+                              <p>If an account exists with that email, you will receive a password reset link shortly. Please check your inbox and spam folder.</p>
                             </div>
                           </div>
                         </div>
@@ -264,31 +255,13 @@ export default function LoginForm() {
                         )}
 
                         <Input
-                          label="Full Name"
-                          value={resetName}
-                          onChange={(e) => setResetName(e.target.value)}
-                          placeholder=""
-                          required
-                          leftIcon={<User className="h-4 w-4" />}
-                        />
-
-                        <Input
                           label="Email Address"
                           type="email"
                           value={resetEmail}
                           onChange={(e) => setResetEmail(e.target.value)}
-                          placeholder=""
+                          placeholder="your@email.com"
                           required
                           leftIcon={<Mail className="h-4 w-4" />}
-                        />
-
-                        <Input
-                          label="Phone Number"
-                          type="tel"
-                          value={resetPhone}
-                          onChange={(e) => setResetPhone(e.target.value)}
-                          placeholder=""
-                          required
                         />
 
                         <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
