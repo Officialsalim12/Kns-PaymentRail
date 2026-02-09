@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Construct the redirect URL
-        const redirectUrl = new URL('/payment-success', request.url);
+        // IMPORTANT: We redirect to the PAGE, which is at /payment-cancelled
+        const redirectUrl = new URL('/payment-cancelled', request.url);
 
         // Append all existing query params
         searchParams.forEach((value, key) => {
@@ -37,8 +38,8 @@ export async function POST(request: NextRequest) {
         // Redirect to the GET page
         return NextResponse.redirect(redirectUrl, 303);
     } catch (error) {
-        console.error('Error handling POST request to payment-success:', error);
+        console.error('Error handling POST request to payment-cancelled:', error);
         // Fallback redirect even if parsing fails
-        return NextResponse.redirect(new URL('/payment-success', request.url), 303);
+        return NextResponse.redirect(new URL('/payment-cancelled', request.url), 303);
     }
 }

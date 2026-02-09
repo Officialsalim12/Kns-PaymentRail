@@ -1,8 +1,23 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   try {
+    // Rewrite POST requests to payment success/cancelled pages to the API handler
+    if (request.method === 'POST') {
+      const pathname = request.nextUrl.pathname
+      if (pathname === '/payment-success' || pathname === '/payment-success/') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/api/handler/payment-success'
+        return NextResponse.rewrite(url)
+      }
+      if (pathname === '/payment-cancelled' || pathname === '/payment-cancelled/') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/api/handler/payment-cancelled'
+        return NextResponse.rewrite(url)
+      }
+    }
+
     return await updateSession(request)
   } catch (e: any) {
     // Only log critical errors in production
