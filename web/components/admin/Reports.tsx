@@ -155,13 +155,17 @@ export default function Reports() {
         year = selectedYear
       }
 
-      const storedReport = await generateAndStoreReport(reportType, selectedDay, selectedMonth, selectedYear)
+      const result = await generateAndStoreReport(reportType, selectedDay, selectedMonth, selectedYear)
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
       // Reload stored reports
       const reports = await getStoredReports(organizationId)
       setStoredReports(reports)
 
-      setSuccess(`Report generated and stored successfully! ${storedReport.payment_count} payments included.`)
+      setSuccess(`Report generated and stored successfully! ${result.data?.payment_count} payments included.`)
       setViewMode('stored')
     } catch (err: any) {
       setError(err.message || 'Failed to generate and store report')
@@ -178,12 +182,16 @@ export default function Reports() {
     setSuccess(null)
 
     try {
-      await generateAndStoreReport(
+      const result = await generateAndStoreReport(
         report.type,
         report.day,
         report.month,
         report.year
       )
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
       // Reload stored reports
       const reports = await getStoredReports(organizationId)

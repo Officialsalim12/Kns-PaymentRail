@@ -25,12 +25,12 @@ export async function generateAndStoreReport(
   day?: number,
   month?: number,
   year?: number
-): Promise<StoredReport> {
+): Promise<{ data?: StoredReport; error?: string }> {
   const user = await requireOrgAdmin()
   const organizationId = user.profile?.organization_id
 
   if (!organizationId) {
-    throw new Error('Organization not found')
+    return { error: 'Organization not found' }
   }
 
   // Use Service Role client for storage uploads to bypass RLS policies
@@ -46,7 +46,7 @@ export async function generateAndStoreReport(
   const reportData = await generateReport(type, reportDay, reportMonth, reportYear)
 
   if (reportData.length === 0) {
-    throw new Error('No payment data found for the selected period')
+    return { error: 'No payment data found for the selected period' }
   }
 
   // Convert to CSV
@@ -81,7 +81,7 @@ export async function generateAndStoreReport(
     })
 
   if (uploadError) {
-    throw new Error(`Failed to upload report: ${uploadError.message}`)
+    return { error: `Failed to upload report: ${uploadError.message}` }
   }
 
   // Get public URL
@@ -93,15 +93,17 @@ export async function generateAndStoreReport(
   const totalAmount = reportData.reduce((sum, p) => sum + p.amount, 0)
 
   return {
-    path: storagePath,
-    url: publicUrl,
-    type,
-    day: type === 'daily' ? reportDay : undefined,
-    month: (type === 'daily' || type === 'monthly') ? reportMonth : undefined,
-    year: reportYear,
-    updated_at: new Date().toISOString(),
-    payment_count: reportData.length,
-    total_amount: totalAmount,
+    data: {
+      path: storagePath,
+      url: publicUrl,
+      type,
+      day: type === 'daily' ? reportDay : undefined,
+      month: (type === 'daily' || type === 'monthly') ? reportMonth : undefined,
+      year: reportYear,
+      updated_at: new Date().toISOString(),
+      payment_count: reportData.length,
+      total_amount: totalAmount,
+    }
   }
 }
 
