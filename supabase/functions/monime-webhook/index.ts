@@ -563,8 +563,14 @@ async function handlePaymentCompleted(
     .from("payments")
     .update(updateData)
     .eq("id", paymentId)
+    .neq("payment_status", "completed") // Atomic check: only update if not already completed
     .select()
-    .single();
+    .maybeSingle();
+
+  if (!updatedPayment) {
+    console.log(`[Webhook] Payment ${paymentId} was already completed or not found. Skipping duplicate processing.`);
+    return;
+  }
 
   if (updateError) {
     console.error(`[Webhook] ERROR updating payment ${paymentId}:`, updateError);

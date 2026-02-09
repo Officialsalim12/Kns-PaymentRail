@@ -212,10 +212,29 @@ serve(async (req) => {
 
       console.log(`[Sync] Attempting to update payment ${paymentId} to completed. Data:`, JSON.stringify(updateData, null, 2));
 
-      const { error: updateError } = await supabaseClient
+      const { error: updateError, data: updatedPayment } = await supabaseClient
         .from("payments")
         .update(updateData)
-        .eq("id", paymentId);
+        .eq("id", paymentId)
+        .neq("payment_status", "completed") // Atomic check: only update if not already completed
+        .select()
+        .maybeSingle();
+
+      if (!updatedPayment) {
+        console.log(`[Sync] Payment ${paymentId} was already completed or not found. Skipping duplicate processing.`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Payment was already completed by another process (webhook or sync).",
+            paymentStatus: "completed",
+            referenceNumber: referenceNumber,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
+      }
 
       if (updateError) {
         console.error(`[Sync] ERROR updating payment ${paymentId}:`, updateError.message);

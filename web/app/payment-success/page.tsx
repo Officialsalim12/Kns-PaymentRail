@@ -15,6 +15,9 @@ function PaymentSuccessContent() {
   const [syncing, setSyncing] = useState(false)
   const redirectTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Safely get payment_id
+  const paymentId = searchParams?.get('payment_id')
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -37,7 +40,7 @@ function PaymentSuccessContent() {
           return
         }
 
-        const paymentId = searchParams.get('payment_id')
+        // const paymentId = searchParams.get('payment_id') // Already got this safely above
 
         // Sync payment status if payment_id is provided
         if (paymentId) {
@@ -187,7 +190,7 @@ function PaymentSuccessContent() {
 
           <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 font-medium">
             <span>Powered by KNS MultiRail</span>
-            <span>Ref: {searchParams.get('payment_id')?.substring(0, 8) || 'N/A'}</span>
+            <span>Ref: {paymentId?.substring(0, 8) || 'N/A'}</span>
           </div>
         </div>
       </div>
