@@ -5,11 +5,6 @@ import Reports from '@/components/admin/Reports'
 export const runtime = 'nodejs'
 
 export default async function ReportsPage() {
-  try {
-    await requireOrgAdmin()
-    return <Reports />
-  } catch (error) {
-    console.error('[ReportsPage] Error:', error)
-    throw error
-  }
+  await requireOrgAdmin()
+  return <Reports />
 }

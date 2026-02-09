@@ -769,8 +769,9 @@ async function handlePaymentCompleted(
     try {
       console.log("Generating receipt for payment:", payment.id);
 
-      // Use idempotency key to prevent duplicate processing
-      const idempotencyKey = `receipt-${payment.id}-${payment.updated_at || Date.now()}`;
+      // Use deterministic idempotency key to prevent duplicate processing
+      // We remove the timestamp/updated_at specific part so concurrent requests generate the SAME key
+      const idempotencyKey = `receipt-${payment.id}`;
 
       // Get service role key and Supabase URL for internal function calls
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

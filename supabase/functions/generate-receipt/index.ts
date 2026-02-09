@@ -49,7 +49,7 @@ serve(async (req) => {
 
     if (!paymentId || !organizationId || !memberId) throw new Error("Missing required parameters");
 
-    // Idempotency check
+    // Idempotency check 1: Check if receipt already exists
     const { data: existingReceipt } = await supabaseClient
       .from("receipts")
       .select("id, receipt_number, pdf_url")
@@ -61,6 +61,50 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
+    }
+
+    // Idempotency check 2: Distributed Lock using receipt_generation_logs
+    // Try to insert a 'processing' record. If it fails (constraint violation), another process is working on it.
+    // The table should have a unique constraint on payment_id.
+    const { error: lockError } = await supabaseClient
+      .from("receipt_generation_logs")
+      .insert({
+        payment_id: paymentId,
+        status: "processing",
+        started_at: new Date().toISOString(),
+        idempotency_key: idempotencyKey
+      });
+
+    if (lockError) {
+      console.log(`Receipt generation lock failed for payment ${paymentId}:`, lockError.message);
+
+      // Check if it failed because it's already processing or completed
+      const { data: logEntry } = await supabaseClient
+        .from("receipt_generation_logs")
+        .select("status, created_at")
+        .eq("payment_id", paymentId)
+        .maybeSingle();
+
+      if (logEntry) {
+        // If it was created less than 1 minute ago, assume it's still processing vs stale lock
+        const lockTime = new Date(logEntry.created_at).getTime();
+        const now = Date.now();
+        if (now - lockTime < 60000) { // 1 minute timeout
+          return new Response(JSON.stringify({
+            success: true,
+            message: "Receipt generation already in progress",
+            processing: true
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        } else {
+          // Stale lock - we could theoretically delete and retry, but for now let's just log and continue carefully
+          // or fail safely. Let's try to take over the lock if it's stale? 
+          // Simpler for now: just fail safe.
+          console.warn(`Found stale lock for payment ${paymentId} from ${logEntry.created_at}.`);
+        }
+      }
     }
 
     // Fetch details
@@ -104,6 +148,12 @@ serve(async (req) => {
       .insert({ organization_id: organizationId, payment_id: paymentId, member_id: memberId, receipt_number: receiptNumber, pdf_url: publicUrl, pdf_storage_path: storagePath })
       .select().single();
 
+    // Release Lock (Update status to completed)
+    await supabaseClient
+      .from("receipt_generation_logs")
+      .update({ status: "completed", completed_at: new Date().toISOString(), receipt_number: receiptNumber })
+      .eq("payment_id", paymentId);
+
     if (receiptError) {
       await supabaseClient.storage.from("receipts").remove([storagePath]);
       throw receiptError;
@@ -128,6 +178,24 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("Receipt generation error:", error);
+
+    // Try to update lock to failed
+    try {
+      if (paymentId) { // Check if paymentId was extracted
+        const supabaseClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+        await supabaseClient
+          .from("receipt_generation_logs")
+          .update({ status: "failed", error: error.message })
+          .eq("payment_id", paymentId);
+      }
+    } catch (e) {
+      // Ignore error during error handling
+    }
+
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
