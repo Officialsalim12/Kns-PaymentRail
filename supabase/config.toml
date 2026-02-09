@@ -1,0 +1,49 @@
+# Supabase Configuration
+# See: https://supabase.com/docs/guides/cli/config
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions.monime-webhook]
+# Disable JWT verification for webhook - external services can't provide JWT
+verify_jwt = false
+
+[functions.generate-receipt]
+# Keep JWT verification for internal function calls
+verify_jwt = true
+
+[functions.create-monime-checkout]
+# Keep JWT verification - called by authenticated users
+verify_jwt = true
+
+[functions.sync-payment-status]
+# Keep JWT verification - called by authenticated users
+verify_jwt = true
+
+[functions.send-notification]
+# Keep JWT verification - called by authenticated users
+verify_jwt = true
+
+[functions.check-member-suspensions]
+# Keep JWT verification - called by authenticated users or cron
+verify_jwt = true
+
+[functions.update-reports]
+# Disable JWT verification - called by other edge functions (webhooks)
+verify_jwt = false
+
+[functions.sync-organization-structure]
+# Keep JWT verification - called by authenticated users or super admins
+verify_jwt = true
+
+[functions.cleanup-pending-payments]
+# Keep JWT verification - called by authenticated users or cron
+verify_jwt = true
+
+[functions.recalculate-member-totals]
+# Keep JWT verification - called by authenticated users or super admins
+verify_jwt = true

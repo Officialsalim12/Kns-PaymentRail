@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 239, 246, 255;
+  /* Light blue background */
+  --background-end-rgb: 255, 255, 255;
+  /* White */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 17, 24, 39;
+    --background-end-rgb: 17, 24, 39;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 640px) {
+
+  /* Improve touch targets on mobile without breaking layout */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Better text readability on small screens */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    /* Slightly smaller base font for mobile */
+  }
+}
+
+/* Base Container for Large Screens */
+.main-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .main-container {
+    max-width: 1600px;
+    /* Cap width on ultra-wide screens but allow it to be wider than before */
+  }
+}
+
+/* Custom horizontal scroll for narrow containers/tables */
+.responsive-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-left: -1rem;
+  /* Negative margin to allow full-bleed scroll on mobile */
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-table-container {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Professional Typography and Spacing */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply tracking-tight font-bold;
+}
+
+/* Prevent horizontal scroll on mobile */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  scroll-behavior: smooth;
+}
+
+/* Ensure text wraps properly on very small screens */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Improve touch targets on very small screens */
+@media (max-width: 375px) {
+  .main-container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  button:not(.inline-btn),
+  a[role="button"]:not(.inline-btn) {
+    min-height: 44px;
+  }
+}
+
+/* Glassmorphism effects */
+.glass-effect {
+  @apply bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20;
+}
+
+/* Professional Card Styles */
+.pro-card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300;
+}
+
+/* Form focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
