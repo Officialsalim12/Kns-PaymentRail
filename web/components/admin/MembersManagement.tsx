@@ -351,7 +351,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
                         </button>
 
                         {openDropdown === member.id && (
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                             {member.status === 'pending' && (
                               <>
                                 <button
@@ -488,7 +488,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
                               </button>
 
                               {openDropdown === member.id && (
-                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                                   {member.status === 'pending' && (
                                     <>
                                       <button
