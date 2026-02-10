@@ -128,7 +128,7 @@ function PaymentSuccessContent() {
         redirectTimerRef.current = null
       }
     }
-  }, [mounted, router, searchParams])
+  }, [mounted, router, searchParams, paymentId])
 
   if (!mounted) {
     return (
