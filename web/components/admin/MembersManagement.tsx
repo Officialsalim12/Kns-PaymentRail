@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { CheckCircle, XCircle, Clock, Plus, Search, X } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Plus, Search, X, MoreVertical } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
@@ -35,6 +35,22 @@ export default function MembersManagement({ members: initialMembers, organizatio
   const [tabsManager, setTabsManager] = useState<{ memberId: string; memberName: string; organizationId: string } | null>(null)
   const [showBulkTabCreator, setShowBulkTabCreator] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.dropdown-container')) {
+        setOpenDropdown(null)
+      }
+    }
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [openDropdown])
 
   // Set up real-time subscriptions for member changes
   useEffect(() => {
@@ -324,61 +340,99 @@ export default function MembersManagement({ members: initialMembers, organizatio
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {member.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleApproveClick(member.id, member.full_name)}
-                            className="flex-1 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => updateMemberStatus(member.id, 'inactive')}
-                            className="flex-1 py-2 bg-red-50 text-red-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {member.status === 'active' && (
+                    <div className="flex justify-end pt-2">
+                      <div className="relative dropdown-container">
                         <button
-                          onClick={() => updateMemberStatus(member.id, 'suspended')}
-                          className="flex-1 py-2 bg-orange-50 text-orange-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
+                          onClick={() => setOpenDropdown(openDropdown === member.id ? null : member.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          aria-label="Actions menu"
                         >
-                          Suspend
+                          <MoreVertical className="h-5 w-5 text-gray-600" />
                         </button>
-                      )}
-                      {member.status === 'suspended' && (
-                        <button
-                          onClick={() => updateMemberStatus(member.id, 'active')}
-                          className="flex-1 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                        >
-                          Reactivate
-                        </button>
-                      )}
-                      {(member.status === 'active' || member.status === 'suspended') && (
-                        <div className="flex w-full gap-2">
-                          <button
-                            onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
-                            className="flex-1 py-2 bg-purple-50 text-purple-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                          >
-                            Tabs
-                          </button>
-                          <button
-                            onClick={() => recalculateBalance(member.id)}
-                            className="flex-1 py-2 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                          >
-                            Recalc
-                          </button>
-                          <button
-                            onClick={() => resetBalance(member.id)}
-                            className="py-2 px-4 bg-gray-50 text-gray-700 text-xs font-bold rounded-xl active:scale-95 transition-all"
-                          >
-                            Reset
-                          </button>
-                        </div>
-                      )}
+
+                        {openDropdown === member.id && (
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                            {member.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleApproveClick(member.id, member.full_name)
+                                    setOpenDropdown(null)
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    updateMemberStatus(member.id, 'inactive')
+                                    setOpenDropdown(null)
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {member.status === 'active' && (
+                              <button
+                                onClick={() => {
+                                  updateMemberStatus(member.id, 'suspended')
+                                  setOpenDropdown(null)
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-orange-700 hover:bg-orange-50 transition-colors"
+                              >
+                                Suspend
+                              </button>
+                            )}
+                            {member.status === 'suspended' && (
+                              <button
+                                onClick={() => {
+                                  updateMemberStatus(member.id, 'active')
+                                  setOpenDropdown(null)
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors"
+                              >
+                                Reactivate
+                              </button>
+                            )}
+                            {(member.status === 'active' || member.status === 'suspended') && (
+                              <>
+                                <div className="border-t border-gray-100 my-1"></div>
+                                <button
+                                  onClick={() => {
+                                    setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })
+                                    setOpenDropdown(null)
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 transition-colors"
+                                >
+                                  Manage Tabs
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    recalculateBalance(member.id)
+                                    setOpenDropdown(null)
+                                  }}
+                                  disabled={loading === member.id}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                >
+                                  {loading === member.id ? 'Recalculating...' : 'Recalculate Balance'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    resetBalance(member.id)
+                                    setOpenDropdown(null)
+                                  }}
+                                  disabled={loading === member.id}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                >
+                                  {loading === member.id ? 'Resetting...' : 'Reset Balance'}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -424,69 +478,100 @@ export default function MembersManagement({ members: initialMembers, organizatio
                             <div className="text-sm font-bold text-gray-900">{formatCurrency(member.unpaid_balance || 0)}</div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-xs font-bold">
-                            <div className="flex flex-wrap gap-2 xl:gap-3">
-                              {member.status === 'pending' && (
-                                <>
-                                  <button
-                                    onClick={() => handleApproveClick(member.id, member.full_name)}
-                                    disabled={loading === member.id}
-                                    className="text-green-600 hover:text-green-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                  >
-                                    {loading === member.id ? 'Updating...' : 'Approve'}
-                                  </button>
-                                  <button
-                                    onClick={() => updateMemberStatus(member.id, 'inactive')}
-                                    disabled={loading === member.id}
-                                    className="text-red-600 hover:text-red-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                  >
-                                    Reject
-                                  </button>
-                                </>
-                              )}
-                              {member.status === 'active' && (
-                                <button
-                                  onClick={() => updateMemberStatus(member.id, 'suspended')}
-                                  disabled={loading === member.id}
-                                  className="text-orange-600 hover:text-orange-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                >
-                                  {loading === member.id ? 'Updating...' : 'Suspend'}
-                                </button>
-                              )}
-                              {member.status === 'suspended' && (
-                                <button
-                                  onClick={() => updateMemberStatus(member.id, 'active')}
-                                  disabled={loading === member.id}
-                                  className="text-green-600 hover:text-green-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                >
-                                  {loading === member.id ? 'Updating...' : 'Reactivate'}
-                                </button>
-                              )}
-                              {(member.status === 'active' || member.status === 'suspended') && (
-                                <>
-                                  <button
-                                    onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
-                                    className="text-purple-600 hover:text-purple-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                    title="Manage tabs for this member"
-                                  >
-                                    Tabs
-                                  </button>
-                                  <button
-                                    onClick={() => recalculateBalance(member.id)}
-                                    disabled={loading === member.id}
-                                    className="text-blue-600 hover:text-blue-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                    title="Recalculate balance from payments"
-                                  >
-                                    {loading === member.id ? '...' : 'Recalc'}
-                                  </button>
-                                  <button
-                                    onClick={() => resetBalance(member.id)}
-                                    disabled={loading === member.id}
-                                    className="text-gray-600 hover:text-gray-900 disabled:opacity-50 text-sm lg:text-base xl:text-lg"
-                                    title="Reset balance to 0"
-                                  >
-                                    {loading === member.id ? '...' : 'Reset'}
-                                  </button>
-                                </>
+                            <div className="relative dropdown-container">
+                              <button
+                                onClick={() => setOpenDropdown(openDropdown === member.id ? null : member.id)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                aria-label="Actions menu"
+                              >
+                                <MoreVertical className="h-5 w-5 text-gray-600" />
+                              </button>
+
+                              {openDropdown === member.id && (
+                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-10">
+                                  {member.status === 'pending' && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          handleApproveClick(member.id, member.full_name)
+                                          setOpenDropdown(null)
+                                        }}
+                                        disabled={loading === member.id}
+                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
+                                      >
+                                        {loading === member.id ? 'Updating...' : 'Approve'}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          updateMemberStatus(member.id, 'inactive')
+                                          setOpenDropdown(null)
+                                        }}
+                                        disabled={loading === member.id}
+                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                      >
+                                        Reject
+                                      </button>
+                                    </>
+                                  )}
+                                  {member.status === 'active' && (
+                                    <button
+                                      onClick={() => {
+                                        updateMemberStatus(member.id, 'suspended')
+                                        setOpenDropdown(null)
+                                      }}
+                                      disabled={loading === member.id}
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-orange-700 hover:bg-orange-50 transition-colors disabled:opacity-50"
+                                    >
+                                      {loading === member.id ? 'Updating...' : 'Suspend'}
+                                    </button>
+                                  )}
+                                  {member.status === 'suspended' && (
+                                    <button
+                                      onClick={() => {
+                                        updateMemberStatus(member.id, 'active')
+                                        setOpenDropdown(null)
+                                      }}
+                                      disabled={loading === member.id}
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
+                                    >
+                                      {loading === member.id ? 'Updating...' : 'Reactivate'}
+                                    </button>
+                                  )}
+                                  {(member.status === 'active' || member.status === 'suspended') && (
+                                    <>
+                                      <div className="border-t border-gray-100 my-1"></div>
+                                      <button
+                                        onClick={() => {
+                                          setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })
+                                          setOpenDropdown(null)
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 transition-colors"
+                                      >
+                                        Manage Tabs
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          recalculateBalance(member.id)
+                                          setOpenDropdown(null)
+                                        }}
+                                        disabled={loading === member.id}
+                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                      >
+                                        {loading === member.id ? 'Recalculating...' : 'Recalculate Balance'}
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          resetBalance(member.id)
+                                          setOpenDropdown(null)
+                                        }}
+                                        disabled={loading === member.id}
+                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                      >
+                                        {loading === member.id ? 'Resetting...' : 'Reset Balance'}
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>
