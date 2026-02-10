@@ -1,23 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Download, FileText, Calendar, TrendingUp, RefreshCw, Cloud, HardDrive, Clock, Trash2 } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Download, FileText, Calendar, TrendingUp, RefreshCw, Cloud, HardDrive, Clock } from 'lucide-react'
 import { generateReport } from '@/app/actions/generate-report'
-import { convertToCSV, type ReportData } from '@/lib/csv'
+import { convertToCSV } from '@/lib/csv'
 import { generateAndStoreReport, getStoredReports, type StoredReport } from '@/app/actions/store-report'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
-import { format } from 'date-fns'
+import { format, startOfDay, endOfDay, subDays } from 'date-fns'
+import { RevenueAreaChart, TransactionBarChart } from './RevenueChart'
 
 export default function Reports() {
-  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'yearly' | 'all'>('all')
-  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate())
+  const [reportType, setReportType] = useState<'monthly' | 'yearly' | 'custom' | 'all'>('all')
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const [customStartDate, setCustomStartDate] = useState<string>(format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+  const [customEndDate, setCustomEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
+
   const [loading, setLoading] = useState(false)
   const [regenerating, setRegenerating] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [reportData, setReportData] = useState<any[]>([])
   const [reportStats, setReportStats] = useState<{
     totalPayments: number
     totalAmount: number
@@ -64,24 +68,76 @@ export default function Reports() {
     loadStoredReports()
   }, [])
 
-  const handleDownload = async () => {
+  const prepareChartData = useMemo(() => {
+    if (!reportData.length) return []
+
+    // Group data based on report type
+    const groupedData = new Map<string, { amount: number, count: number }>()
+
+    reportData.forEach(payment => {
+      const date = new Date(payment.created_at)
+      let key = ''
+      let label = ''
+
+      if (reportType === 'monthly' || reportType === 'custom' || reportType === 'all') {
+        // For monthly/custom/all, group by day
+        key = format(date, 'yyyy-MM-dd')
+        label = format(date, 'MMM d')
+      } else if (reportType === 'yearly') {
+        // For yearly, group by month
+        key = format(date, 'yyyy-MM')
+        label = format(date, 'MMM')
+      }
+
+      const existing = groupedData.get(key) || { amount: 0, count: 0 }
+      groupedData.set(key, {
+        amount: existing.amount + payment.amount,
+        count: existing.count + 1
+      })
+    })
+
+    // Sort by date/time
+    return Array.from(groupedData.entries())
+      .map(([key, value]) => ({
+        date: key,
+        amount: value.amount,
+        count: value.count,
+        label: reportData.find(p => {
+          const d = new Date(p.created_at)
+          if (reportType === 'yearly') return format(d, 'yyyy-MM') === key
+          return format(d, 'yyyy-MM-dd') === key
+        }) ? (
+          reportType === 'yearly' ? format(new Date(reportData.find(p => format(new Date(p.created_at), 'yyyy-MM') === key).created_at), 'MMM') :
+            format(new Date(key), 'MMM d')
+        ) : key
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [reportData, reportType])
+
+  const generateReportData = async () => {
     setLoading(true)
     setError(null)
     setSuccess(null)
     setReportStats(null)
+    setReportData([])
 
     try {
-      let month: number | undefined
-      let year: number | undefined
+      let data: any[] = []
 
-      if (reportType === 'monthly') {
-        month = selectedMonth
-        year = selectedYear
-      } else if (reportType === 'yearly') {
-        year = selectedYear
+      if (reportType === 'custom') {
+        const allData = await generateReport('all')
+
+        const start = startOfDay(new Date(customStartDate))
+        const end = endOfDay(new Date(customEndDate))
+
+        data = allData.filter((p: any) => {
+          const date = new Date(p.created_at)
+          return date >= start && date <= end
+        })
+      } else {
+        // We removed 'daily', so just pass undefined for day
+        data = await generateReport(reportType as any, undefined, selectedMonth, selectedYear)
       }
-
-      const data = await generateReport(reportType, selectedDay, selectedMonth, selectedYear)
 
       if (data.length === 0) {
         setError('No payments found for the selected period.')
@@ -89,8 +145,10 @@ export default function Reports() {
         return
       }
 
+      setReportData(data)
+
       // Calculate statistics
-      const totalAmount = data.reduce((sum, p) => sum + p.amount, 0)
+      const totalAmount = data.reduce((sum: number, p: any) => sum + p.amount, 0)
       const averageAmount = data.length > 0 ? totalAmount / data.length : 0
       setReportStats({
         totalPayments: data.length,
@@ -98,17 +156,30 @@ export default function Reports() {
         averageAmount,
       })
 
+      setSuccess('Report generated successfully!')
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate report')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDownload = async () => {
+    if (!reportData.length) return
+
+    try {
       // Convert to CSV
-      const csvContent = await convertToCSV(data)
+      const csvContent = await convertToCSV(reportData)
 
       // Generate filename
       let filename = 'payments-report'
-      if (reportType === 'daily') {
-        filename = `payments-${selectedDay}-${months[selectedMonth].toLowerCase()}-${selectedYear}`
-      } else if (reportType === 'monthly') {
+      if (reportType === 'monthly') {
         filename = `payments-${months[selectedMonth].toLowerCase()}-${selectedYear}`
       } else if (reportType === 'yearly') {
         filename = `payments-${selectedYear}`
+      } else if (reportType === 'custom') {
+        filename = `payments-${customStartDate}-to-${customEndDate}`
       } else {
         filename = 'payments-all'
       }
@@ -128,9 +199,7 @@ export default function Reports() {
 
       setSuccess('Report downloaded successfully!')
     } catch (err: any) {
-      setError(err.message || 'Failed to generate report')
-    } finally {
-      setLoading(false)
+      setError(err.message || 'Failed to download report')
     }
   }
 
@@ -140,22 +209,17 @@ export default function Reports() {
       return
     }
 
+    if (reportType === 'custom') {
+      setError('Storing custom range reports is not supported yet.')
+      return
+    }
+
     setLoading(true)
     setError(null)
     setSuccess(null)
 
     try {
-      let month: number | undefined
-      let year: number | undefined
-
-      if (reportType === 'monthly') {
-        month = selectedMonth
-        year = selectedYear
-      } else if (reportType === 'yearly') {
-        year = selectedYear
-      }
-
-      const result = await generateAndStoreReport(reportType, selectedDay, selectedMonth, selectedYear)
+      const result = await generateAndStoreReport(reportType as any, undefined, selectedMonth, selectedYear)
 
       if (result.error) {
         throw new Error(result.error)
@@ -184,7 +248,7 @@ export default function Reports() {
     try {
       const result = await generateAndStoreReport(
         report.type,
-        report.day,
+        undefined, // day is no longer used
         report.month,
         report.year
       )
@@ -210,10 +274,8 @@ export default function Reports() {
       return 'All Payments'
     } else if (report.type === 'yearly') {
       return `${report.year} Yearly Report`
-    } else if (report.type === 'monthly') {
+    } else { // This will now cover monthly reports
       return `${months[report.month || 0]} ${report.year}`
-    } else {
-      return `${report.day} ${months[report.month || 0]} ${report.year}`
     }
   }
 
@@ -260,92 +322,55 @@ export default function Reports() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
-                  onClick={() => setReportType('daily')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'daily'
-                    ? 'border-primary-600 bg-primary-50 text-primary-700'
-                    : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
-                    }`}
-                >
-                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'daily' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
-                    }`}>
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div className="font-bold text-sm">Daily</div>
-                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Today&apos;s Transactions</div>
-                </button>
-
-                <button
                   onClick={() => setReportType('monthly')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'monthly'
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'monthly'
                     ? 'border-primary-600 bg-primary-50 text-primary-700'
                     : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
-                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'monthly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
-                    }`}>
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <div className="font-bold text-sm">Monthly</div>
-                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Periodic View</div>
+                  <Calendar className={`h-5 w-5 mb-2 ${reportType === 'monthly' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <div className="font-bold text-xs">Monthly</div>
                 </button>
 
                 <button
                   onClick={() => setReportType('yearly')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'yearly'
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'yearly'
                     ? 'border-primary-600 bg-primary-50 text-primary-700'
                     : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
-                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'yearly' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
-                    }`}>
-                    <TrendingUp className="h-5 w-5" />
-                  </div>
-                  <div className="font-bold text-sm">Yearly</div>
-                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Annual Summary</div>
+                  <TrendingUp className={`h-5 w-5 mb-2 ${reportType === 'yearly' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <div className="font-bold text-xs">Yearly</div>
+                </button>
+
+                <button
+                  onClick={() => setReportType('custom')}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'custom'
+                    ? 'border-primary-600 bg-primary-50 text-primary-700'
+                    : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
+                    }`}
+                >
+                  <Calendar className={`h-5 w-5 mb-2 ${reportType === 'custom' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <div className="font-bold text-xs">Custom Range</div>
                 </button>
 
                 <button
                   onClick={() => setReportType('all')}
-                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'all'
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center text-center group ${reportType === 'all'
                     ? 'border-primary-600 bg-primary-50 text-primary-700'
                     : 'border-gray-100 bg-gray-50/50 hover:border-primary-200 text-gray-600'
                     }`}
                 >
-                  <div className={`p-3 rounded-xl mb-3 transition-transform group-hover:scale-110 ${reportType === 'all' ? 'bg-primary-600 text-white' : 'bg-white text-gray-400 lg:group-hover:text-primary-600'
-                    }`}>
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <div className="font-bold text-sm">All Payments</div>
-                  <div className="text-[10px] opacity-70 mt-1 uppercase tracking-tight">Full History</div>
+                  <FileText className={`h-5 w-5 mb-2 ${reportType === 'all' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <div className="font-bold text-xs">All Payments</div>
                 </button>
               </div>
             </div>
 
             {/* Date Selection */}
-            {(reportType === 'daily' || reportType === 'monthly' || reportType === 'yearly') && (
+            {(reportType === 'monthly' || reportType === 'yearly') && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {reportType === 'daily' && (
-                  <div>
-                    <label htmlFor="report-day" className="block text-sm font-medium text-gray-700 mb-2">
-                      Day
-                    </label>
-                    <select
-                      id="report-day"
-                      name="report-day"
-                      value={selectedDay}
-                      onChange={(e) => setSelectedDay(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                        <option key={day} value={day}>
-                          {day}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {(reportType === 'daily' || reportType === 'monthly') && (
+                {reportType === 'monthly' && (
                   <div>
                     <label htmlFor="report-month" className="block text-sm font-medium text-gray-700 mb-2">
                       Month
@@ -387,6 +412,48 @@ export default function Reports() {
               </div>
             )}
 
+            {/* Custom Date Range Selection */}
+            {reportType === 'custom' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    id="start-date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    id="end-date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Actions to Generate */}
+            <div className="flex justify-end">
+              <button
+                onClick={generateReportData}
+                disabled={loading}
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}
+                Generate Report
+              </button>
+            </div>
+
             {/* Error/Success Messages */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -400,46 +467,61 @@ export default function Reports() {
               </div>
             )}
 
-            {/* Report Statistics */}
+            {/* Report Statistics & Charts */}
             {reportStats && (
-              <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
-                <h3 className="text-xs font-bold text-primary-600 uppercase tracking-widest mb-4 text-center">Report Summary</h3>
-                <div className="grid grid-cols-1 xs:grid-cols-3 gap-6 text-center">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Payments</p>
-                    <p className="text-2xl font-bold text-primary-900">{reportStats.totalPayments}</p>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
+                  <h3 className="text-xs font-bold text-primary-600 uppercase tracking-widest mb-4 text-center">Report Summary</h3>
+                  <div className="grid grid-cols-1 xs:grid-cols-3 gap-6 text-center">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Payments</p>
+                      <p className="text-2xl font-bold text-primary-900">{reportStats.totalPayments}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Total Amount</p>
+                      <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.totalAmount)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Average</p>
+                      <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.averageAmount)}</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Total Amount</p>
-                    <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.totalAmount)}</p>
+                </div>
+
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">Revenue Over Time</h3>
+                    <RevenueAreaChart data={prepareChartData} />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-primary-400 font-bold uppercase tracking-tight">Average</p>
-                    <p className="text-2xl font-bold text-primary-900">{formatCurrency(reportStats.averageAmount)}</p>
+                  <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4">Transaction Volume</h3>
+                    <TransactionBarChart data={prepareChartData} />
                   </div>
+                </div>
+
+                {/* Download Actions */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center justify-center gap-2 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download CSV
+                  </button>
+                  {reportType !== 'custom' && (
+                    <button
+                      onClick={handleGenerateAndStore}
+                      disabled={loading}
+                      className="flex items-center justify-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      <Cloud className="h-4 w-4" />
+                      Store Report
+                    </button>
+                  )}
                 </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleDownload}
-                disabled={loading}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Download className="h-5 w-5" />
-                {loading ? 'Generating...' : 'Download CSV'}
-              </button>
-              <button
-                onClick={handleGenerateAndStore}
-                disabled={loading || !organizationId}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Cloud className="h-5 w-5" />
-                {loading ? 'Storing...' : 'Generate & Store'}
-              </button>
-            </div>
           </div>
         </div>
       ) : (
@@ -509,8 +591,8 @@ export default function Reports() {
         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
           <li>Reports include all payment transactions with member details</li>
           <li>CSV files can be opened in Excel, Google Sheets, or any spreadsheet application</li>
-          <li>All reports include: Payment ID, Date, Member Name, Amount, Payment Method, Status, Reference Number, and Description</li>
-          <li>Stored reports are automatically updated when new payments are completed</li>
+          <li>Charts visualise revenue trends based on the selected period.</li>
+          <li>Stored reports are automatically updated when new payments are completed (except custom ranges)</li>
         </ul>
       </div>
     </div>

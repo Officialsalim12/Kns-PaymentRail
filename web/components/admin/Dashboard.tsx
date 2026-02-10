@@ -43,6 +43,12 @@ interface DashboardProps {
   revenueHistory?: any[]
   memberGrowth?: number
   revenueChange?: number
+  paymentStatusDistribution?: {
+    completed: number
+    pending: number
+    failed: number
+    total: number
+  }
 }
 
 export default function AdminDashboard({
@@ -52,7 +58,8 @@ export default function AdminDashboard({
   pendingApprovals,
   revenueHistory = [],
   memberGrowth = 0,
-  revenueChange = 0
+  revenueChange = 0,
+  paymentStatusDistribution
 }: DashboardProps) {
   const [showBulkTabCreator, setShowBulkTabCreator] = useState(false)
   const [mobileTab, setMobileTab] = useState<'summary' | 'analytics' | 'activity'>('summary')
@@ -83,21 +90,41 @@ export default function AdminDashboard({
     const dayStart = startOfDay(date)
     const dayEnd = endOfDay(date)
 
-    const dayTotal = revenueHistory
+    const dailyPayments = revenueHistory
       .filter(p => {
         const pDate = new Date(p.created_at || p.payment_date)
-        return pDate >= dayStart && pDate <= dayEnd && (p.payment_status === 'completed' || p.status === 'completed')
+        return pDate >= dayStart && pDate <= dayEnd
       })
+
+    const dayTotal = dailyPayments
+      .filter(p => p.payment_status === 'completed' || p.status === 'completed')
       .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+
+    const transactionCount = dailyPayments.length
 
     return {
       date: format(date, 'EEE'),
       amount: dayTotal,
+      count: transactionCount,
       fullDate: format(dayStart, 'MMM dd')
     }
   })
 
   const maxAmount = Math.max(...chartData.map(d => d.amount), 1)
+
+  // Use paymentStatusDistribution if available, otherwise fallback to stats (though page now provides it)
+  const statusData = paymentStatusDistribution || {
+    completed: 0,
+    pending: 0,
+    failed: 0,
+    total: 0
+  }
+
+  // Calculate percentages for the donut chart
+  const totalStatus = statusData.total || 1
+  const completedPct = (statusData.completed / totalStatus) * 502.65
+  const pendingPct = (statusData.pending / totalStatus) * 502.65
+  const failedPct = (statusData.failed / totalStatus) * 502.65
 
   return (
     <div className="space-y-8 pb-20 md:pb-8">
@@ -221,8 +248,9 @@ export default function AdminDashboard({
                   return (
                     <div key={day.date} className="relative flex-1 flex flex-col items-center group">
                       <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all z-10 pointer-events-none">
-                        <div className="bg-gray-900/95 text-white text-[10px] font-bold px-2 py-1 rounded shadow-xl whitespace-nowrap">
-                          {formatCurrency(day.amount)}
+                        <div className="bg-gray-900/95 text-white text-[10px] px-2 py-1 rounded shadow-xl whitespace-nowrap text-center">
+                          <div className="font-bold">{formatCurrency(day.amount)}</div>
+                          <div className="font-medium text-gray-300">{day.count} Transactions</div>
                         </div>
                       </div>
                       <div
@@ -234,9 +262,14 @@ export default function AdminDashboard({
                           style={{ height: '0%', animation: 'grow-up 1s ease-out forwards' }}
                         />
                       </div>
-                      <p className="text-[8px] xs:text-[10px] font-bold text-white/60 mt-3 uppercase tracking-tighter xs:tracking-widest">
-                        {day.date}
-                      </p>
+                      <div className="mt-3 flex flex-col items-center">
+                        <p className="text-[8px] xs:text-[10px] font-bold text-white/60 uppercase tracking-tighter xs:tracking-widest">
+                          {day.date}
+                        </p>
+                        {day.count > 0 && (
+                          <span className="text-[8px] text-white/40 font-mono mt-0.5">{day.count}</span>
+                        )}
+                      </div>
                     </div>
                   )
                 })}

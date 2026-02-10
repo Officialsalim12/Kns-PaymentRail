@@ -383,7 +383,7 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                   Showing {filteredPayments.length} of {payments.length} payments
                 </span>
               ) : (
-                <span>{payments.length} total payments</span>
+                <span>Total Payments: {payments.length}</span>
               )}
             </div>
           </div>
@@ -436,12 +436,12 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                       <p className="text-[10px] text-primary-600 font-bold tracking-wider mt-0.5 uppercase">ID: {payment.member.membership_id}</p>
                     </div>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${payment.payment_status === 'completed'
-                        ? 'bg-green-50 text-green-700'
-                        : payment.payment_status === 'processing'
-                          ? 'bg-yellow-50 text-yellow-700'
-                          : payment.payment_status === 'failed'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-gray-50 text-gray-700'
+                      ? 'bg-green-50 text-green-700'
+                      : payment.payment_status === 'processing'
+                        ? 'bg-yellow-50 text-yellow-700'
+                        : payment.payment_status === 'failed'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-gray-50 text-gray-700'
                       }`}>
                       {payment.payment_status || 'pending'}
                     </span>
@@ -523,12 +523,12 @@ export default function PaymentManagement({ members: initialMembers, payments: i
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${payment.payment_status === 'completed'
-                              ? 'bg-green-50 text-green-700'
-                              : payment.payment_status === 'processing'
-                                ? 'bg-yellow-50 text-yellow-700'
-                                : payment.payment_status === 'failed'
-                                  ? 'bg-red-50 text-red-700'
-                                  : 'bg-gray-50 text-gray-700'
+                            ? 'bg-green-50 text-green-700'
+                            : payment.payment_status === 'processing'
+                              ? 'bg-yellow-50 text-yellow-700'
+                              : payment.payment_status === 'failed'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-gray-50 text-gray-700'
                             }`}>
                             {payment.payment_status || 'pending'}
                           </span>

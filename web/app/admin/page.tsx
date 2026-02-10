@@ -40,11 +40,22 @@ export default async function AdminDashboardPage() {
     .select('id, status, unpaid_balance')
     .eq('organization_id', organizationId)
 
-  const { data: payments } = await supabase
+  // Get all payments for status distribution and chart
+  const { data: allPayments } = await supabase
     .from('payments')
     .select('amount, created_at, payment_status')
     .eq('organization_id', organizationId)
-    .eq('payment_status', 'completed')
+
+  // Filter for completed payments for revenue calculations
+  const payments = allPayments?.filter(p => p.payment_status === 'completed') || []
+
+  // Calculate payment status distribution
+  const paymentStatusDistribution = {
+    completed: allPayments?.filter(p => p.payment_status === 'completed').length || 0,
+    pending: allPayments?.filter(p => p.payment_status === 'pending' || p.payment_status === 'processing').length || 0,
+    failed: allPayments?.filter(p => p.payment_status === 'failed' || p.payment_status === 'cancelled').length || 0,
+    total: allPayments?.length || 0
+  }
 
   const activeMembers = members?.filter(m => m.status === 'active').length || 0
 
@@ -71,28 +82,28 @@ export default async function AdminDashboardPage() {
   }).length || 0
 
   // Calculate totals using display amounts (97% for completed payments)
-  const totalPayments = payments?.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0) || 0
+  const totalPayments = payments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
 
   // Calculate monthly revenue (current month) - using native Date methods
   const now = new Date()
   const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const monthlyPayments = payments?.filter(p => {
+  const monthlyPayments = payments.filter(p => {
     const paymentDate = new Date(p.created_at)
     return paymentDate >= startOfCurrentMonth
-  }) || []
+  })
   const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
 
   // Calculate last month revenue for comparison
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const endOfLastMonth = startOfCurrentMonth
-  const lastMonthPayments = payments?.filter(p => {
+  const lastMonthPayments = payments.filter(p => {
     const date = new Date(p.created_at)
     return date >= startOfLastMonth && date < endOfLastMonth
-  }) || []
+  })
   const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
 
   // Calculate average payment
-  const averagePayment = payments && payments.length > 0
+  const averagePayment = payments.length > 0
     ? totalPayments / payments.length
     : 0
 
@@ -100,10 +111,10 @@ export default async function AdminDashboardPage() {
   const sevenDaysAgo = new Date(now)
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   sevenDaysAgo.setHours(0, 0, 0, 0)
-  const recentPaymentsData = payments?.filter(p => {
+  const recentPaymentsData = payments.filter(p => {
     const paymentDate = new Date(p.created_at)
     return paymentDate >= sevenDaysAgo
-  }) || []
+  })
 
   // Get recent completed payments only (payment record)
   const { data: recentPayments } = await supabase
@@ -167,15 +178,16 @@ export default async function AdminDashboardPage() {
         totalPayments,
         monthlyRevenue,
         averagePayment,
-        totalTransactions: payments?.length || 0,
+        totalTransactions: payments.length,
         paidMembers,
         unpaidMembers,
       }}
       recentPayments={recentPayments || []}
       pendingApprovals={pendingApprovalsList}
-      revenueHistory={payments || []}
+      revenueHistory={allPayments || []} // Pass all payments for transaction count
       memberGrowth={memberGrowth}
       revenueChange={revenueChange}
+      paymentStatusDistribution={paymentStatusDistribution}
     />
   )
 }
