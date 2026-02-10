@@ -890,14 +890,62 @@ async function handlePaymentCompleted(
 
   // Send notification to member
   if (payment.member?.user_id) {
-    await supabaseClient.from("notifications").insert({
-      organization_id: payment.organization_id,
-      recipient_id: payment.member.user_id,
-      member_id: payment.member_id,
-      title: "Payment Completed",
-      message: `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully.`,
-      type: "payment",
-    });
+    // Check for duplicate member notification (within 5 minutes) to handle potential double-webhook or trigger conflicts
+    const { data: existingMemberNotif } = await supabaseClient
+      .from("notifications")
+      .select("id")
+      .eq("recipient_id", payment.member.user_id)
+      .eq("title", "Payment Completed")
+      .eq("type", "payment")
+      .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .maybeSingle();
+
+    if (!existingMemberNotif) {
+      await supabaseClient.from("notifications").insert({
+        organization_id: payment.organization_id,
+        recipient_id: payment.member.user_id,
+        member_id: payment.member_id,
+        title: "Payment Completed",
+        message: `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully.`,
+        type: "payment",
+      });
+    }
+  }
+
+  // Allocate payment to monthly balances (for compulsory payments)
+  if (payment.member_id && payment.tab_id && payment.amount) {
+    try {
+      console.log("🔄 Allocating payment to monthly balances...");
+      const allocationResponse = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/allocate-payment-to-balances`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            memberId: payment.member_id,
+            tabId: payment.tab_id,
+            paymentAmount: payment.amount,
+            paymentId: payment.id,
+            organizationId: payment.organization_id,
+          }),
+        }
+      );
+
+      const allocationResult = await allocationResponse.json();
+
+      if (allocationResult.success) {
+        console.log("✅ Payment allocated to balances:", allocationResult);
+      } else {
+        console.warn("⚠️ Payment allocation returned error:", allocationResult.error);
+        // Don't throw - allocation failure shouldn't fail the webhook
+      }
+    } catch (allocationError) {
+      console.error("❌ Error allocating payment to balances:", allocationError);
+      // Don't throw - allocation failure shouldn't fail the webhook
+    }
   }
 
   // Send notification to admin about payment completion
@@ -911,14 +959,26 @@ async function handlePaymentCompleted(
       .single();
 
     if (adminUser) {
-      await supabaseClient.from("notifications").insert({
-        organization_id: payment.organization_id,
-        recipient_id: adminUser.id,
-        member_id: payment.member_id,
-        title: "New Payment Received",
-        message: `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`,
-        type: "payment",
-      });
+      // Check for duplicate admin notification (within 5 minutes)
+      const { data: existingAdminNotif } = await supabaseClient
+        .from("notifications")
+        .select("id")
+        .eq("recipient_id", adminUser.id)
+        .eq("title", "New Payment Received")
+        .eq("type", "payment")
+        .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .maybeSingle();
+
+      if (!existingAdminNotif) {
+        await supabaseClient.from("notifications").insert({
+          organization_id: payment.organization_id,
+          recipient_id: adminUser.id,
+          member_id: payment.member_id,
+          title: "New Payment Received",
+          message: `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`,
+          type: "payment",
+        });
+      }
     }
   }
 

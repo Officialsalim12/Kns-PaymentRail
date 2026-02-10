@@ -127,16 +127,27 @@ export default function MemberRegistrationForm({ organizations }: Props) {
           .single()
 
         if (adminUser) {
-          await supabase
+          // Check if a notification already exists for this member to prevent duplicates
+          // (In case of DB triggers or double submission)
+          const { data: existingNotification } = await supabase
             .from('notifications')
-            .insert({
-              organization_id: formData.organization_id,
-              recipient_id: adminUser.id,
-              member_id: newMember.id,
-              title: 'New Member Request',
-              message: `${formData.full_name.trim()} ({membershipId}) has requested to join your organization and is pending approval.`,
-              type: 'member_request',
-            })
+            .select('id')
+            .eq('member_id', newMember.id)
+            .eq('type', 'member_request')
+            .maybeSingle()
+
+          if (!existingNotification) {
+            await supabase
+              .from('notifications')
+              .insert({
+                organization_id: formData.organization_id,
+                recipient_id: adminUser.id,
+                member_id: newMember.id,
+                title: 'New Member Request',
+                message: `${formData.full_name.trim()} (${membershipId}) has requested to join your organization and is pending approval.`,
+                type: 'member_request',
+              })
+          }
         }
       }
 

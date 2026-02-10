@@ -70,6 +70,10 @@ export default function NotificationsManagement({ notifications: initialNotifica
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
 
+  useEffect(() => {
+    setNotifications(initialNotifications)
+  }, [initialNotifications])
+
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   // Set up real-time subscriptions for notifications
@@ -295,8 +299,8 @@ export default function NotificationsManagement({ notifications: initialNotifica
                 <div
                   key={notification.id}
                   className={`border rounded-lg p-4 ${!notification.is_read
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'border-blue-200 hover:bg-blue-50'
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'border-blue-200 hover:bg-blue-50'
                     } transition-colors`}
                 >
                   <div className="flex items-start gap-3">
@@ -310,9 +314,9 @@ export default function NotificationsManagement({ notifications: initialNotifica
                             <p className="font-semibold text-gray-900 break-words">{notification.title}</p>
                             {notification.type && (
                               <span className={`px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap ${notification.type === 'payment' ? 'bg-green-100 text-green-700' :
-                                  notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
-                                    notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-gray-100 text-gray-700'
+                                notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
+                                  notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
                                 }`}>
                                 {notification.type}
                               </span>

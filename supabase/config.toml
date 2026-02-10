@@ -47,3 +47,11 @@ verify_jwt = true
 [functions.recalculate-member-totals]
 # Keep JWT verification - called by authenticated users or super admins
 verify_jwt = true
+
+[functions.evaluate-monthly-balances]
+# Keep JWT verification - called by cron or internal scheduler
+verify_jwt = true
+
+[functions.allocate-payment-to-balances]
+# Keep JWT verification - called during payment processing
+verify_jwt = true

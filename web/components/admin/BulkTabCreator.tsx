@@ -20,8 +20,10 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
   const [formData, setFormData] = useState({
     tab_name: '',
     tab_type: 'payment' as 'payment' | 'donation',
+    payment_nature: 'open' as 'open' | 'compulsory',
     description: '',
     monthly_cost: '',
+    duration_months: '',
     billing_cycle: 'monthly' as 'weekly' | 'monthly',
     is_active: true,
   })
@@ -152,6 +154,10 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
       if (formData.tab_type === 'payment') {
         insertData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
         insertData.billing_cycle = formData.billing_cycle
+        insertData.payment_nature = formData.payment_nature || 'open'
+        insertData.duration_months = formData.duration_months && formData.payment_nature === 'compulsory'
+          ? parseInt(formData.duration_months)
+          : null
       }
 
       // Create tabs for all selected members or as a general tab
@@ -335,41 +341,87 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
               />
             </div>
 
-            {/* Monthly Cost (for payment type) */}
+            {/* Payment Configuration (for payment type) */}
             {formData.tab_type === 'payment' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <>
+                {/* Payment Nature */}
                 <div>
-                  <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost Amount *
-                  </label>
-                  <input
-                    id="monthly_cost"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required={formData.tab_type === 'payment'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    value={formData.monthly_cost}
-                    onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="billing_cycle" className="block text-sm font-medium text-gray-700 mb-1">
-                    Billing Cycle *
+                  <label htmlFor="payment_nature" className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Nature *
                   </label>
                   <select
-                    id="billing_cycle"
-                    required={formData.tab_type === 'payment'}
+                    id="payment_nature"
+                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    value={formData.billing_cycle}
-                    onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                    value={formData.payment_nature}
+                    onChange={(e) => setFormData({ ...formData, payment_nature: e.target.value as 'open' | 'compulsory' })}
                   >
-                    <option value="monthly">Monthly</option>
-                    <option value="weekly">Weekly</option>
+                    <option value="open">Open - Members pay any amount, anytime</option>
+                    <option value="compulsory">Compulsory - Fixed monthly payment required</option>
                   </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.payment_nature === 'compulsory'
+                      ? '⚠️ Compulsory: Members must pay the fixed amount monthly. Unpaid balances accumulate, and accounts freeze after 3 consecutive unpaid months.'
+                      : 'Open: Members can pay any amount at their convenience. No balance tracking.'}
+                  </p>
                 </div>
-              </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="monthly_cost" className="block text-sm font-medium text-gray-700 mb-1">
+                      {formData.payment_nature === 'compulsory' ? 'Monthly Amount *' : 'Suggested Amount'}
+                    </label>
+                    <input
+                      id="monthly_cost"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required={formData.tab_type === 'payment' && formData.payment_nature === 'compulsory'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      value={formData.monthly_cost}
+                      onChange={(e) => setFormData({ ...formData, monthly_cost: e.target.value })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="billing_cycle" className="block text-sm font-medium text-gray-700 mb-1">
+                      Billing Cycle *
+                    </label>
+                    <select
+                      id="billing_cycle"
+                      required={formData.tab_type === 'payment'}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      value={formData.billing_cycle}
+                      onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                    >
+                      <option value="monthly">Monthly</option>
+                      <option value="weekly">Weekly</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Duration (for compulsory only) */}
+                {formData.payment_nature === 'compulsory' && (
+                  <div>
+                    <label htmlFor="duration_months" className="block text-sm font-medium text-gray-700 mb-1">
+                      Duration (Months) - Optional
+                    </label>
+                    <input
+                      id="duration_months"
+                      type="number"
+                      min="1"
+                      max="120"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      value={formData.duration_months}
+                      onChange={(e) => setFormData({ ...formData, duration_months: e.target.value })}
+                      placeholder="e.g., 10 for 10-month payment plan"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Leave blank for indefinite compulsory payments. Set a duration (e.g., 10) for fixed-term payment plans.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Active Toggle */}
