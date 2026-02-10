@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { CheckCircle, XCircle, Clock, Plus, Search, X, MoreVertical } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Plus, Search, X, MoreVertical, Check, Ban, Settings2, RotateCw, RefreshCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
@@ -478,100 +478,78 @@ export default function MembersManagement({ members: initialMembers, organizatio
                             <div className="text-sm font-bold text-gray-900">{formatCurrency(member.unpaid_balance || 0)}</div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-xs font-bold">
-                            <div className="relative dropdown-container">
-                              <button
-                                onClick={() => setOpenDropdown(openDropdown === member.id ? null : member.id)}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                aria-label="Actions menu"
-                              >
-                                <MoreVertical className="h-5 w-5 text-gray-600" />
-                              </button>
+                            <div className="flex flex-wrap gap-2">
+                              {member.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleApproveClick(member.id, member.full_name)}
+                                    disabled={loading === member.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                    <span>Approve</span>
+                                  </button>
+                                  <button
+                                    onClick={() => updateMemberStatus(member.id, 'inactive')}
+                                    disabled={loading === member.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                    <span>Reject</span>
+                                  </button>
+                                </>
+                              )}
 
-                              {openDropdown === member.id && (
-                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-                                  {member.status === 'pending' && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          handleApproveClick(member.id, member.full_name)
-                                          setOpenDropdown(null)
-                                        }}
-                                        disabled={loading === member.id}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
-                                      >
-                                        {loading === member.id ? 'Updating...' : 'Approve'}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          updateMemberStatus(member.id, 'inactive')
-                                          setOpenDropdown(null)
-                                        }}
-                                        disabled={loading === member.id}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50"
-                                      >
-                                        Reject
-                                      </button>
-                                    </>
-                                  )}
-                                  {member.status === 'active' && (
-                                    <button
-                                      onClick={() => {
-                                        updateMemberStatus(member.id, 'suspended')
-                                        setOpenDropdown(null)
-                                      }}
-                                      disabled={loading === member.id}
-                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-orange-700 hover:bg-orange-50 transition-colors disabled:opacity-50"
-                                    >
-                                      {loading === member.id ? 'Updating...' : 'Suspend'}
-                                    </button>
-                                  )}
-                                  {member.status === 'suspended' && (
-                                    <button
-                                      onClick={() => {
-                                        updateMemberStatus(member.id, 'active')
-                                        setOpenDropdown(null)
-                                      }}
-                                      disabled={loading === member.id}
-                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
-                                    >
-                                      {loading === member.id ? 'Updating...' : 'Reactivate'}
-                                    </button>
-                                  )}
-                                  {(member.status === 'active' || member.status === 'suspended') && (
-                                    <>
-                                      <div className="border-t border-gray-100 my-1"></div>
-                                      <button
-                                        onClick={() => {
-                                          setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })
-                                          setOpenDropdown(null)
-                                        }}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-purple-700 hover:bg-purple-50 transition-colors"
-                                      >
-                                        Manage Tabs
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          recalculateBalance(member.id)
-                                          setOpenDropdown(null)
-                                        }}
-                                        disabled={loading === member.id}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50"
-                                      >
-                                        {loading === member.id ? 'Recalculating...' : 'Recalculate Balance'}
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          resetBalance(member.id)
-                                          setOpenDropdown(null)
-                                        }}
-                                        disabled={loading === member.id}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                                      >
-                                        {loading === member.id ? 'Resetting...' : 'Reset Balance'}
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
+                              {member.status === 'active' && (
+                                <button
+                                  onClick={() => updateMemberStatus(member.id, 'suspended')}
+                                  disabled={loading === member.id}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg transition-colors border border-orange-200"
+                                >
+                                  <Ban className="h-3.5 w-3.5" />
+                                  <span>Suspend</span>
+                                </button>
+                              )}
+
+                              {member.status === 'suspended' && (
+                                <button
+                                  onClick={() => updateMemberStatus(member.id, 'active')}
+                                  disabled={loading === member.id}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  <span>Reactivate</span>
+                                </button>
+                              )}
+
+                              {(member.status === 'active' || member.status === 'suspended') && (
+                                <>
+                                  <button
+                                    onClick={() => setTabsManager({ memberId: member.id, memberName: member.full_name, organizationId })}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
+                                  >
+                                    <Settings2 className="h-3.5 w-3.5" />
+                                    <span>Tabs</span>
+                                  </button>
+                                  <button
+                                    onClick={() => recalculateBalance(member.id)}
+                                    disabled={loading === member.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 disabled:opacity-50"
+                                    title="Recalculate Balance"
+                                  >
+                                    <RotateCw className={`h-3.5 w-3.5 ${loading === member.id ? 'animate-spin' : ''}`} />
+                                    <span>Recalculate</span>
+                                  </button>
+                                  <button
+                                    onClick={() => resetBalance(member.id)}
+                                    disabled={loading === member.id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 disabled:opacity-50"
+                                    title="Reset Balance"
+                                  >
+                                    <RefreshCcw className="h-3.5 w-3.5" />
+                                    <span>Reset</span>
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
