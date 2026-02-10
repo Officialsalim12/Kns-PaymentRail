@@ -1,30 +1,52 @@
-import { requireAuth } from '@/lib/auth'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getOrganizationAbbreviation } from '@/lib/utils/organization'
+import { Menu, X } from 'lucide-react'
 
-export default async function AdminNavbar() {
-  const user = await requireAuth()
-  const supabase = await createClient()
+interface AdminNavbarProps {
+  organization: {
+    id: string
+    name: string
+    logo_url: string | null
+  } | null
+}
 
-  // Get organization details including logo
-  const organizationId = user.profile?.organization_id
-  let organization = null
-  if (organizationId) {
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', organizationId)
-      .single()
+export default function AdminNavbar({ organization }: AdminNavbarProps) {
+  const [isOpen, setIsOpen] = useState(false)
 
-    if (!error && data) {
-      organization = {
-        id: data.id,
-        name: data.name,
-        logo_url: data.logo_url || null
-      }
+  // Prevent scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
     }
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [isOpen])
+
+  const navLinks = [
+    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin/members', label: 'Members' },
+    { href: '/admin/payments', label: 'Payments' },
+    { href: '/admin/payment-tabs', label: 'Payment Tabs' },
+    { href: '/admin/messages', label: 'Messages' },
+    { href: '/admin/settings', label: 'Settings' },
+  ]
+
+  const getOrganizationAbbreviation = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 
   return (
@@ -48,29 +70,52 @@ export default async function AdminNavbar() {
                   </span>
                 </div>
               )}
-              <span>{organization?.name || 'KNS MultiRail Pay'}</span>
+              <span className="hidden sm:inline">{organization?.name || 'KNS MultiRail Pay'}</span>
             </Link>
+
+            {/* Desktop Navigation */}
             <div className="hidden md:flex gap-6">
-              <Link href="/admin" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/admin/members" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Members
-              </Link>
-              <Link href="/admin/payments" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Payments
-              </Link>
-              <Link href="/admin/payment-tabs" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Payment Tabs
-              </Link>
-              <Link href="/admin/messages" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Messages
-              </Link>
-              <Link href="/admin/settings" className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors">
-                Settings
-              </Link>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-primary-600 pb-4 -mb-4 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden p-2 -mr-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all active:scale-90"
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed inset-0 top-16 h-[calc(100vh-64px)] bg-white z-40 transition-all duration-300 md:hidden ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible pointer-events-none'
+          }`}
+      >
+        <div className="flex flex-col h-full p-6 space-y-2 overflow-y-auto">
+          <nav className="space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className="block text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition-colors py-3 px-4 rounded-lg"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
     </nav>
