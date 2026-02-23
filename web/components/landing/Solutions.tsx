@@ -29,7 +29,7 @@ const solutions = [
 
 export default function Solutions() {
     return (
-        <section className="py-20 sm:py-24 bg-gray-50 overflow-hidden">
+        <section className="py-20 sm:py-24 bg-white overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
@@ -43,12 +43,12 @@ export default function Solutions() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
                     {solutions.map((solution, index) => (
                         <div key={index} className="group flex flex-col items-center text-center">
-                            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02] mb-8">
+                            <div className="relative w-full aspect-[4/3] overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] mb-8">
                                 <Image
                                     src={solution.image}
                                     alt={solution.alt}
                                     fill
-                                    className="object-cover"
+                                    className="object-contain"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                             </div>

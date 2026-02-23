@@ -28,7 +28,7 @@ export default function TeamMemberImage({ src, alt, fallbackIcon }: TeamMemberIm
           alt={alt}
           width={128}
           height={128}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           onError={() => setImageError(true)}
         />
       ) : (

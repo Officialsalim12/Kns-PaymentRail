@@ -20,7 +20,7 @@ export default function TeamImage({ src, alt }: TeamImageProps) {
           alt={alt}
           width={192}
           height={192}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           onError={() => setImageError(true)}
         />
       ) : (
