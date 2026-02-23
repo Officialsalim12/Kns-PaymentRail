@@ -4,7 +4,7 @@ const solutions = [
     {
         title: 'Faith-Based Organizations',
         description: 'Perfect for churches and mosques to manage offerings, tithes, building project donations, or department contributions. Bring transparency and ease to your community\'s generous giving.',
-        image: '/organization-preview.jpg',
+        image: '/faith-preview.jpg',
         alt: 'Churches and Mosques',
     },
     {
@@ -16,13 +16,13 @@ const solutions = [
     {
         title: 'Community Crowdfunding',
         description: 'Empower your community projects with robust crowdfunding tools. Manage multiple contributions effectively and keep your donors updated on the progress of your shared goals.',
-        image: '/Business Contribution.jpg',
+        image: '/community-crownfunding.jpg',
         alt: 'Crowdfunding donations',
     },
     {
         title: 'Institutional Contributions',
         description: 'Ideal for offices and institutions to manage monthly or yearly staff contributions, event funds, or internal collections with automated tracking and reporting.',
-        image: '/Office Contribution.jpg',
+        image: '/Institution-contribution.jpg',
         alt: 'Office and Institutional contributions',
     },
 ]
