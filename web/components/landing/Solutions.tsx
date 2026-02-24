@@ -1,5 +1,7 @@
 import Image from 'next/image'
 
+// Available solution categories for different organization types
+
 const solutions = [
     {
         title: 'Interfaith Foundations & Councils',
