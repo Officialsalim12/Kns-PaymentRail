@@ -1,6 +1,5 @@
 import Image from 'next/image'
 
-// Solution types that KNS MultiRail supports
 const solutions = [
     {
         title: 'Interfaith Foundations & Councils',
@@ -31,7 +30,6 @@ const solutions = [
 export default function Solutions() {
     return (
         <section className="py-20 sm:py-24 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
-            {/* Subtle background pattern for visual depth */}
             <div className="absolute inset-0 opacity-5">
                 <div className="absolute inset-0" style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -63,9 +61,7 @@ export default function Solutions() {
                             key={index} 
                             className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-700 overflow-hidden border border-gray-100"
                         >
-                            {/* Main card container */}
                             <div className="relative bg-white rounded-2xl overflow-hidden">
-                                {/* Solution image with hover effect */}
                                 <div className="relative h-96 lg:h-[28rem] overflow-hidden">
                                     <Image
                                         src={solution.image}
@@ -77,7 +73,6 @@ export default function Solutions() {
                                     />
                                 </div>
                                 
-                                {/* Solution title and description */}
                                 <div className="p-8 lg:p-10">
                                     <div className="flex items-center mb-4">
                                         <div className="w-8 h-0.5 bg-blue-600 rounded-full"></div>
