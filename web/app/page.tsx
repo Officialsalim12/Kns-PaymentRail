@@ -36,10 +36,10 @@ export default async function HomePage() {
 
       <Hero />
       <Features />
-      <Solutions />
       <PaymentMethods />
       <WhyChoose />
       <Security />
+      <Solutions />
 
       <div id="faq">
         <FAQ />

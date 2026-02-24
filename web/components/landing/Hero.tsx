@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 
 export default function Hero() {
     return (
-        <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 pt-28 pb-10 sm:pt-32 sm:pb-16 md:pt-40 md:pb-20 lg:pt-48 lg:pb-24 xl:pt-56 xl:pb-32 overflow-hidden">
+        <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 pt-28 pb-20 sm:pt-32 sm:pb-24 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 xl:pt-56 xl:pb-40 overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-4xl mx-auto">
                     <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
