@@ -301,20 +301,6 @@ export default function UserProfile({ user }: UserProfileProps) {
         .from('avatars')
         .getPublicUrl(filePath)
 
-      console.log('Uploaded photo URL:', publicUrl)
-      console.log('File path:', filePath)
-      console.log('Bucket: avatars')
-
-      // Verify the file exists
-      const { data: fileList } = await supabase.storage
-        .from('avatars')
-        .list('profiles', {
-          limit: 100,
-          search: fileName
-        })
-
-      console.log('File list after upload:', fileList)
-
       // Update user profile
       const { error: updateError } = await supabase
         .from('users')
@@ -322,19 +308,7 @@ export default function UserProfile({ user }: UserProfileProps) {
         .eq('id', user.id)
 
       if (updateError) {
-        console.error('Update error:', updateError)
         throw updateError
-      }
-
-      // Verify URL is accessible
-      try {
-        const testResponse = await fetch(publicUrl, { method: 'HEAD' })
-        console.log('Image URL accessibility test:', testResponse.status, testResponse.ok)
-        if (!testResponse.ok) {
-          console.warn('Image URL might not be accessible:', publicUrl)
-        }
-      } catch (fetchError) {
-        console.warn('Could not verify image URL:', fetchError)
       }
 
       setPreviewUrl(publicUrl)

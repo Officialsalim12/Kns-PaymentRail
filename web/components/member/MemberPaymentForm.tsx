@@ -94,7 +94,6 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
       let paymentId: string
 
       if (existingPayment) {
-        console.log('Reusing existing pending payment:', existingPayment.id)
         paymentId = existingPayment.id
       } else {
         // Insert new pending payment record

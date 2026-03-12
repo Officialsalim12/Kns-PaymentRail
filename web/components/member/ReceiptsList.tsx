@@ -57,7 +57,6 @@ export default function ReceiptsList({ receipts }: Props) {
       // Step 3: If we have no path and no URL, we can't proceed
       if (!path && !publicUrl) {
         alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
-        console.error('Receipt download failed - missing both path and URL:', { pdfUrl, storagePath, receiptNumber })
         return
       }
       
@@ -90,17 +89,8 @@ export default function ReceiptsList({ receipts }: Props) {
         }
         
         if (downloadError) {
-          console.error('Direct download error:', downloadError)
-          // Check if it's a permission/bucket issue
-          if (downloadError.message?.includes('bucket') || downloadError.message?.includes('not found')) {
-            console.error('Storage bucket "receipts" may not exist or you may not have permission. Please check storage setup.')
-          }
+          // fallback to other methods below
         }
-        
-        if (downloadData && downloadData.size === 0) {
-          console.warn('Downloaded blob is empty, trying alternative methods')
-        }
-        
         // Method 2: Use signed URL for download
         const { data: signedUrlData, error: signedUrlError } = await supabase
           .storage
@@ -120,11 +110,6 @@ export default function ReceiptsList({ receipts }: Props) {
           } else {
             console.error('Failed to fetch signed URL:', response.status, response.statusText)
           }
-        } else {
-          console.error('Signed URL creation failed:', signedUrlError?.message || 'Unknown error')
-          if (signedUrlError?.message?.includes('bucket') || signedUrlError?.message?.includes('not found')) {
-            console.error('Storage bucket "receipts" may not exist. Please run the storage setup migration.')
-          }
         }
       }
       
@@ -137,14 +122,10 @@ export default function ReceiptsList({ receipts }: Props) {
             if (blob.size > 0) {
               triggerDownload(blob)
               return
-            } else {
-              console.log('Blob from public URL is empty')
             }
-          } else {
-            console.log('Failed to fetch public URL:', response.status, response.statusText)
           }
         } catch (fetchError) {
-          console.error('Error fetching public URL:', fetchError)
+          // final fallback below
         }
       }
       
@@ -152,16 +133,7 @@ export default function ReceiptsList({ receipts }: Props) {
       if (publicUrl && publicUrl.startsWith('http')) {
         window.open(publicUrl, '_blank')
       } else {
-        const errorMsg = `Unable to download receipt. 
-        
-Possible issues:
-1. Storage bucket "receipts" may not exist - Please run the storage setup migration
-2. Missing permissions - Check RLS policies for the receipts bucket
-3. Invalid receipt path: ${path || 'N/A'}
-
-Please contact support with this information.`
-        alert(errorMsg)
-        console.error('Receipt download failed. PDF URL:', pdfUrl, 'Storage path:', path)
+        alert('Unable to download receipt. Please contact support.')
       }
     } catch (error) {
       console.error('Error downloading receipt:', error)

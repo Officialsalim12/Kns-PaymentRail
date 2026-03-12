@@ -56,8 +56,6 @@ function PaymentSuccessContent() {
 
             if (error) {
               console.error('Error syncing payment:', error)
-            } else if (data?.success) {
-              console.log('Payment synced successfully:', data)
             }
           } catch (syncError) {
             console.error('Error syncing payment status:', syncError)

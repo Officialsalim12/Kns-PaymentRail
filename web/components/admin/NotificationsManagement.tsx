@@ -101,19 +101,14 @@ export default function NotificationsManagement({ notifications: initialNotifica
       // Subscribe to notification changes for this organization
       notificationsChannel = supabase
         .channel(`notifications-management-${profile.organization_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `organization_id=eq.${profile.organization_id}`,
-          },
-          (payload) => {
-            console.log('Notification change detected:', payload)
-            router.refresh()
-          }
-        )
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `organization_id=eq.${profile.organization_id}`,
+        }, () => {
+          router.refresh()
+        })
         .subscribe()
     }
 

@@ -104,73 +104,53 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
 
     const paymentsChannel = supabase
       .channel(`member-payments-${memberData.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'payments',
-          filter: `member_id=eq.${memberData.id}`,
-        },
-        (payload) => {
-          console.log('Payment change detected:', payload)
-          router.refresh()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'payments',
+        filter: `member_id=eq.${memberData.id}`,
+      }, () => {
+        router.refresh()
+      })
       .subscribe()
 
     const receiptsChannel = supabase
       .channel(`member-receipts-${memberData.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'receipts',
-          filter: `member_id=eq.${memberData.id}`,
-        },
-        (payload) => {
-          console.log('Receipt change detected:', payload)
-          router.refresh()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'receipts',
+        filter: `member_id=eq.${memberData.id}`,
+      }, () => {
+        router.refresh()
+      })
       .subscribe()
 
     const memberChannel = supabase
       .channel(`member-updates-${memberData.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'members',
-          filter: `id=eq.${memberData.id}`,
-        },
-        (payload) => {
-          console.log('Member update detected:', payload)
-          if (payload.new) {
-            setMemberData(payload.new as Member)
-          }
-          router.refresh()
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'members',
+        filter: `id=eq.${memberData.id}`,
+      }, (payload) => {
+        if (payload.new) {
+          setMemberData(payload.new as Member)
         }
-      )
+        router.refresh()
+      })
       .subscribe()
 
     const tabsChannel = supabase
       .channel(`member-tabs-${memberData.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'member_tabs',
-          filter: `member_id=eq.${memberData.id}`,
-        },
-        (payload) => {
-          console.log('Member tab change detected:', payload)
-          router.refresh()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'member_tabs',
+        filter: `member_id=eq.${memberData.id}`,
+      }, () => {
+        router.refresh()
+      })
       .subscribe()
 
     return () => {

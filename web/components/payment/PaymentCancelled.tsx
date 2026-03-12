@@ -69,12 +69,7 @@ export default function PaymentCancelled() {
 
           if (deleteError) {
             console.error('Error deleting cancelled payment:', deleteError)
-          } else {
-            console.log('Cancelled payment deleted successfully:', paymentId)
           }
-        } else if (payment && payment.payment_status !== 'pending') {
-          // Payment is already completed or has another status, don't delete
-          console.log('Payment already has status:', payment.payment_status, '- not deleting')
         }
       } catch (error) {
         console.error('Error during payment cleanup:', error)

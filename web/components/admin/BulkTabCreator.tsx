@@ -51,8 +51,6 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
         .eq('organization_id', organizationId)
         .order('full_name')
 
-      console.log('All members for org:', organizationId, ':', allMembers?.length || 0, allMembers)
-
       if (allError) {
         console.error('Error loading all members:', allError)
         throw allError
@@ -62,8 +60,6 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
       const filteredMembers = (allMembers || []).filter(m =>
         m.status === 'active' || m.status === 'pending'
       )
-
-      console.log('Filtered members (active/pending):', filteredMembers.length, filteredMembers)
 
       setMembers(filteredMembers)
 

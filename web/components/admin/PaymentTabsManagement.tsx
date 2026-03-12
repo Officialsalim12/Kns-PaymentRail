@@ -85,20 +85,15 @@ export default function PaymentTabsManagement({ organizationId, initialTabs }: P
     // Subscribe to member_tabs changes for this organization
     const tabsChannel = supabase
       .channel(`payment-tabs-${organizationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'member_tabs',
-          filter: `organization_id=eq.${organizationId}`,
-        },
-        (payload) => {
-          console.log('Payment tab change detected:', payload)
-          // Reload tabs to get the latest data with member information
-          loadTabs()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'member_tabs',
+        filter: `organization_id=eq.${organizationId}`,
+      }, () => {
+        // Reload tabs to get the latest data with member information
+        loadTabs()
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setIsRealtimeConnected(true)

@@ -96,7 +96,6 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
 
       // If we get a network error, try direct fetch as fallback
       if (result.error && result.error.message && result.error.message.includes('Unable to connect')) {
-        console.log('invokeEdgeFunction failed, trying direct fetch...')
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
         const { data: { session } } = await supabase.auth.getSession()
 

@@ -39,19 +39,14 @@ export default function MemberPaymentsList({ member, tabs: initialTabs }: Props)
     // Subscribe to member tab changes for this member
     const tabsChannel = supabase
       .channel(`member-tabs-${member.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'member_tabs',
-          filter: `member_id=eq.${member.id}`,
-        },
-        (payload) => {
-          console.log('Member tab change detected:', payload)
-          router.refresh()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'member_tabs',
+        filter: `member_id=eq.${member.id}`,
+      }, () => {
+        router.refresh()
+      })
       .subscribe()
 
     return () => {

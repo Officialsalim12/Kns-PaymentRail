@@ -61,19 +61,14 @@ export default function MembersManagement({ members: initialMembers, organizatio
     // Subscribe to member changes for this organization
     const membersChannel = supabase
       .channel(`members-management-${organizationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'members',
-          filter: `organization_id=eq.${organizationId}`,
-        },
-        (payload) => {
-          console.log('Member change detected:', payload)
-          router.refresh()
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'members',
+        filter: `organization_id=eq.${organizationId}`,
+      }, () => {
+        router.refresh()
+      })
       .subscribe()
 
     return () => {

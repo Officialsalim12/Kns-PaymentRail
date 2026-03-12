@@ -87,7 +87,7 @@ export default function DashboardHeader({
         switch (role) {
             case 'admin': return '/admin/notifications'
             case 'member': return '/member/notifications'
-            case 'super_admin': return '/super-admin/password-resets'
+            case 'super_admin': return '/super-admin/notifications'
             default: return '#'
         }
     }

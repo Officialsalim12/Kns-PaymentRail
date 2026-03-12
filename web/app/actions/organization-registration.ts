@@ -51,7 +51,7 @@ export async function createOrgAdminUserProfile(
       throw upsertError
     }, {
       maxRetries: 10,
-      onRetry: (err, attempt) => console.log(`[Org Registration] Retry attempt ${attempt}: ${err.message}`)
+      onRetry: () => {}
     })
   } catch (error: any) {
     console.error('[Organization Registration] Final failure:', error)

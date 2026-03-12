@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Bell, CheckCircle, DollarSign, UserPlus, CheckCircle2, MessageSquare, Trash2 } from 'lucide-react'
+import { Bell, DollarSign, UserPlus, CheckCircle2, MessageSquare, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -25,6 +25,7 @@ const getNotificationIcon = (type: string) => {
       return <DollarSign className="h-5 w-5" />
     case 'approval':
     case 'member_request':
+    case 'organization':
       return <UserPlus className="h-5 w-5" />
     case 'receipt':
       return <CheckCircle2 className="h-5 w-5" />
@@ -44,6 +45,7 @@ const getNotificationColor = (type: string, isRead: boolean) => {
       return 'text-green-600'
     case 'approval':
     case 'member_request':
+    case 'organization':
       return 'text-orange-600'
     case 'receipt':
       return 'text-blue-600'
@@ -52,7 +54,7 @@ const getNotificationColor = (type: string, isRead: boolean) => {
   }
 }
 
-export default function MemberNotificationsList({ notifications: initialNotifications }: Props) {
+export default function SuperAdminNotificationsList({ notifications: initialNotifications }: Props) {
   const router = useRouter()
   const [notifications, setNotifications] = useState(initialNotifications)
   const [markingAsRead, setMarkingAsRead] = useState<string | null>(null)
@@ -64,7 +66,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
 
   const unreadCount = notifications.filter(n => !n.is_read).length
 
-  // Set up real-time subscriptions for notifications
+  // Real-time updates for super admin notifications
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -72,13 +74,11 @@ export default function MemberNotificationsList({ notifications: initialNotifica
     const supabase = createClient()
 
     const setupSubscriptions = async () => {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Subscribe to notification changes for this member
       notificationsChannel = supabase
-        .channel(`member-notifications-${user.id}`)
+        .channel(`super-admin-notifications-${user.id}`)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
@@ -116,6 +116,7 @@ export default function MemberNotificationsList({ notifications: initialNotifica
       setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       )
+      router.refresh()
     } catch (error: any) {
       alert(`Error marking notification as read: ${error.message}`)
     } finally {
@@ -174,8 +175,10 @@ export default function MemberNotificationsList({ notifications: initialNotifica
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">Stay updated with your payment and account notifications</p>
+          <h1 className="text-2xl font-bold text-gray-900">Super Admin Notifications</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Platform-wide alerts about organization registrations, status changes, and key admin events.
+          </p>
         </div>
         {unreadCount > 0 && (
           <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -218,11 +221,12 @@ export default function MemberNotificationsList({ notifications: initialNotifica
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-gray-900 break-words">{notification.title}</p>
                           {notification.type && (
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap ${notification.type === 'payment' ? 'bg-green-100 text-green-700' :
-                              notification.type === 'approval' || notification.type === 'member_request' ? 'bg-orange-100 text-orange-700' :
-                                notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
-                                  'bg-gray-100 text-gray-700'
-                              }`}>
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded whitespace-nowrap ${
+                              notification.type === 'payment' ? 'bg-green-100 text-green-700' :
+                              notification.type === 'approval' || notification.type === 'member_request' || notification.type === 'organization' ? 'bg-orange-100 text-orange-700' :
+                              notification.type === 'receipt' ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
                               {notification.type}
                             </span>
                           )}
@@ -261,3 +265,4 @@ export default function MemberNotificationsList({ notifications: initialNotifica
     </div>
   )
 }
+

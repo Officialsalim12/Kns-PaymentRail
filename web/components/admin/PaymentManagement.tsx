@@ -72,19 +72,14 @@ export default function PaymentManagement({ members: initialMembers, payments: i
       // Subscribe to payment changes for this organization
       paymentsChannel = supabase
         .channel(`payment-management-${profile.organization_id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'payments',
-            filter: `organization_id=eq.${profile.organization_id}`,
-          },
-          (payload) => {
-            console.log('Payment change detected:', payload)
-            router.refresh()
-          }
-        )
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'payments',
+          filter: `organization_id=eq.${profile.organization_id}`,
+        }, () => {
+          router.refresh()
+        })
         .subscribe()
     }
 
@@ -243,7 +238,6 @@ export default function PaymentManagement({ members: initialMembers, payments: i
 
             // If unpaid_balance column doesn't exist, try updating only total_paid
             if (memberUpdateError.message.includes('unpaid_balance') || memberUpdateError.message.includes('schema cache')) {
-              console.log('Retrying with only total_paid...')
               const { error: retryError } = await supabase
                 .from('members')
                 .update({ total_paid: Math.max(0, newTotalPaid) })
@@ -252,13 +246,11 @@ export default function PaymentManagement({ members: initialMembers, payments: i
               if (retryError) {
                 alert(`Warning: Payment deleted but failed to update member total_paid: ${retryError.message}`)
               } else {
-                console.log('Member total_paid updated successfully (balance column not available)')
+                // total_paid updated successfully even without unpaid_balance
               }
             } else {
               alert(`Warning: Payment deleted but failed to update member totals: ${memberUpdateError.message}`)
             }
-          } else {
-            console.log('Member totals recalculated successfully:', updateResult)
           }
         }
       }

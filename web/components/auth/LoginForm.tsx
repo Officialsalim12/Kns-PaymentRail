@@ -72,8 +72,6 @@ export default function LoginForm() {
           return
         }
 
-        console.log('Login successful, redirecting user with role:', role)
-
         // Use window.location.href for a full page reload to ensure session cookies are read
         if (role === 'super_admin') {
           window.location.href = '/super-admin'

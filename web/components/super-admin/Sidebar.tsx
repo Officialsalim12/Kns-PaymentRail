@@ -55,6 +55,7 @@ export default function SuperAdminSidebar({
         { href: '/super-admin', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/super-admin/organizations', label: 'Organizations', icon: Building2 },
         { href: '/super-admin/users', label: 'Users', icon: Users },
+        { href: '/super-admin/notifications', label: 'Notifications', icon: Bell },
         { href: '/super-admin/activity-logs', label: 'Activity Logs', icon: Activity },
     ]
 
