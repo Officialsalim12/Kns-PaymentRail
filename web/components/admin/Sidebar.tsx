@@ -44,6 +44,7 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [logoError, setLogoError] = useState(false)
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -92,17 +93,17 @@ export default function AdminSidebar({
           {/* Logo/Header */}
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2.5 overflow-hidden" onClick={onClose}>
-              {organization?.logo_url && organization.logo_url.trim() !== '' ? (
-                <div className="h-9 w-9 shrink-0 relative">
-                  <Image
-                    src={organization.logo_url}
-                    alt={organization.name || 'Organization'}
-                    fill
-                    className="object-contain rounded-lg shadow-sm"
-                  />
-                </div>
+              {organization?.logo_url && organization.logo_url.trim() !== '' && !logoError ? (
+                <Image
+                  src={organization.logo_url}
+                  alt={organization.name || 'Organization'}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain rounded-lg shadow-sm shrink-0"
+                  onError={() => setLogoError(true)}
+                />
               ) : (
-                <div className="h-9 w-9 shrink-0 bg-primary-600 rounded-lg flex items-center justify-center shadow-md">
+                <div className="h-10 w-10 shrink-0 bg-primary-600 rounded-lg flex items-center justify-center shadow-md">
                   <span className="text-white font-bold text-xs">
                     {organization?.name ? getOrganizationAbbreviation(organization.name) : 'K'}
                   </span>

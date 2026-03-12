@@ -2,7 +2,18 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dcnxszcexngyghbelbrk.supabase.co',
+        pathname: '/storage/v1/object/**',
+      },
+    ],
   },
   // Disable source maps in production for security
   productionBrowserSourceMaps: false,

@@ -98,6 +98,7 @@ export default function OrganizationDetail({
 }: Props) {
   const [activeTab, setActiveTab] = useState<'members' | 'payments' | 'logs' | 'credentials'>('members')
   const [showPasswords, setShowPasswords] = useState<{ [key: string]: boolean }>({})
+  const [logoError, setLogoError] = useState(false)
 
   const tabs = [
     { id: 'members', label: 'Members', icon: Users, count: members.length },
@@ -117,16 +118,17 @@ export default function OrganizationDetail({
           <ArrowLeft className="h-5 w-5 text-blue-600" />
         </Link>
         <div className="flex items-center gap-4 flex-1">
-          {organization.logo_url ? (
+          {organization.logo_url && !logoError ? (
             <Image
               src={organization.logo_url}
               alt={organization.name}
-              width={64}
-              height={64}
-              className="h-16 w-16 object-contain rounded-lg border border-blue-200"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain rounded-lg border border-blue-200"
+              onError={() => setLogoError(true)}
             />
           ) : (
-            <div className="h-16 w-16 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl font-bold text-blue-600">
                 {getOrganizationAbbreviation(organization.name)}
               </span>

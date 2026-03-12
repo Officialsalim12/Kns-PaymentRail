@@ -42,6 +42,7 @@ export default function MemberSidebar({
 }: MemberSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [logoError, setLogoError] = useState(false)
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -88,16 +89,17 @@ export default function MemberSidebar({
           {/* Logo/Header */}
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <Link href="/member" className="flex items-center gap-2" onClick={onClose}>
-              {organization?.logo_url ? (
+              {organization?.logo_url && !logoError ? (
                 <Image
                   src={organization.logo_url}
                   alt={organization.name}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain rounded-lg shadow-sm"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain rounded-lg shadow-sm"
+                  onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center shadow-md">
+                <div className="h-10 w-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-md">
                   <span className="text-white font-bold text-xs">
                     {organization?.name ? getOrganizationAbbreviation(organization.name) : 'K'}
                   </span>

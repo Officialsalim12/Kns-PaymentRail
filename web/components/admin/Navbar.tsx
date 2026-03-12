@@ -15,6 +15,7 @@ interface AdminNavbarProps {
 
 export default function AdminNavbar({ organization }: AdminNavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
   // Prevent scroll when menu is open
   useEffect(() => {
@@ -55,13 +56,14 @@ export default function AdminNavbar({ organization }: AdminNavbarProps) {
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/admin" className="flex items-center gap-2 text-xl font-semibold text-gray-900 hover:text-gray-700">
-              {organization?.logo_url ? (
+              {organization?.logo_url && !logoError ? (
                 <Image
                   src={organization.logo_url}
                   alt={organization.name}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain rounded-lg"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 object-contain rounded-lg"
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">

@@ -64,6 +64,7 @@ export default function AdminDashboard({
   const [showBulkTabCreator, setShowBulkTabCreator] = useState(false)
   const [mobileTab, setMobileTab] = useState<'summary' | 'analytics' | 'activity'>('summary')
   const organizationId = organization?.id
+  const [logoError, setLogoError] = useState(false)
 
   // Calculate fees
   const transferFeeTotal = stats.totalPayments * 0.01 // 1%
@@ -136,18 +137,19 @@ export default function AdminDashboard({
 
           <div className="relative p-5 xs:p-6 sm:p-8 text-center sm:text-left">
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-              {organization.logo_url ? (
-                <div className="relative h-14 w-14 sm:h-20 sm:w-20">
+              {organization.logo_url && !logoError ? (
+                <div className="relative h-10 w-10">
                   <Image
                     src={organization.logo_url}
                     alt={organization.name}
                     fill
-                    className="rounded-2xl object-cover ring-4 ring-white/20 shadow-2xl"
+                    className="object-contain rounded-lg bg-white ring-2 ring-white/30 shadow-2xl"
+                    onError={() => setLogoError(true)}
                   />
                 </div>
               ) : (
-                <div className="relative h-14 w-14 sm:h-20 sm:w-20 rounded-2xl bg-white/10 flex items-center justify-center ring-4 ring-white/10 shadow-2xl">
-                  <Building2 className="h-8 w-8 sm:h-10 sm:w-10 text-white opacity-80" />
+                <div className="relative h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center ring-2 ring-white/20 shadow-2xl">
+                  <Building2 className="h-6 w-6 text-white opacity-80" />
                 </div>
               )}
               <div className="space-y-1">

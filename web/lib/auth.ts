@@ -23,9 +23,11 @@ export async function getCurrentUser() {
     } = authResult as { data: { user: any }, error: any }
 
     if (authError || !user) {
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development' && authError) {
         console.error('[getCurrentUser] Auth error:', authError?.message || 'No user found')
       }
+      // Silently return null when there is simply no session;
+      // callers like requireAuth handle the redirect.
       return null
     }
 

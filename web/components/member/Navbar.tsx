@@ -55,9 +55,9 @@ export default async function MemberNavbar() {
               <Image
                 src={organization.logo_url}
                 alt={organization.name}
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain rounded-lg"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain rounded-lg"
               />
             ) : (
               <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
