@@ -32,6 +32,18 @@ export default function OrganizationsList({ organizations: initialOrgs, filter }
     setLoading(orgId)
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', orgId)
+        .single()
+
+      if (orgError) {
+        throw orgError
+      }
+
       const { error } = await supabase
         .from('organizations')
         .update({ status: newStatus })
@@ -44,6 +56,70 @@ export default function OrganizationsList({ organizations: initialOrgs, filter }
       setOrganizations(orgs =>
         orgs.map(org => org.id === orgId ? { ...org, status: newStatus } : org)
       )
+
+      // Notify organization admin about status change
+      if (org) {
+        const { data: adminUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('organization_id', org.id)
+          .eq('role', 'org_admin')
+          .single()
+
+        const notifications: any[] = []
+
+        if (adminUser) {
+          let adminTitle = ''
+          let adminMessage = ''
+
+          if (newStatus === 'approved') {
+            adminTitle = 'Organization Approved'
+            adminMessage = `Your organization ${org.name} has been approved and is now active on the platform.`
+          } else if (newStatus === 'suspended') {
+            adminTitle = 'Organization Suspended'
+            adminMessage = `Your organization ${org.name} has been suspended. Please contact support for more details.`
+          }
+
+          if (adminTitle) {
+            notifications.push({
+              organization_id: org.id,
+              recipient_id: adminUser.id,
+              title: adminTitle,
+              message: adminMessage,
+              type: 'organization',
+            })
+          }
+        }
+
+        // Notify acting super admin for audit trail
+        if (user && user.id) {
+          let superTitle = ''
+          let superMessage = ''
+
+          if (newStatus === 'approved') {
+            superTitle = 'Organization Approved'
+            superMessage = `You approved organization ${org.name}.`
+          } else if (newStatus === 'suspended') {
+            superTitle = 'Organization Suspended'
+            superMessage = `You suspended organization ${org.name}.`
+          }
+
+          if (superTitle) {
+            notifications.push({
+              organization_id: org.id,
+              recipient_id: user.id,
+              title: superTitle,
+              message: superMessage,
+              type: 'organization',
+            })
+          }
+        }
+
+        if (notifications.length > 0) {
+          await supabase.from('notifications').insert(notifications)
+        }
+      }
+
       router.refresh()
     } catch (err) {
       console.error('Error updating organization status:', err)

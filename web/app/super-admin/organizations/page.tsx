@@ -20,6 +20,10 @@ export default async function OrganizationsPage({
     query = query.eq('status', 'pending')
   }
 
+  if (searchParams.filter === 'approved') {
+    query = query.eq('status', 'approved')
+  }
+
   const { data: organizations } = await query
 
   return <OrganizationsList organizations={organizations || []} filter={searchParams.filter} />

@@ -61,3 +61,34 @@ export async function createOrgAdminUserProfile(
     }
   }
 }
+
+export async function notifySuperAdminsOfNewOrganization(
+  organizationId: string,
+  organizationName: string
+) {
+  const supabase = createServiceRoleClient()
+
+  try {
+    const { data: superAdmins, error: superAdminsError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('role', 'super_admin')
+
+    if (superAdminsError || !superAdmins || superAdmins.length === 0) {
+      return
+    }
+
+    const notifications = superAdmins.map((admin) => ({
+      organization_id: organizationId,
+      recipient_id: admin.id,
+      title: 'New Organization Registration',
+      message: `${organizationName} has registered and is awaiting review.`,
+      type: 'organization',
+    }))
+
+    await supabase.from('notifications').insert(notifications)
+  } catch (error) {
+    console.error('[Organization Registration] Failed to notify super admins:', error)
+  }
+}
+

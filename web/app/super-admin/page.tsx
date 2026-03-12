@@ -96,10 +96,31 @@ export default async function SuperAdminDashboardPage() {
       console.error('Error fetching users:', error)
     }
 
+    // Get pending admin password reset requests (for all org admins)
+    let pendingPasswordResetsCount = 0
+    try {
+      const { count, error } = await supabase
+        .from('password_reset_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+
+      if (error) {
+        console.error('Error fetching pending password reset requests:', error)
+      } else {
+        pendingPasswordResetsCount = count || 0
+      }
+    } catch (error) {
+      console.error('Error fetching pending password reset requests:', error)
+    }
+
+    const pendingOrganizationsCount = organizations?.filter(o => o.status === 'pending').length || 0
+    const approvedOrganizationsCount = organizations?.filter(o => o.status === 'approved').length || 0
+
     const stats = {
       totalOrganizations: organizations?.length || 0,
-      pendingApprovals: organizations?.filter(o => o.status === 'pending').length || 0,
+      pendingApprovals: pendingOrganizationsCount + pendingPasswordResetsCount,
       totalUsers: allUsers?.length || 0,
+      approvedOrganizations: approvedOrganizationsCount,
     }
 
     return (

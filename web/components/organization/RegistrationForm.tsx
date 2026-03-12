@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { createOrgAdminUserProfile } from '@/app/actions/organization-registration'
+import { createOrgAdminUserProfile, notifySuperAdminsOfNewOrganization } from '@/app/actions/organization-registration'
 import { standardizeOrganizationData } from '@/lib/utils/organization'
 
 export default function OrganizationRegistrationForm() {
@@ -132,6 +132,9 @@ export default function OrganizationRegistrationForm() {
         setLoading(false)
         return
       }
+
+      // Step 5: Notify all super admins about new organization registration
+      await notifySuperAdminsOfNewOrganization(orgData.id, orgData.name)
 
       setSuccess(true)
       setTimeout(() => {

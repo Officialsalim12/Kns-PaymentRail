@@ -37,6 +37,7 @@ interface Stats {
   totalOrganizations: number
   pendingApprovals: number
   totalUsers: number
+  approvedOrganizations: number
 }
 
 interface Props {
@@ -168,7 +169,7 @@ export default function SuperAdminDashboard({
 
       {/* Summary Tab Content */}
       <div className={`${mobileTab === 'summary' ? 'block' : 'hidden md:block'} space-y-8 px-4 md:px-0`}>
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {/* Total Organizations Card */}
           <Link
             href="/super-admin/organizations"
@@ -183,19 +184,16 @@ export default function SuperAdminDashboard({
 
           {/* Pending Approvals Card */}
           <Link
-            href="/super-admin/organizations?filter=pending"
+            href="/super-admin/pending"
             className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-orange-200 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col items-center text-center"
           >
             <div className="p-3.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300 mb-4">
               <Clock className="h-6 w-6 text-white" />
             </div>
-            {stats.pendingApprovals > 0 && (
-              <span className="mb-2 bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {stats.pendingApprovals} Pending
-              </span>
-            )}
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Approvals</p>
-            <p className="text-3xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{stats.pendingApprovals}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending</p>
+            <p className="text-3xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+              {stats.pendingApprovals}
+            </p>
           </Link>
 
           {/* Total Users Card */}
@@ -208,6 +206,20 @@ export default function SuperAdminDashboard({
             </div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Users</p>
             <p className="text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">{stats.totalUsers}</p>
+          </Link>
+
+          {/* Pending Overview Card */}
+          <Link
+            href="/super-admin/organizations?filter=approved"
+            className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-purple-200 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col items-center text-center"
+          >
+            <div className="p-3.5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300 mb-4">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Approved Orgs</p>
+            <p className="text-3xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+              {stats.approvedOrganizations}
+            </p>
           </Link>
         </div>
 
@@ -235,8 +247,8 @@ export default function SuperAdminDashboard({
               <h3 className="text-base font-bold">Quick Insight</h3>
               <p className="text-xs text-blue-100 mt-1">
                 {stats.pendingApprovals > 0
-                  ? `${stats.pendingApprovals} organizations are waiting for your approval.`
-                  : "All organizations are currently processed."}
+                  ? `${stats.pendingApprovals} item(s) are waiting for your review.`
+                  : 'All pending items are currently processed.'}
               </p>
             </div>
             <Shield className="h-10 w-10 text-white/20 relative shrink-0" />
