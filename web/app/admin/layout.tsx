@@ -11,7 +11,6 @@ export default async function AdminLayout({
   const user = await requireOrgAdmin()
   const supabase = await createClient()
 
-  // Get organization details including logo
   const organizationId = user.profile?.organization_id
   let organization = null
   if (organizationId) {
@@ -23,17 +22,20 @@ export default async function AdminLayout({
 
     if (data) {
       organization = {
+        id: data.id,
         name: data.name,
-        logo_url: data.logo_url || null
+        logo_url: data.logo_url || null,
+        primary_color: data.primary_color || '#0ea5e9',
+        background_color: data.background_color || '#f9fafb',
+        sidebar_bg_color: data.sidebar_bg_color || '#020617',
+        text_color: data.text_color || '#0f172a',
       }
     }
   }
 
-  // Get user profile info
   const userFullName = user.profile?.full_name || user.email || 'Admin'
   const profilePhotoUrl = user.profile?.profile_photo_url || null
 
-  // Get unread notification count
   const { count: notificationCount } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
@@ -55,6 +57,12 @@ export default async function AdminLayout({
           unreadNotificationCount={notificationCount || 0}
         />
       }
+      theme={organization && {
+        primary: organization.primary_color,
+        background: organization.background_color,
+        sidebarBg: organization.sidebar_bg_color,
+        text: organization.text_color,
+      }}
     >
       {children}
     </DashboardLayoutWrapper>

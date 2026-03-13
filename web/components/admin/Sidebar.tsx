@@ -72,7 +72,6 @@ export default function AdminSidebar({
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all duration-300"
@@ -80,17 +79,15 @@ export default function AdminSidebar({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-100 z-40 shadow-xl
+          fixed top-0 left-0 h-full w-64 bg-[color:var(--org-sidebar-bg-color)] border-r border-gray-800/40 z-40 shadow-xl
           transform transition-all duration-300 ease-in-out
           lg:translate-x-0 lg:shadow-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Logo/Header */}
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2.5 overflow-hidden" onClick={onClose}>
               {organization?.logo_url && organization.logo_url.trim() !== '' && !logoError ? (
@@ -118,7 +115,6 @@ export default function AdminSidebar({
             </button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
@@ -143,7 +139,6 @@ export default function AdminSidebar({
               )
             })}
           </nav>
-          {/* Sidebar Sign Out (Mobile) */}
           <div className="lg:hidden p-4 border-t border-gray-50 mt-auto">
             <button
               onClick={handleSignOut}

@@ -16,6 +16,10 @@ interface Organization {
   description: string | null
   logo_url: string | null
   status?: string
+  primary_color?: string | null
+  background_color?: string | null
+  sidebar_bg_color?: string | null
+  text_color?: string | null
 }
 
 interface Props {
@@ -30,6 +34,10 @@ export default function OrganizationSettings({ organization: initialOrganization
     organization_type: initialOrganization?.organization_type || '',
     phone_number: initialOrganization?.phone_number || '',
     description: initialOrganization?.description || '',
+    primary_color: initialOrganization?.primary_color || '#0ea5e9',
+    background_color: initialOrganization?.background_color || '#f9fafb',
+    sidebar_bg_color: initialOrganization?.sidebar_bg_color || '#020617',
+    text_color: initialOrganization?.text_color || '#0f172a',
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -40,13 +48,10 @@ export default function OrganizationSettings({ organization: initialOrganization
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select an image file')
         return
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image size must be less than 5MB')
         return
@@ -136,6 +141,10 @@ export default function OrganizationSettings({ organization: initialOrganization
         description: formData.description || null,
         logo_url: logoUrl,
         status: organization?.status || 'pending', // Keep existing status
+        primary_color: formData.primary_color,
+        background_color: formData.background_color,
+        sidebar_bg_color: formData.sidebar_bg_color,
+        text_color: formData.text_color,
       })
 
       const updateData: {
@@ -144,11 +153,19 @@ export default function OrganizationSettings({ organization: initialOrganization
         phone_number: string | null
         description: string | null
         logo_url?: string | null
+        primary_color?: string | null
+        background_color?: string | null
+        sidebar_bg_color?: string | null
+        text_color?: string | null
       } = {
         name: standardizedData.name,
         organization_type: standardizedData.organization_type,
         phone_number: standardizedData.phone_number,
         description: standardizedData.description,
+        primary_color: standardizedData.primary_color,
+        background_color: standardizedData.background_color,
+        sidebar_bg_color: standardizedData.sidebar_bg_color,
+        text_color: standardizedData.text_color,
       }
 
       // Only include logo_url if it changed
@@ -172,7 +189,11 @@ export default function OrganizationSettings({ organization: initialOrganization
         organization_type: standardizedData.organization_type,
         phone_number: standardizedData.phone_number,
         description: standardizedData.description,
-        logo_url: standardizedData.logo_url || null
+        logo_url: standardizedData.logo_url || null,
+        primary_color: standardizedData.primary_color || prev.primary_color,
+        background_color: standardizedData.background_color || prev.background_color,
+        sidebar_bg_color: standardizedData.sidebar_bg_color || prev.sidebar_bg_color,
+        text_color: standardizedData.text_color || prev.text_color,
       } : null)
 
       setLogoFile(null)
@@ -182,7 +203,11 @@ export default function OrganizationSettings({ organization: initialOrganization
         formData.name.trim() !== initialOrganization?.name ||
         formData.organization_type.trim() !== initialOrganization?.organization_type ||
         (formData.phone_number.trim() || null) !== (initialOrganization?.phone_number || null) ||
-        (formData.description.trim() || null) !== (initialOrganization?.description || null)
+        (formData.description.trim() || null) !== (initialOrganization?.description || null) ||
+        formData.primary_color !== (initialOrganization?.primary_color || '#0ea5e9') ||
+        formData.background_color !== (initialOrganization?.background_color || '#f9fafb') ||
+        formData.sidebar_bg_color !== (initialOrganization?.sidebar_bg_color || '#020617') ||
+        formData.text_color !== (initialOrganization?.text_color || '#0f172a')
 
       if (hasChanges) {
         setSuccess('Organization updated successfully!')
@@ -209,7 +234,18 @@ export default function OrganizationSettings({ organization: initialOrganization
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Organization Settings</h1>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Organization Settings</h1>
+          <button
+            type="button"
+            onClick={() => router.push('/admin')}
+            className="inline-flex items-center justify-center rounded-full p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            aria-label="Close settings"
+            title="Close settings"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -353,6 +389,95 @@ export default function OrganizationSettings({ organization: initialOrganization
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Brief description of your organization..."
                 />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Theme & Appearance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Brand Color (Buttons & Highlights)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-16 border border-gray-300 rounded"
+                    value={formData.primary_color}
+                    onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    value={formData.primary_color}
+                    onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                    placeholder="#0ea5e9"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Page Background Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-16 border border-gray-300 rounded"
+                    value={formData.background_color}
+                    onChange={(e) => setFormData({ ...formData, background_color: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    value={formData.background_color}
+                    onChange={(e) => setFormData({ ...formData, background_color: e.target.value })}
+                    placeholder="#f9fafb"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sidebar Background Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-16 border border-gray-300 rounded"
+                    value={formData.sidebar_bg_color}
+                    onChange={(e) => setFormData({ ...formData, sidebar_bg_color: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    value={formData.sidebar_bg_color}
+                    onChange={(e) => setFormData({ ...formData, sidebar_bg_color: e.target.value })}
+                    placeholder="#020617"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Text Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    className="h-10 w-16 border border-gray-300 rounded"
+                    value={formData.text_color}
+                    onChange={(e) => setFormData({ ...formData, text_color: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    value={formData.text_color}
+                    onChange={(e) => setFormData({ ...formData, text_color: e.target.value })}
+                    placeholder="#0f172a"
+                  />
+                </div>
               </div>
             </div>
           </div>
