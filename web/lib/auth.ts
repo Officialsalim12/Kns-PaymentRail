@@ -42,7 +42,7 @@ export async function getCurrentUser() {
       const profileResult = await Promise.race([profilePromise, profileTimeoutPromise])
       const { data: profile, error: profileErr } = profileResult as { data: any, error: any }
 
-      if (!error && profile) {
+      if (!profileErr && profile) {
         userProfile = profile
         break
       }
