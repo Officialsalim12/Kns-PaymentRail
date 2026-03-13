@@ -22,6 +22,10 @@
     "recharts": "^3.7.0",
     "zod": "^3.22.4"
   },
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "14.2.35",
+    "@next/swc-linux-x64-musl": "14.2.35"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@types/node": "^20.10.6",
