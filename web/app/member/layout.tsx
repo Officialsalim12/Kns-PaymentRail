@@ -56,18 +56,18 @@ export default async function MemberLayout({
       unreadNotificationCount={notificationCount || 0}
       sidebar={
         <MemberSidebar
-          organization={organization}
+          organization={organization ? { name: organization.name, logo_url: organization.logo_url } : null}
           userFullName={userFullName}
           profilePhotoUrl={profilePhotoUrl}
           unreadNotificationCount={notificationCount || 0}
         />
       }
-      theme={organization && {
+      theme={organization ? {
         primary: organization.primary_color,
         background: organization.background_color,
         sidebarBg: organization.sidebar_bg_color,
         text: organization.text_color,
-      }}
+      } : undefined}
     >
       {children}
     </DashboardLayoutWrapper>

@@ -1,16 +1,9 @@
 import { createClient } from './supabase/server'
 import { redirect } from 'next/navigation'
 
-// Retrieve current user with retry mechanism for profile fetching
 export async function getCurrentUser() {
-  /* if (process.env.NODE_ENV === 'development') {
-    console.log('[getCurrentUser] Starting...')
-  } */
   try {
     const supabase = await createClient()
-    /* if (process.env.NODE_ENV === 'development') {
-      console.log('[getCurrentUser] Supabase client created')
-    } */
     const getUserPromise = supabase.auth.getUser()
     const timeoutPromise = new Promise<{ data: { user: null }, error: { message: string } }>((resolve) =>
       setTimeout(() => resolve({ data: { user: null }, error: { message: 'Network timeout' } }), 5000)
@@ -23,15 +16,14 @@ export async function getCurrentUser() {
     } = authResult as { data: { user: any }, error: any }
 
     if (authError || !user) {
-      if (process.env.NODE_ENV === 'development' && authError) {
-        console.error('[getCurrentUser] Auth error:', authError?.message || 'No user found')
+      const msg = authError?.message || 'No user found'
+      const isExpectedNoSession = /session missing|no user|not found/i.test(msg)
+      if (process.env.NODE_ENV === 'development' && authError && !isExpectedNoSession) {
+        console.error('[getCurrentUser] Auth error:', msg)
       }
-      // Silently return null when there is simply no session;
-      // callers like requireAuth handle the redirect.
       return null
     }
 
-    // Attempt to fetch user profile with exponential backoff
     let userProfile = null
     let profileError = null
     const maxRetries = 3
@@ -48,17 +40,15 @@ export async function getCurrentUser() {
       )
 
       const profileResult = await Promise.race([profilePromise, profileTimeoutPromise])
-      const { data: profile, error: error } = profileResult as { data: any, error: any }
+      const { data: profile, error: profileErr } = profileResult as { data: any, error: any }
 
       if (!error && profile) {
         userProfile = profile
         break
       }
 
-      profileError = error
-
-      // Wait before retrying if not a network error
-      if (attempt < maxRetries && error?.code !== 'PGRST116') {
+      profileError = profileErr
+      if (attempt < maxRetries && profileErr?.code !== 'PGRST116') {
         await new Promise(resolve => setTimeout(resolve, 500 * attempt))
       }
     }

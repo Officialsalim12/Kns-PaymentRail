@@ -18,6 +18,7 @@ export function getOrganizationAbbreviation(name: string): string {
     .map(word => word.charAt(0).toUpperCase())
     .join('')
 }
+
 export interface StandardizedOrganizationData {
   name: string
   organization_type: string
@@ -26,6 +27,10 @@ export interface StandardizedOrganizationData {
   description: string | null
   status?: string
   logo_url?: string | null
+  primary_color?: string | null
+  background_color?: string | null
+  sidebar_bg_color?: string | null
+  text_color?: string | null
 }
 
 export function standardizeOrganizationData(data: {
@@ -36,6 +41,10 @@ export function standardizeOrganizationData(data: {
   description?: string | null
   status?: string
   logo_url?: string | null
+  primary_color?: string | null
+  background_color?: string | null
+  sidebar_bg_color?: string | null
+  text_color?: string | null
 }): StandardizedOrganizationData {
   const trimmedName = (data.name || '').trim()
   const trimmedOrgType = (data.organization_type || '').trim()
@@ -59,5 +68,9 @@ export function standardizeOrganizationData(data: {
     description: description,
     status: status,
     logo_url: data.logo_url || null,
+    primary_color: data.primary_color || null,
+    background_color: data.background_color || null,
+    sidebar_bg_color: data.sidebar_bg_color || null,
+    text_color: data.text_color || null,
   }
 }
