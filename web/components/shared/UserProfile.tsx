@@ -18,6 +18,7 @@ interface UserProfileProps {
       id_number?: string | null
       address?: string | null
       bio?: string | null
+      show_public_profile?: boolean | null
     }
   }
   membershipId?: string | null
