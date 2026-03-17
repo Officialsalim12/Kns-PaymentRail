@@ -64,8 +64,15 @@ serve(async (req) => {
         for (const tab of tabs) {
           const cost = tab.monthly_cost || 0
           const cycle = tab.billing_cycle || 'monthly'
-          const diffMs = now.getTime() - new Date(tab.created_at).getTime()
 
+          // One-time payment tabs should not generate recurring expected amounts.
+          // They only count as expected once, at creation.
+          if (cycle === 'one_time') {
+            expectedTotal += cost
+            continue
+          }
+
+          const diffMs = now.getTime() - new Date(tab.created_at).getTime()
           if (diffMs < 0) continue
 
           const msPerPeriod = cycle === 'weekly'

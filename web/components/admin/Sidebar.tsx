@@ -16,7 +16,8 @@ import {
   CreditCard,
   Bell,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Newspaper
 } from 'lucide-react'
 import { getOrganizationAbbreviation } from '@/lib/utils/organization'
 import { useRouter } from 'next/navigation'
@@ -59,6 +60,7 @@ export default function AdminSidebar({
     { href: '/admin/payments', label: 'Payments', icon: Wallet },
     { href: '/admin/payment-tabs', label: 'Payment Tabs', icon: CreditCard },
     { href: '/admin/reports', label: 'Reports', icon: FileText },
+    { href: '/admin/blog', label: 'Blog', icon: Newspaper },
     { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
     { href: '/admin/settings', label: 'Settings', icon: Settings, hiddenOnDesktop: true },
   ]

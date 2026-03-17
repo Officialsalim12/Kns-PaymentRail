@@ -14,7 +14,8 @@ import {
   X,
   Settings,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Newspaper
 } from 'lucide-react'
 import { getOrganizationAbbreviation } from '@/lib/utils/organization'
 import { useRouter } from 'next/navigation'
@@ -55,8 +56,10 @@ export default function MemberSidebar({
     { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/member/receipts', label: 'Receipts', icon: Receipt },
     { href: '/member/payment-history', label: 'Payment History', icon: History },
+    { href: '/member/members', label: 'Members', icon: UserIcon },
+    { href: '/member/blog', label: 'Blog', icon: Newspaper },
     { href: '/member/notifications', label: 'Notifications', icon: Bell, hiddenOnDesktop: true },
-    { href: '/member/payments', label: 'Payments', icon: Wallet },
+    { href: '/member/payments', label: 'Payment Options', icon: Wallet },
   ]
 
   const isActive = (href: string) => {
@@ -84,29 +87,36 @@ export default function MemberSidebar({
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-            <Link href="/member" className="flex items-center gap-2" onClick={onClose}>
+          <div className="p-4 sm:p-6 border-b border-gray-50 flex items-center justify-between gap-3">
+            <Link
+              href="/member"
+              className="flex items-center gap-2 overflow-hidden"
+              onClick={onClose}
+            >
               {organization?.logo_url && !logoError ? (
                 <Image
                   src={organization.logo_url}
                   alt={organization.name}
                   width={40}
                   height={40}
-                  className="h-10 w-10 object-contain rounded-lg shadow-sm"
+                  className="h-9 w-9 sm:h-10 sm:w-10 object-contain rounded-lg shadow-sm flex-shrink-0"
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="h-10 w-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-md">
+                <div className="h-9 w-9 sm:h-10 sm:w-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
                   <span className="text-white font-bold text-xs">
                     {organization?.name ? getOrganizationAbbreviation(organization.name) : 'K'}
                   </span>
                 </div>
               )}
-              <span className="text-xl font-bold text-gray-900 tracking-tight">
+              <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900 tracking-tight truncate">
                 {organization?.name || 'KNS MultiRail'}
               </span>
             </Link>
-            <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors">
+            <button
+              onClick={onClose}
+              className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors flex-shrink-0"
+            >
               <X className="h-6 w-6" />
             </button>
           </div>

@@ -242,6 +242,7 @@ export default function AdminDashboard({
 
           {/* Analytics Tab Content */}
           <div className={`${mobileTab === 'analytics' ? 'block' : 'hidden md:block'} space-y-8`}>
+            {/* Revenue Performance (existing bar chart) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
               <h2 className="text-lg font-bold text-gray-900 mb-8 sm:mb-10 text-center sm:text-left">Revenue Performance</h2>
               <div className="h-64 sm:h-80 flex items-end justify-between gap-1 xs:gap-3 sm:gap-6 lg:gap-8 px-1 xs:px-4">
@@ -277,74 +278,114 @@ export default function AdminDashboard({
                 })}
               </div>
             </div>
+
+            {/* Member Payment Participation chart */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Member Payment Participation</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Shows how many active members paid in the last 7 days compared to those who did not.
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className="font-semibold text-gray-600">Paying members</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                    <span className="font-semibold text-gray-600">Not paying</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-64 flex items-end justify-between gap-1 xs:gap-3 sm:gap-6 lg:gap-8 px-1 xs:px-4">
+                {chartData.map((day) => {
+                  // Unique member IDs who paid (completed) on this day
+                  const date = subDays(new Date(), 6 - chartData.findIndex(d => d.date === day.date))
+                  const dayStart = startOfDay(date)
+                  const dayEnd = endOfDay(date)
+
+                  const membersWhoPaid = new Set(
+                    revenueHistory
+                      .filter(p => {
+                        const pDate = new Date(p.created_at || p.payment_date)
+                        return (
+                          p.payment_status === 'completed' &&
+                          p.member_id &&
+                          pDate >= dayStart &&
+                          pDate <= dayEnd
+                        )
+                      })
+                      .map(p => p.member_id)
+                  )
+
+                  const payingCount = membersWhoPaid.size
+                  const totalActive = Math.max(stats.activeMembers, payingCount)
+                  const payingPct = totalActive > 0 ? (payingCount / totalActive) * 100 : 0
+                  const nonPayingPct = 100 - payingPct
+
+                  return (
+                    <div key={day.date} className="relative flex-1 flex flex-col items-center group">
+                      <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all z-10 pointer-events-none">
+                        <div className="bg-gray-900/95 text-white text-[10px] px-2 py-1 rounded shadow-xl whitespace-nowrap text-center">
+                          <div className="font-bold">{payingCount} paying</div>
+                          <div className="font-medium text-gray-300">
+                            {totalActive - payingCount} not paying
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-full max-w-[16px] xs:max-w-[22px] sm:max-w-[30px] rounded-t-lg bg-slate-200/80 overflow-hidden flex flex-col justify-end">
+                        <div
+                          className="bg-emerald-500 transition-all duration-700"
+                          style={{ height: `${payingPct}%` }}
+                        />
+                        <div
+                          className="bg-slate-200"
+                          style={{ height: `${nonPayingPct}%` }}
+                        />
+                      </div>
+                      <div className="mt-3 flex flex-col items-center">
+                        <p className="text-[8px] xs:text-[10px] font-bold text-gray-500 uppercase tracking-tighter xs:tracking-widest">
+                          {day.date}
+                        </p>
+                        {payingCount > 0 && (
+                          <span className="text-[8px] text-gray-400 font-mono mt-0.5">
+                            {payingCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Activity Tab Content */}
           <div className={`${mobileTab === 'activity' ? 'block' : 'hidden md:block'} space-y-8`}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Activity */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Activity className="h-5 w-5 text-primary-600" />
-                  <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-                </div>
-                <div className="space-y-4">
-                  {recentActivity.length > 0 ? (
-                    recentActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                        <div className="p-2 bg-primary-50 rounded-lg shrink-0">
-                          <Wallet className="h-4 w-4 text-primary-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-gray-900 truncate">{activity.member?.full_name || 'Member'}</p>
-                          <p className="text-xs text-gray-500">Paid <span className="text-primary-600 font-bold">{formatCurrency(getDisplayAmount(activity.amount, activity.status))}</span></p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 text-center py-8">No recent activity</p>
-                  )}
-                </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <Activity className="h-5 w-5 text-primary-600" />
+                <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
               </div>
-
-              {/* Member Payment Status */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-6">Payment Status</h2>
-                <div className="flex flex-col items-center">
-                  <div className="relative w-40 h-40 mb-6">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                      <circle cx="100" cy="100" r="80" fill="none" stroke="#f1f5f9" strokeWidth="20" />
-                      {stats.totalMembers > 0 && (
-                        <>
-                          <circle cx="100" cy="100" r="80" fill="none" stroke="#10b981" strokeWidth="20"
-                            strokeDasharray={`${(stats.paidMembers / stats.totalMembers) * 502.65} 502.65`}
-                            strokeLinecap="round" />
-                          {stats.unpaidMembers > 0 && (
-                            <circle cx="100" cy="100" r="80" fill="none" stroke="#ef4444" strokeWidth="20"
-                              strokeDasharray={`${(stats.unpaidMembers / stats.totalMembers) * 502.65} 502.65`}
-                              strokeDashoffset={`-${(stats.paidMembers / stats.totalMembers) * 502.65}`}
-                              strokeLinecap="round" />
-                          )}
-                        </>
-                      )}
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <p className="text-3xl font-extrabold text-gray-900">{stats.totalMembers}</p>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total</p>
+              <div className="space-y-4">
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                      <div className="p-2 bg-primary-50 rounded-lg shrink-0">
+                        <Wallet className="h-4 w-4 text-primary-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{activity.member?.full_name || 'Member'}</p>
+                        <p className="text-xs text-gray-500">Paid <span className="text-primary-600 font-bold">{formatCurrency(getDisplayAmount(activity.amount, activity.status))}</span></p>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex gap-6 w-full justify-center">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      <span className="text-xs font-bold text-gray-700">{stats.paidMembers} Paid</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                      <span className="text-xs font-bold text-gray-700">{stats.unpaidMembers} Unpaid</span>
-                    </div>
-                  </div>
-                </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-8">No recent activity</p>
+                )}
               </div>
             </div>
           </div>

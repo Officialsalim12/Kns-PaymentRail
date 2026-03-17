@@ -30,7 +30,7 @@ serve(async (req) => {
     if (queryError) throw queryError
 
     if (!members?.length) {
-      return new Response(JSON.stringify({ message: 'No members to check', checked: 0, suspended: 0 }), {
+      return new Response(JSON.stringify({ message: 'No members to check', checked: 0, flagged: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
@@ -80,36 +80,23 @@ serve(async (req) => {
       }
 
       if (shouldSuspend) {
-        const { error: suspendError } = await supabase
-          .from('members')
-          .update({ status: 'inactive', updated_at: now.toISOString() })
-          .eq('id', member.id)
-
-        if (suspendError) {
-          console.error(`[check-member-suspensions] Error inactivating ${member.id}:`, suspendError)
-          continue
-        }
-
-        if (member.user_id) {
-          await supabase.from('notifications').insert({
-            organization_id: member.organization_id,
-            recipient_id: member.user_id,
-            member_id: member.id,
-            title: 'Account Inactive',
-            message: `Your account is now inactive due to 3+ months of non-payment. Balance due: ${member.unpaid_balance || 0}. Please pay to regain access.`,
-            type: 'warning',
-          })
-        }
-
-        results.push({ id: member.id, name: member.full_name, reason })
+        // Do NOT automatically change member status anymore.
+        // Just flag the member so admins can manually review and decide.
+        results.push({
+          id: member.id,
+          name: member.full_name,
+          reason,
+          unpaid_balance: member.unpaid_balance || 0,
+          current_status: member.status,
+        })
       }
     }
 
     return new Response(JSON.stringify({
-      message: 'Suspension check completed',
+      message: 'Suspension check completed (members flagged only; no automatic status changes)',
       checked: members.length,
-      suspended: results.length,
-      suspendedMembers: results,
+      flagged: results.length,
+      flaggedMembers: results,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
 
   } catch (error) {

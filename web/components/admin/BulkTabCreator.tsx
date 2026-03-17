@@ -24,7 +24,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
     description: '',
     monthly_cost: '',
     duration_months: '',
-    billing_cycle: 'monthly' as 'weekly' | 'monthly',
+    billing_cycle: 'monthly' as 'weekly' | 'monthly' | 'one_time',
     is_active: true,
   })
   const [error, setError] = useState<string | null>(null)
@@ -388,10 +388,11 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
                       required={formData.tab_type === 'payment'}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       value={formData.billing_cycle}
-                      onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                      onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' | 'one_time' })}
                     >
                       <option value="monthly">Monthly</option>
                       <option value="weekly">Weekly</option>
+                      <option value="one_time">One-time</option>
                     </select>
                   </div>
                 </div>

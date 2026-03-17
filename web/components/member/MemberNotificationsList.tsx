@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Bell, CheckCircle, DollarSign, UserPlus, CheckCircle2, MessageSquare, Trash2 } from 'lucide-react'
+import { Bell, CheckCircle, Wallet, UserPlus, CheckCircle2, MessageSquare, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -22,7 +22,7 @@ interface Props {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'payment':
-      return <DollarSign className="h-5 w-5" />
+      return <Wallet className="h-5 w-5" />
     case 'approval':
     case 'member_request':
       return <UserPlus className="h-5 w-5" />

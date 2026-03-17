@@ -12,7 +12,7 @@ interface MemberTab {
   tab_type: 'payment' | 'donation'
   description: string | null
   monthly_cost: number | null
-  billing_cycle: 'weekly' | 'monthly'
+  billing_cycle: 'weekly' | 'monthly' | 'one_time'
   is_active: boolean
   created_at: string
 }
@@ -35,7 +35,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
     tab_type: 'payment' as 'payment' | 'donation',
     description: '',
     monthly_cost: '',
-    billing_cycle: 'monthly' as 'weekly' | 'monthly',
+    billing_cycle: 'monthly' as 'weekly' | 'monthly' | 'one_time',
     is_active: true,
   })
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +85,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
       tab_type: tab.tab_type,
       description: tab.description || '',
       monthly_cost: tab.monthly_cost?.toString() || '',
-      billing_cycle: tab.billing_cycle || 'monthly',
+      billing_cycle: (tab.billing_cycle as 'weekly' | 'monthly' | 'one_time') || 'monthly',
       is_active: tab.is_active,
     })
     setShowCreateModal(true)
@@ -263,7 +263,8 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
                           )}
                           {tab.tab_type === 'payment' && tab.monthly_cost && (
                             <p className="text-sm font-medium text-gray-900 mt-1">
-                              {formatCurrency(tab.monthly_cost)} / {tab.billing_cycle || 'month'}
+                              {formatCurrency(tab.monthly_cost)}{' '}
+                              {tab.billing_cycle === 'one_time' ? '(one-time)' : `/ ${tab.billing_cycle || 'month'}`}
                             </p>
                           )}
                         </div>
@@ -383,10 +384,11 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
                           required={formData.tab_type === 'payment'}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                           value={formData.billing_cycle}
-                          onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' })}
+                          onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'weekly' | 'monthly' | 'one_time' })}
                         >
                           <option value="monthly">Monthly</option>
                           <option value="weekly">Weekly</option>
+                          <option value="one_time">One-time</option>
                         </select>
                       </div>
                     </div>

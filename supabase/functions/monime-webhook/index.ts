@@ -890,6 +890,8 @@ async function handlePaymentCompleted(
 
   // Send notification to member
   if (payment.member?.user_id) {
+    const memberNotificationMessage = `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully. Reference: ${payment.reference_number || payment.id}.`;
+
     // Check for duplicate member notification (within 5 minutes) to handle potential double-webhook or trigger conflicts
     const { data: existingMemberNotif } = await supabaseClient
       .from("notifications")
@@ -897,6 +899,7 @@ async function handlePaymentCompleted(
       .eq("recipient_id", payment.member.user_id)
       .eq("title", "Payment Completed")
       .eq("type", "payment")
+      .eq("message", memberNotificationMessage)
       .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
       .maybeSingle();
 
@@ -906,7 +909,7 @@ async function handlePaymentCompleted(
         recipient_id: payment.member.user_id,
         member_id: payment.member_id,
         title: "Payment Completed",
-        message: `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully.`,
+        message: memberNotificationMessage,
         type: "payment",
       });
     }
@@ -959,6 +962,8 @@ async function handlePaymentCompleted(
       .single();
 
     if (adminUser) {
+      const adminNotificationMessage = `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`;
+
       // Check for duplicate admin notification (within 5 minutes)
       const { data: existingAdminNotif } = await supabaseClient
         .from("notifications")
@@ -966,6 +971,7 @@ async function handlePaymentCompleted(
         .eq("recipient_id", adminUser.id)
         .eq("title", "New Payment Received")
         .eq("type", "payment")
+        .eq("message", adminNotificationMessage)
         .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
         .maybeSingle();
 
@@ -975,7 +981,7 @@ async function handlePaymentCompleted(
           recipient_id: adminUser.id,
           member_id: payment.member_id,
           title: "New Payment Received",
-          message: `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`,
+          message: adminNotificationMessage,
           type: "payment",
         });
       }
@@ -1009,7 +1015,9 @@ async function handlePaymentFailed(
     .delete()
     .or(orConditions.join(","));
 
-  if (deleteError) { }
+  if (deleteError) {
+    console.error("Error deleting failed payment:", deleteError);
+  }
 }
 
 async function handlePaymentCancelled(
@@ -1160,7 +1168,9 @@ async function handlePaymentProcessing(
     })
     .or(orConditions.join(","));
 
-  if (updateError) { }
+  if (updateError) {
+    console.error("Error updating payment to processing:", updateError);
+  }
 }
 
 // Verify webhook signature using HMAC-SHA256

@@ -1,9 +1,25 @@
 import { requireAuth } from '@/lib/auth'
 import UserProfile from '@/components/shared/UserProfile'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function ProfilePage() {
   try {
     const user = await requireAuth()
+
+    const supabase = await createClient()
+
+    // Try to find a linked member record to surface the membership ID in profile
+    let membershipId: string | null = null
+    if (user?.id) {
+      const { data: member } = await supabase
+        .from('members')
+        .select('membership_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (member?.membership_id) {
+        membershipId = member.membership_id
+      }
+    }
 
     if (!user) {
       return (
@@ -48,7 +64,7 @@ export default async function ProfilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <UserProfile user={user} />
+          <UserProfile user={user} membershipId={membershipId} />
         </div>
       </div>
     )

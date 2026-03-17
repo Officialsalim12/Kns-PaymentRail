@@ -27,17 +27,20 @@ export async function generateReceiptPDF(
 
     yPosition -= 40;
 
-    const monimePaymentDate = monimePaymentData?.created_at ||
+    // Always prefer the platform's recorded payment timestamp for the receipt,
+    // and only fall back to Monime metadata if those fields are missing.
+    const paymentTimestamp =
+        payment.payment_date ||
+        payment.created_at ||
+        monimePaymentData?.created_at ||
         monimePaymentData?.createdAt ||
         monimePaymentData?.paid_at ||
         monimePaymentData?.paidAt ||
         monimePaymentData?.completed_at ||
         monimePaymentData?.completedAt ||
-        payment.payment_date ||
-        payment.created_at ||
         new Date().toISOString();
 
-    const actualPaymentDate = new Date(monimePaymentDate);
+    const actualPaymentDate = new Date(paymentTimestamp);
 
     // Receipt Number and Date
     yPosition -= 30;

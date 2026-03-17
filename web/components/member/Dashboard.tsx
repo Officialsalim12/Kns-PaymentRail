@@ -425,13 +425,12 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
             <h1 className="text-2xl xs:text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight text-center">
               {memberData.full_name}
             </h1>
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center justify-center gap-2 text-primary-100/90 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <Sparkles className="h-3.5 w-3.5 text-primary-200" />
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Member Dashboard</p>
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center gap-2 text-primary-100/90 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  <Sparkles className="h-3.5 w-3.5 text-primary-200" />
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Welcome</p>
+                </div>
               </div>
-              <p className="text-[10px] sm:text-sm text-primary-200/90 font-mono tracking-widest opacity-80">ID: {memberData.membership_id}</p>
-            </div>
           </div>
         </div>
       </div>

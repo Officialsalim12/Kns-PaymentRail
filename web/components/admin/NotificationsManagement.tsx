@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Bell, CheckCircle, DollarSign, UserPlus, CheckCircle2, XCircle, MessageSquare, Trash2 } from 'lucide-react'
+import { Bell, CheckCircle, UserPlus, CheckCircle2, XCircle, MessageSquare, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -32,7 +32,11 @@ interface Props {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'payment':
-      return <DollarSign className="h-5 w-5" />
+      return (
+        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold">
+          NLe
+        </span>
+      )
     case 'approval':
     case 'member_request':
       return <UserPlus className="h-5 w-5" />
@@ -249,7 +253,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="max-w-md">
           <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">All your payment, approval, and system notifications</p>
+          <p className="text-sm text-gray-500 mt-1">All your payment, approval, and dashboard notifications</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {unreadCount > 0 && (

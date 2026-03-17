@@ -213,7 +213,7 @@ async function createCurrentMonthBalances(
     // Get all active compulsory tabs
     const { data: compulsoryTabs, error: tabsError } = await supabaseClient
         .from("member_tabs")
-        .select("id, member_id, organization_id, monthly_cost, tab_name")
+        .select("id, member_id, organization_id, monthly_cost, tab_name, billing_cycle")
         .eq("payment_nature", "compulsory")
         .eq("is_active", true)
 
@@ -229,17 +229,20 @@ async function createCurrentMonthBalances(
 
     console.log(`Found ${compulsoryTabs.length} active compulsory tabs`)
 
-    const balanceRecords = compulsoryTabs.map((tab) => ({
-        organization_id: tab.organization_id,
-        member_id: tab.member_id,
-        tab_id: tab.id,
-        month_start: monthStart.toISOString().split("T")[0],
-        month_end: monthEnd.toISOString().split("T")[0],
-        required_amount: tab.monthly_cost,
-        paid_amount: 0,
-        unpaid_amount: 0,
-        is_settled: false,
-    }))
+    const balanceRecords = compulsoryTabs
+        // Skip donation/one-time style tabs for monthly balances
+        .filter((tab) => tab.billing_cycle !== "one_time")
+        .map((tab) => ({
+            organization_id: tab.organization_id,
+            member_id: tab.member_id,
+            tab_id: tab.id,
+            month_start: monthStart.toISOString().split("T")[0],
+            month_end: monthEnd.toISOString().split("T")[0],
+            required_amount: tab.monthly_cost,
+            paid_amount: 0,
+            unpaid_amount: 0,
+            is_settled: false,
+        }))
 
     // Insert with ON CONFLICT DO NOTHING (idempotency)
     const { error: insertError } = await supabaseClient
@@ -280,61 +283,18 @@ async function checkAndFreezeDelinquentAccounts(supabaseClient: any) {
 
     console.log(`Found ${delinquentMembers.length} delinquent members`)
 
+    // Automatic freezing is disabled. We now only log delinquent members
+    // so that admins can manually review and take action if needed.
     for (const member of delinquentMembers) {
         console.log(
-            `Processing delinquent member: ${member.member_id} (${member.consecutive_unpaid_months} months)`
+            `[Delinquent] Member ${member.member_id} (${member.consecutive_unpaid_months} consecutive unpaid months, total_unpaid=${member.total_unpaid})`
         )
 
-        // Check if already frozen
-        const { data: currentMember } = await supabaseClient
-            .from("members")
-            .select("status, full_name")
-            .eq("id", member.member_id)
-            .single()
-
-        if (!currentMember) {
-            console.warn(`Member ${member.member_id} not found`)
-            continue
-        }
-
-        if (currentMember.status === "frozen") {
-            console.log(`Member ${member.member_id} already frozen, skipping`)
-            continue
-        }
-
-        // Freeze account
-        const { error: freezeError } = await supabaseClient
-            .from("members")
-            .update({
-                status: "frozen",
-                freeze_reason: "3 consecutive months of unpaid balance",
-                frozen_at: new Date().toISOString(),
-            })
-            .eq("id", member.member_id)
-
-        if (freezeError) {
-            console.error(`Error freezing member ${member.member_id}:`, freezeError)
-            continue
-        }
-
-        console.log(`Successfully froze member: ${member.member_id}`)
-
-        // Notify user
-        await supabaseClient.from("notifications").insert({
-            organization_id: member.organization_id,
-            recipient_id: member.user_id,
-            member_id: member.member_id,
-            title: "Account Frozen - Unpaid Balance",
-            message: `Your account has been frozen due to 3 consecutive months of unpaid balances (Total: ${member.total_unpaid}). Please contact your administrator or make a payment to reactivate your account.`,
-            type: "warning",
-        })
-
-        // Audit log
         await supabaseClient.from("balance_audit_log").insert({
             monthly_balance_id: member.latest_balance_id,
-            action: "freeze_triggered",
+            action: "delinquent_detected",
             amount: member.total_unpaid,
-            notes: `Account frozen: ${member.consecutive_unpaid_months} consecutive months unpaid`,
+            notes: `Delinquent detected: ${member.consecutive_unpaid_months} consecutive months unpaid (no automatic freeze applied)`,
             metadata: {
                 member_id: member.member_id,
                 total_unpaid: member.total_unpaid,
@@ -342,5 +302,5 @@ async function checkAndFreezeDelinquentAccounts(supabaseClient: any) {
         })
     }
 
-    console.log("Finished processing delinquent accounts")
+    console.log("Finished processing delinquent accounts (logging only, no automatic freezes)")
 }

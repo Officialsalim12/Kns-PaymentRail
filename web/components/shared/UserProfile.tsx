@@ -17,11 +17,13 @@ interface UserProfileProps {
       role: string
       id_number?: string | null
       address?: string | null
+      bio?: string | null
     }
   }
+  membershipId?: string | null
 }
 
-export default function UserProfile({ user }: UserProfileProps) {
+export default function UserProfile({ user, membershipId }: UserProfileProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -35,7 +37,9 @@ export default function UserProfile({ user }: UserProfileProps) {
     full_name: user?.profile?.full_name || '',
     phone_number: user?.profile?.phone_number || '',
     address: user?.profile?.address || '',
-    id_number: user?.profile?.id_number || '',
+    id_number: membershipId || user?.profile?.id_number || '',
+    bio: user?.profile?.bio || '',
+    show_public_profile: user?.profile?.show_public_profile ?? true,
   })
 
   // Update image src with cache-busting timestamp only on client side
@@ -78,6 +82,8 @@ export default function UserProfile({ user }: UserProfileProps) {
           full_name: formData.full_name,
           phone_number: formData.phone_number || null,
           address: formData.address || null,
+          bio: formData.bio || null,
+          show_public_profile: formData.show_public_profile,
           // id_number is excluded - it's system-generated and not editable
         })
         .eq('id', user.id)
@@ -98,7 +104,9 @@ export default function UserProfile({ user }: UserProfileProps) {
       full_name: user.profile?.full_name || '',
       phone_number: user.profile?.phone_number || '',
       address: user.profile?.address || '',
-      id_number: user.profile?.id_number || '',
+      id_number: membershipId || user.profile?.id_number || '',
+      bio: user.profile?.bio || '',
+      show_public_profile: user.profile?.show_public_profile ?? true,
     })
     setPreviewUrl(user.profile?.profile_photo_url || null)
     setIsEditing(false)
@@ -557,7 +565,7 @@ export default function UserProfile({ user }: UserProfileProps) {
                     <span>ID Number</span>
                   </label>
                   <p className="text-sm sm:text-base text-gray-900 font-medium px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border border-gray-200 break-words">
-                    {user.profile?.id_number || <span className="text-gray-400 italic">System generated - Not editable</span>}
+                    {membershipId || user.profile?.id_number || <span className="text-gray-400 italic">System generated - Not editable</span>}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">ID numbers are system-generated and cannot be edited</p>
                 </div>
@@ -581,6 +589,48 @@ export default function UserProfile({ user }: UserProfileProps) {
                     </p>
                   )}
                 </div>
+
+                {user.profile?.role !== 'super_admin' && (
+                  <div className="md:col-span-2 space-y-1.5 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
+                      <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-600 flex-shrink-0" />
+                      <span>Bio</span>
+                    </label>
+                    {isEditing ? (
+                      <>
+                        <textarea
+                          value={formData.bio}
+                          onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white resize-none"
+                          placeholder="Tell others a little about yourself (optional)"
+                        />
+                        <label className="mt-2 inline-flex items-center gap-2 text-[11px] sm:text-xs text-gray-600">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_public_profile}
+                            onChange={(e) =>
+                              setFormData({ ...formData, show_public_profile: e.target.checked })
+                            }
+                            className="h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span>Show my bio to other members in the Members list</span>
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm sm:text-base text-gray-900 font-medium px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border border-gray-200 min-h-[60px] break-words">
+                          {user.profile?.bio || <span className="text-gray-400 italic">No bio added yet</span>}
+                        </p>
+                        <p className="mt-1 text-[11px] sm:text-xs text-gray-500">
+                          {user.profile?.show_public_profile ?? true
+                            ? 'Your bio is visible to other members in your organization.'
+                            : 'Your bio is hidden from the Members list.'}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-1.5 sm:space-y-2">
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
