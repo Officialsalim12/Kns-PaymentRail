@@ -15,7 +15,7 @@ export default function Hero() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-2 sm:px-0">
                         <Link
-                            href="/organization/register"
+                            href="/get-started"
                             className="w-full sm:w-auto px-6 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                         >
                             Get Started

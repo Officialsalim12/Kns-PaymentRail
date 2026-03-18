@@ -16,6 +16,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { setMemberStatusAtomic } from '@/app/actions/admin-approvals'
 
 interface Member {
   id: string
@@ -108,56 +109,12 @@ export default function ApprovalsManagement({
   const updateMemberStatus = async (memberId: string, newStatus: string, balance?: number) => {
     setLoading(memberId)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      const { data: member } = await supabase
-        .from('members')
-        .select('full_name, membership_id, organization_id, user_id')
-        .eq('id', memberId)
-        .single()
-
-      const updateData: { status: string; unpaid_balance?: number; activated_at?: string } = { status: newStatus }
-
-      if (newStatus === 'active') {
-        if (balance !== undefined) {
-          updateData.unpaid_balance = balance
-        }
-        updateData.activated_at = new Date().toISOString()
-      }
-
-      const { error } = await supabase
-        .from('members')
-        .update(updateData)
-        .eq('id', memberId)
-
-      if (error) throw error
-
-      // Notify member
-      if (member?.user_id) {
-        let title = ''
-        let message = ''
-
-        if (newStatus === 'active') {
-          title = 'Membership Approved'
-          message = 'Your membership request has been approved! You can now access all member features.'
-        } else if (newStatus === 'inactive') {
-          title = 'Membership Request Rejected'
-          message = 'Your membership request has been rejected. Please contact your organization administrator.'
-        }
-
-        if (title) {
-          await supabase.from('notifications').insert({
-            organization_id: organizationId,
-            recipient_id: member.user_id,
-            member_id: memberId,
-            title,
-            message,
-            type: 'approval',
-          })
-        }
-      }
+      // Atomic DB update (member status + optional notification) via RPC.
+      await setMemberStatusAtomic({
+        memberId,
+        newStatus: newStatus as 'active' | 'inactive' | 'suspended',
+        initialUnpaidBalance: newStatus === 'active' ? (balance ?? 0) : undefined,
+      })
 
       router.refresh()
     } catch (error: any) {

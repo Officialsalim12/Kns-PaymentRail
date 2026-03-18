@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/currency'
 import { useRouter } from 'next/navigation'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
 import { getDisplayAmount } from '@/lib/utils/payment-display'
+import { deletePaymentAtomic } from '@/app/actions/admin-payments'
 
 interface Member {
   id: string
@@ -132,143 +133,8 @@ export default function PaymentManagement({ members: initialMembers, payments: i
 
     setDeletingPaymentId(paymentId)
     try {
-      const supabase = createClient()
-      const { data: payment } = await supabase
-        .from('payments')
-        .select('member_id, amount, description, organization_id')
-        .eq('id', paymentId)
-        .single()
-
-      if (!payment) {
-        throw new Error('Payment not found')
-      }
-
-      // Delete receipt generation logs first (foreign key constraint)
-      const { error: logsError } = await supabase
-        .from('receipt_generation_logs')
-        .delete()
-        .eq('payment_id', paymentId)
-
-      if (logsError) {
-        console.error('Error deleting receipt generation logs:', logsError)
-      }
-
-      // Delete receipts
-      const { error: receiptError } = await supabase
-        .from('receipts')
-        .delete()
-        .eq('payment_id', paymentId)
-
-      if (receiptError) {
-        console.error('Error deleting receipt:', receiptError)
-      }
-
-      // Finally delete the payment
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .delete()
-        .eq('id', paymentId)
-
-      if (paymentError) {
-        throw new Error(`Failed to delete payment: ${paymentError.message}`)
-      }
-
-      if (payment.member_id && payment.amount) {
-        const { data: allRemainingPayments, error: allPaymentsError } = await supabase
-          .from('payments')
-          .select('amount, description, payment_status')
-          .eq('member_id', payment.member_id)
-
-        if (allPaymentsError) {
-          console.error('Error fetching remaining payments:', allPaymentsError)
-        } else {
-          // Filter only completed payments for total_paid calculation
-          const remainingPayments = allRemainingPayments?.filter(p => {
-            const status = p.payment_status || (p as any).status
-            return status === 'completed' || !status
-          }) || []
-
-          // Recalculate total_paid from actual completed payments
-          const newTotalPaid = remainingPayments.reduce((sum, p) => {
-            const amount = typeof p.amount === 'string' ? parseFloat(p.amount) : (p.amount || 0)
-            return sum + amount
-          }, 0)
-
-          let newBalance = 0
-          if (allRemainingPayments && allRemainingPayments.length > 0) {
-            allRemainingPayments.forEach((p) => {
-              if (p.description) {
-                const balanceMatch = p.description.match(/\[BALANCE_ADDED:\s*([\d]+\.?[\d]*)\]/i)
-                if (balanceMatch && balanceMatch[1]) {
-                  const balanceAmount = parseFloat(balanceMatch[1])
-                  if (!isNaN(balanceAmount)) {
-                    newBalance += balanceAmount
-                  }
-                }
-              }
-            })
-          }
-
-          console.log('Recalculating member totals:', {
-            memberId: payment.member_id,
-            remainingPaymentsCount: remainingPayments.length,
-            allPaymentsCount: allRemainingPayments?.length || 0,
-            newTotalPaid,
-            newBalance
-          })
-
-          const updateData: { total_paid: number; unpaid_balance?: number } = {
-            total_paid: Math.max(0, newTotalPaid)
-          }
-
-          try {
-            updateData.unpaid_balance = Math.max(0, newBalance)
-          } catch (e) {
-            console.warn('unpaid_balance column may not exist, skipping balance update')
-          }
-
-          const { error: memberUpdateError, data: updateResult } = await supabase
-            .from('members')
-            .update(updateData)
-            .eq('id', payment.member_id)
-            .select()
-
-          if (memberUpdateError) {
-            console.error('Error updating member totals:', memberUpdateError)
-
-            // If unpaid_balance column doesn't exist, try updating only total_paid
-            if (memberUpdateError.message.includes('unpaid_balance') || memberUpdateError.message.includes('schema cache')) {
-              const { error: retryError } = await supabase
-                .from('members')
-                .update({ total_paid: Math.max(0, newTotalPaid) })
-                .eq('id', payment.member_id)
-
-              if (retryError) {
-                alert(`Warning: Payment deleted but failed to update member total_paid: ${retryError.message}`)
-              } else {
-                // total_paid updated successfully even without unpaid_balance
-              }
-            } else {
-              alert(`Warning: Payment deleted but failed to update member totals: ${memberUpdateError.message}`)
-            }
-          }
-        }
-      }
-
-      // Log activity
-      const { logActivityClient } = await import('@/lib/activity-log-client')
-      await logActivityClient({
-        user_id: '', // Will be filled by logActivityClient
-        action: 'payment.deleted',
-        entity_type: 'payment',
-        entity_id: paymentId,
-        organization_id: payment.organization_id, // Use payment's organization_id
-        description: `Deleted payment of ${payment.amount}${payment.description ? `: ${payment.description}` : ''}`,
-        metadata: {
-          amount: payment.amount,
-          member_id: payment.member_id,
-        },
-      })
+      // Atomic DB delete + member total recalculation via RPC.
+      await deletePaymentAtomic(paymentId)
 
       // Remove payment from local state immediately
       setPayments(payments.filter(p => p.id !== paymentId))

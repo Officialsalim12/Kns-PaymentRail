@@ -75,13 +75,7 @@ export default function LandingNavbar() {
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center space-x-4">
                         <Link
-                            href="/login"
-                            className="text-xs sm:text-sm font-black text-gray-600 hover:text-primary-600 tracking-widest transition-all px-4 py-2 uppercase"
-                        >
-                            Sign In
-                        </Link>
-                        <Link
-                            href="/organization/register"
+                            href="/get-started"
                             className="px-5 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-all shadow-lg shadow-primary-600/20 hover:shadow-primary-600/40 hover:-translate-y-0.5 active:scale-95"
                         >
                             Get Started
@@ -120,15 +114,7 @@ export default function LandingNavbar() {
 
                     <div className="flex flex-col space-y-4 pt-4">
                         <Link
-                            href="/login"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl text-lg font-bold text-gray-900 group"
-                        >
-                            <span>Sign In</span>
-                            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                        <Link
-                            href="/organization/register"
+                            href="/get-started"
                             onClick={() => setIsOpen(false)}
                             className="flex items-center justify-center p-5 bg-primary-600 text-white rounded-2xl text-lg font-black uppercase tracking-widest shadow-xl shadow-primary-600/20"
                         >

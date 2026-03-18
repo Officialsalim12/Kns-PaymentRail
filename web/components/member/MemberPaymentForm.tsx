@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
+import { createOrReusePendingPayment } from '@/app/actions/member-payments'
 
 interface Props {
   memberId: string
@@ -74,50 +75,15 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
         throw new Error('Please enter a valid payment amount')
       }
 
-      // Check for an existing pending payment for the same member, amount, and description
-      // created within the last 5 minutes to prevent duplicates
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      // Create or reuse a recent pending payment atomically on the server
+      // (prevents race conditions + duplicate pending payments).
+      const { payment_id, reused } = await createOrReusePendingPayment({
+        memberId,
+        amount: paymentAmount,
+        description: paymentDescription,
+      })
 
-      const { data: existingPayment } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('member_id', memberId)
-        .eq('amount', paymentAmount)
-        .eq('description', paymentDescription)
-        .eq('payment_status', 'pending')
-        .eq('organization_id', member.organization_id)
-        .gte('created_at', fiveMinutesAgo)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      let paymentId: string
-
-      if (existingPayment) {
-        paymentId = existingPayment.id
-      } else {
-        // Insert new pending payment record
-        const { data: payment, error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            organization_id: member.organization_id,
-            member_id: memberId,
-            amount: paymentAmount,
-            payment_date: new Date().toISOString(),
-            payment_method: 'online',
-            description: paymentDescription,
-            created_by: user.id,
-            payment_status: 'pending',
-          })
-          .select()
-          .single()
-
-        if (paymentError) {
-          throw new Error(paymentError.message)
-        }
-
-        paymentId = payment.id
-      }
+      const paymentId = payment_id
 
       const { data: checkoutData, error: checkoutError } = await invokeEdgeFunction<{
         success: boolean
@@ -160,7 +126,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
 
       if (checkoutError) {
         // Only delete if we JUST created it (not if we reused an existing one)
-        if (!existingPayment) {
+        if (!reused) {
           try {
             await supabase.from('payments').delete().eq('id', paymentId)
           } catch (e) { }
@@ -169,7 +135,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
       }
 
       if (!checkoutData?.checkoutSession) {
-        if (!existingPayment) {
+        if (!reused) {
           try {
             await supabase.from('payments').delete().eq('id', paymentId)
           } catch (e) { }
@@ -181,7 +147,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
         window.location.href = checkoutData.checkoutSession.url
       } else {
         // Clean up the payment if checkout URL is missing and we just created it
-        if (!existingPayment) {
+        if (!reused) {
           try {
             await supabase
               .from('payments')

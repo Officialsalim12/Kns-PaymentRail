@@ -12,7 +12,7 @@ export default function CTA() {
                     Launch subscriptions, run fundraisers, and streamline your finances in one platform.
                 </p>
                 <Link
-                    href="/organization/register"
+                    href="/get-started"
                     className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-6 lg:px-8 py-1.5 sm:py-2 md:py-3 lg:py-4 text-xs sm:text-sm md:text-base font-semibold text-primary-600 bg-white hover:bg-gray-50 rounded-lg transition-all shadow-lg hover:shadow-xl"
                 >
                     Get Started

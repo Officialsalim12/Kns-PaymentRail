@@ -256,21 +256,22 @@ export default function AdminDashboard({
                           <div className="font-medium text-gray-300">{day.count} Transactions</div>
                         </div>
                       </div>
+                      {/* Use primary colors so the chart stays visible on the white card background. */}
                       <div
-                        className="w-full max-w-[12px] xs:max-w-[20px] sm:max-w-[32px] rounded-t-lg bg-white/20 hover:bg-white/40 active:bg-white/60 transition-all relative overflow-hidden group/bar"
+                        className="w-full max-w-[12px] xs:max-w-[20px] sm:max-w-[32px] rounded-t-lg bg-primary-600/15 hover:bg-primary-600/25 active:bg-primary-600/35 transition-all relative overflow-hidden group/bar"
                         style={{ height: `${height}%` }}
                       >
                         <div
-                          className="absolute bottom-0 left-0 right-0 bg-white/40 transition-all duration-1000 group-hover/bar:bg-white/60"
-                          style={{ height: '0%', animation: 'grow-up 1s ease-out forwards' }}
+                          className="absolute bottom-0 left-0 right-0 bg-primary-600/80"
+                          style={{ height: '100%' }}
                         />
                       </div>
                       <div className="mt-3 flex flex-col items-center">
-                        <p className="text-[8px] xs:text-[10px] font-bold text-white/60 uppercase tracking-tighter xs:tracking-widest">
+                        <p className="text-[8px] xs:text-[10px] font-bold text-gray-500 uppercase tracking-tighter xs:tracking-widest">
                           {day.date}
                         </p>
                         {day.count > 0 && (
-                          <span className="text-[8px] text-white/40 font-mono mt-0.5">{day.count}</span>
+                          <span className="text-[8px] text-gray-400 font-mono mt-0.5">{day.count}</span>
                         )}
                       </div>
                     </div>

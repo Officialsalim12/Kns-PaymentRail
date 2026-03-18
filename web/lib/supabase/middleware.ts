@@ -14,6 +14,8 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = [
     '/login',
     '/register',
+    '/get-started',
+    '/crown-funding-coming-soon',
     '/organization/register',
     '/super-admin/register',
     '/member-register',
