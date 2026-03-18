@@ -44,12 +44,13 @@ export default function AuthLayout({ children, title, subtitle, imageSrc }: Auth
                     </div>
 
                     <div className="space-y-6">
+                        {/* Marketing copy used on auth flows (login/register/get-started) */}
                         <h1 className="text-4xl font-extrabold text-white tracking-tight leading-tight">
-                            Seamless Payments for <br />
-                            Modern Organizations
+                            Subscriptions &amp; Fundraising for <br />
+                            Growing Organizations
                         </h1>
                         <p className="text-primary-200 text-lg max-w-md">
-                            Manage your organization&apos;s payments, memberships, and financial reports in one secure platform.
+                            Manage subscription payments, memberships, and fundraising in one secure platform.
                         </p>
                     </div>
 
