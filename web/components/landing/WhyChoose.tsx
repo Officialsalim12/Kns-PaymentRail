@@ -27,7 +27,7 @@ export default function WhyChoose() {
                         Why Choose KNS MultiRail?
                     </h2>
                     <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-                        Everything you need to manage payments and members efficiently
+                        Everything you need to run subscriptions, fundraisers, and member management efficiently
                     </p>
                 </div>
 

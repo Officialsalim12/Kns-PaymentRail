@@ -16,6 +16,7 @@ interface UserProfileProps {
       profile_photo_url: string | null
       role: string
       id_number?: string | null
+      admission_date?: string | null
       address?: string | null
       bio?: string | null
       show_public_profile?: boolean | null
@@ -34,11 +35,28 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(user?.profile?.profile_photo_url || null)
   const [imageSrc, setImageSrc] = useState<string | null>(user?.profile?.profile_photo_url || null)
+
+  const normalizeDateInputValue = (value: string | null | undefined) => {
+    if (!value) return ''
+    // Accept ISO timestamp or date; keep YYYY-MM-DD for <input type="date" />
+    if (value.length >= 10) return value.slice(0, 10)
+    return value
+  }
+
+  const formatDateForDisplay = (value: string | null | undefined) => {
+    if (!value) return null
+    const normalized = normalizeDateInputValue(value)
+    const d = new Date(normalized)
+    if (Number.isNaN(d.getTime())) return normalized
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })
+  }
+
   const [formData, setFormData] = useState({
     full_name: user?.profile?.full_name || '',
     phone_number: user?.profile?.phone_number || '',
     address: user?.profile?.address || '',
     id_number: membershipId || user?.profile?.id_number || '',
+    admission_date: normalizeDateInputValue(user?.profile?.admission_date),
     bio: user?.profile?.bio || '',
     show_public_profile: user?.profile?.show_public_profile ?? true,
   })
@@ -83,6 +101,7 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
           full_name: formData.full_name,
           phone_number: formData.phone_number || null,
           address: formData.address || null,
+          admission_date: formData.admission_date || null,
           bio: formData.bio || null,
           show_public_profile: formData.show_public_profile,
           // id_number is excluded - it's system-generated and not editable
@@ -106,6 +125,7 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
       phone_number: user.profile?.phone_number || '',
       address: user.profile?.address || '',
       id_number: membershipId || user.profile?.id_number || '',
+      admission_date: normalizeDateInputValue(user?.profile?.admission_date),
       bio: user.profile?.bio || '',
       show_public_profile: user.profile?.show_public_profile ?? true,
     })
@@ -569,6 +589,27 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
                     {membershipId || user.profile?.id_number || <span className="text-gray-400 italic">System generated - Not editable</span>}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">ID numbers are system-generated and cannot be edited</p>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
+                    <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-600 flex-shrink-0" />
+                    <span>Admission Date</span>
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={formData.admission_date}
+                      onChange={(e) => setFormData({ ...formData, admission_date: e.target.value })}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white"
+                    />
+                  ) : (
+                    <p className="text-sm sm:text-base text-gray-900 font-medium px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border border-gray-200 break-words">
+                      {formatDateForDisplay(user.profile?.admission_date) || (
+                        <span className="text-gray-400 italic">Not set</span>
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 <div className="md:col-span-2 space-y-1.5 sm:space-y-2">

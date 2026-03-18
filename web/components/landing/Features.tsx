@@ -4,17 +4,17 @@ const features = [
     {
         icon: Users,
         title: 'Member Management',
-        description: "Efficiently manage your organization's members with approval workflows, role-based access control, and comprehensive member profiles.",
+        description: "Manage your organization's members with approval workflows, role-based access control, and comprehensive member profiles.",
     },
     {
         icon: CreditCard,
-        title: 'Payment Tracking',
-        description: 'Track all payments in real-time with comprehensive history, status monitoring, detailed analytics, and payment tab management.',
+        title: 'Subscriptions & Collections',
+        description: 'Run subscriptions and track collections in real time with history, status monitoring, analytics, and flexible subscription tabs.',
     },
     {
         icon: FileText,
         title: 'Automated Receipts',
-        description: 'Automatically generate professional PDF receipts for all transactions with secure storage and easy access for members.',
+        description: 'Automatically generate professional PDF receipts for subscriptions and donations with secure storage and easy access for members.',
     },
 ]
 
@@ -24,10 +24,10 @@ export default function Features() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12 sm:mb-16">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
-                        Take charge of your organization
+                        Take charge of subscriptions and fundraising
                     </h2>
                     <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-                        Accept payments, manage finances, grow your revenue. Join us during our pilot phase and help shape the future of payment management.
+                        Manage subscriptions, run fundraisers, and streamline finances. Join us during our pilot phase and help shape the future of subscription and fundraising management.
                     </p>
                 </div>
 

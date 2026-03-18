@@ -7,11 +7,11 @@ export default function Hero() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-4xl mx-auto">
                     <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight">
-                        Modern Payments for <br className="hidden sm:block" />
+                        Modern Subscriptions &amp; Fundraising for <br className="hidden sm:block" />
                         <span className="text-primary-600">Growing Organizations</span>
                     </h1>
                     <p className="text-sm sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-2">
-                        Sierra Leone&apos;s most reliable payment management platform, offering an end-to-end solution that boosts payment performance and streamlines finances. We help organizations grow revenue and retain members.
+                        Sierra Leone&apos;s most reliable subscription and fundraising platform, an end-to-end solution that improves collections and streamlines finances. We help organizations grow revenue and retain members.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-2 sm:px-0">
                         <Link

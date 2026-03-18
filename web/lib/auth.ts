@@ -17,7 +17,9 @@ export async function getCurrentUser() {
 
     if (authError || !user) {
       const msg = authError?.message || 'No user found'
-      const isExpectedNoSession = /session missing|no user|not found/i.test(msg)
+      const isExpectedNoSession =
+        /session missing|no user|not found|invalid refresh token|refresh token not found/i.test(msg) ||
+        authError?.code === 'refresh_token_not_found'
       if (process.env.NODE_ENV === 'development' && authError && !isExpectedNoSession) {
         console.error('[getCurrentUser] Auth error:', msg)
       }

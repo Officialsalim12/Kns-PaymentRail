@@ -12,15 +12,16 @@ export default function Footer() {
                             <span className="text-base sm:text-lg md:text-xl font-bold text-white">KNS MultiRail</span>
                         </div>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            KNS MultiRail helps thousands of organizations collect payments, manage members, and track transactions. Built for Sierra Leone.
+                            KNS MultiRail helps organizations run subscriptions, manage fundraisers, and track collections. Built for Sierra Leone.
                         </p>
                     </div>
 
                     <div>
                         <h4 className="text-white font-semibold mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm md:text-base">Products</h4>
                         <ul className="space-y-1 sm:space-y-1.5 md:space-y-2 text-xs sm:text-sm">
-                            <li>Payment Management</li>
+                            <li>Subscription Management</li>
                             <li>Member Management</li>
+                            <li>Fundraising Tools</li>
                             <li>Receipt Generation</li>
                             <li>Analytics</li>
                         </ul>

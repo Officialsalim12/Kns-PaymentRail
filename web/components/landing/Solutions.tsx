@@ -53,7 +53,7 @@ export default function Solutions() {
                         </span>
                     </h2>
                     <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4 leading-relaxed">
-                        Discover how KNS MultiRail can transform your daily financial operations and empower your community with cutting-edge payment solutions.
+                        Discover how KNS MultiRail can streamline subscriptions and fundraisers, improve collections, and give your community a better way to contribute.
                     </p>
                 </div>
 

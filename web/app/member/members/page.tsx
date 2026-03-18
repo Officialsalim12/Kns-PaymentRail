@@ -2,6 +2,21 @@ import { requireRole } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import NextImage from 'next/image'
 
+const normalizeDateInputValue = (value: string | null | undefined) => {
+  if (!value) return ''
+  // Accept ISO timestamp or date; keep YYYY-MM-DD
+  if (value.length >= 10) return value.slice(0, 10)
+  return value
+}
+
+const formatDateForDisplay = (value: string | null | undefined) => {
+  if (!value) return null
+  const normalized = normalizeDateInputValue(value)
+  const d = new Date(normalized)
+  if (Number.isNaN(d.getTime())) return normalized
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })
+}
+
 export default async function MemberDirectoryPage() {
   const user = await requireRole(['member', 'org_admin'])
   const supabase = await createClient()
@@ -38,6 +53,7 @@ export default async function MemberDirectoryPage() {
         users:user_id (
           profile_photo_url,
           bio,
+          admission_date,
           show_public_profile
         )
       `,
@@ -63,51 +79,93 @@ export default async function MemberDirectoryPage() {
           No members to show yet.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleMembers.map((member: any) => {
-            const statusFrame =
-              member.status === 'active'
-                ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-white'
-                : member.status === 'inactive'
-                ? 'ring-2 ring-gray-400 ring-offset-2 ring-offset-white'
-                : member.status === 'suspended'
-                ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-white'
-                : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white'
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr className="text-left">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Member</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Membership ID</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Bio</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                    Admission date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {visibleMembers.map((member: any) => {
+                  const statusDot =
+                    member.status === 'active'
+                      ? 'bg-green-500'
+                      : member.status === 'inactive'
+                      ? 'bg-gray-400'
+                      : member.status === 'suspended'
+                      ? 'bg-red-500'
+                      : 'bg-amber-500'
 
-            return (
-              <div
-                key={member.id}
-                className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center text-center hover:shadow-sm transition-shadow"
-              >
-                <div
-                  className={`w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center overflow-hidden mb-3 ${statusFrame}`}
-                >
-                  {member.users?.profile_photo_url ? (
-                    <NextImage
-                      src={member.users.profile_photo_url}
-                      alt={member.full_name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm font-semibold text-primary-700">
-                      {member.full_name?.[0] || '?'}
-                    </span>
-                  )}
-                </div>
-              <p className="text-sm font-semibold text-gray-900">{member.full_name}</p>
-              <p className="text-[11px] text-gray-400 font-mono uppercase tracking-widest mt-0.5">
-                ID: {member.membership_id}
-              </p>
-                {member.users?.bio && (member.users.show_public_profile ?? true) && (
-                  <p className="mt-2 text-xs text-gray-600 line-clamp-3 whitespace-pre-line">
-                    {member.users.bio}
-                  </p>
-                )}
-              </div>
-            )
-          })}
+                  const isPublic = member.users?.show_public_profile ?? true
+                  const bio = isPublic ? member.users?.bio : null
+                  const admissionDate = isPublic ? member.users?.admission_date : null
+
+                  return (
+                    <tr key={member.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3 min-w-[220px]">
+                          <div className="relative w-10 h-10 rounded-full bg-primary-50 overflow-hidden flex items-center justify-center">
+                            {member.users?.profile_photo_url ? (
+                              <NextImage
+                                src={member.users.profile_photo_url}
+                                alt={member.full_name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs font-semibold text-primary-700">{member.full_name?.[0] || '?'}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="grid grid-cols-[0.5rem_1fr] gap-x-2">
+                              <span className={`mt-1.5 h-2 w-2 rounded-full ${statusDot}`} />
+                              <p className="text-sm font-semibold text-gray-900 truncate">{member.full_name}</p>
+                              <span />
+                              <p className="text-[11px] text-gray-500 font-mono uppercase tracking-widest truncate">
+                                Member
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-xs font-mono text-gray-700">{member.membership_id}</span>
+                      </td>
+
+                      <td className="px-4 py-3">
+                        {bio ? (
+                          <p className="text-xs text-gray-600 line-clamp-2 whitespace-pre-line min-w-[260px]">
+                            {bio}
+                          </p>
+                        ) : (
+                          <span className="text-xs text-gray-400">{isPublic ? '—' : 'Hidden'}</span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {admissionDate ? (
+                          <span className="text-xs text-gray-700">
+                            {formatDateForDisplay(admissionDate) || admissionDate}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">{isPublic ? '—' : 'Hidden'}</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -10,28 +10,28 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    question: 'What payment methods do you support?',
-    answer: 'KNS MultiRail integrates with leading payment gateways, which support various payment methods including mobile money, bank transfers, cards, and digital wallets. All payments are processed securely through our partners\' infrastructure and tracked in realtime within your organization\'s dashboard. Payment methods available depend on the gateway support in your region.',
+    question: 'What collection methods do you support?',
+    answer: 'KNS MultiRail integrates with leading payment gateways to support common collection methods like mobile money, bank transfers, and cards. Subscriptions and fundraiser contributions are processed securely through our partners\' infrastructure and tracked in real time in your dashboard. Availability depends on gateway support in your region.',
   },
   {
     question: 'How does the pricing work?',
-    answer: 'KNS MultiRail is currently in pilot phase. We offer flexible pricing based on your organization\'s needs. Since we integrate with third-party providers for payment processing, transaction fees are determined by their pricing structures. Contact us to discuss pricing plans tailored to your organization\'s transaction volume and requirements. We offer transparent pricing with no hidden fees.',
+    answer: 'KNS MultiRail is currently in pilot phase. We offer flexible pricing based on your organization\'s needs. Since we integrate with third-party providers for processing, transaction fees are determined by their pricing structures. Contact us to discuss plans tailored to your organization\'s volume and requirements. We offer transparent pricing with no hidden fees.',
   },
   {
     question: 'How long does it take to set up?',
-    answer: 'Setting up your organization on KNS MultiRail is quick and straightforward. After registering your organization, you can immediately start adding members, creating payment tabs, and configuring your payment settings. The entire setup process typically takes just a few minutes. Once your organization admin approves member registrations, members can start making payments right away through the integrated payment gateways.',
+    answer: 'Setting up your organization on KNS MultiRail is quick and straightforward. After registering, you can immediately add members, create subscription tabs, and configure your collection settings. The entire setup typically takes just a few minutes. Once an organization admin approves member registrations, members can start paying subscriptions or supporting fundraisers right away.',
   },
   {
     question: 'Is my data secure?',
-    answer: 'Yes, security is our top priority. KNS MultiRail uses a multitenant architecture that ensures complete data isolation between organizations. Each organization\'s data is completely separated and secure. We implement rolebased access control with three distinct roles: Super Admin, Organization Admin, and Member, each with appropriate permissions. All data transmission is encrypted, and we follow enterprise-grade security practices to protect your payment and member information.',
+    answer: 'Yes, security is our top priority. KNS MultiRail uses a multitenant architecture that ensures complete data isolation between organizations. We implement role-based access control with distinct roles (Super Admin, Organization Admin, and Member) and encrypt data in transit. We follow enterprise-grade security practices to protect your financial and member information.',
   },
   {
-    question: 'Can I customize payment tabs for different members?',
-    answer: 'Yes! Organization admins can always add payment tabs for members. You can create custom payment tabs with different amounts, descriptions, payment types (payment or donation), and monthly costs as needed.',
+    question: 'Can I customize subscription tabs for different members?',
+    answer: 'Yes. Organization admins can create subscription tabs with different amounts, descriptions, and monthly costs. You can also create donation-style tabs for fundraisers when needed.',
   },
   {
     question: 'Do you offer transaction volume discounts?',
-    answer: 'Since we\'re currently in pilot phase, we\'re open to discussing custom pricing arrangements based on your organization\'s transaction volume. While payment processing fees are determined by our payment partners, we can work with you to create pricing plans that scale with your needs. Contact us to discuss volume discounts and custom pricing options for your organization.',
+    answer: 'Since we\'re currently in pilot phase, we\'re open to discussing custom pricing arrangements based on your organization\'s volume. While processing fees are determined by our partners, we can work with you to create plans that scale with your needs. Contact us to discuss volume discounts and custom pricing options.',
   },
 ]
 

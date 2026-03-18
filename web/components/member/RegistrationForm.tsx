@@ -18,6 +18,9 @@ interface Props {
   organizations: OrganizationOption[]
 }
 
+const MEMBERSHIP_ID_PREFIX = 'MEM'
+const MEMBERSHIP_ID_PAD = 3
+
 export default function MemberRegistrationForm({ organizations }: Props) {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -30,6 +33,28 @@ export default function MemberRegistrationForm({ organizations }: Props) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+
+  // Generates per-organization IDs like MEM001, MEM002...
+  // Add a UNIQUE constraint on (organization_id, membership_id) in the database to guarantee uniqueness under concurrency.
+  const getNextMembershipId = async (supabase: ReturnType<typeof createClient>, organizationId: string) => {
+    const { data: lastMember, error: lastMemberError } = await supabase
+      .from('members')
+      .select('membership_id, created_at')
+      .eq('organization_id', organizationId)
+      .like('membership_id', `${MEMBERSHIP_ID_PREFIX}%`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (lastMemberError) throw lastMemberError
+
+    const lastId = lastMember?.membership_id || null
+    const match = lastId ? lastId.match(new RegExp(`^${MEMBERSHIP_ID_PREFIX}(\\d+)$`)) : null
+    const lastNumber = match?.[1] ? Number.parseInt(match[1], 10) : 0
+    const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1
+
+    return `${MEMBERSHIP_ID_PREFIX}${String(nextNumber).padStart(MEMBERSHIP_ID_PAD, '0')}`
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,30 +113,44 @@ export default function MemberRegistrationForm({ organizations }: Props) {
         return
       }
 
-      // Step 3: Generate a unique membership ID
-      // Format: MEM-{timestamp}-{random string}
-      const timestamp = Date.now().toString(36).toUpperCase()
-      const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase()
-      const membershipId = `MEM-${timestamp}-${randomStr}`
+      // Step 3: Generate a membership ID like MEM001, MEM002, ...
+      // Note: this is best-effort on the client; add a UNIQUE constraint in DB to guarantee uniqueness.
+      let membershipId: string | null = null
+      let newMember: any = null
+      let lastInsertError: any = null
 
-      // Step 4: Create member record
-      const { data: newMember, error: memberError } = await supabase
-        .from('members')
-        .insert({
-          organization_id: formData.organization_id,
-          user_id: authData.user.id,
-          full_name: formData.full_name.trim(),
-          email: formData.email.trim(),
-          membership_id: membershipId,
-          status: 'pending',
-          unpaid_balance: 0.0,
-          total_paid: 0.0,
-        })
-        .select()
-        .single()
+      for (let attempt = 0; attempt < 5; attempt++) {
+        membershipId = await getNextMembershipId(supabase, formData.organization_id)
 
-      if (memberError) {
-        setError(`Failed to create member record: ${memberError.message}`)
+        const insertResult = await supabase
+          .from('members')
+          .insert({
+            organization_id: formData.organization_id,
+            user_id: authData.user.id,
+            full_name: formData.full_name.trim(),
+            email: formData.email.trim(),
+            membership_id: membershipId,
+            status: 'pending',
+            unpaid_balance: 0.0,
+            total_paid: 0.0,
+          })
+          .select()
+          .single()
+
+        if (!insertResult.error) {
+          newMember = insertResult.data
+          lastInsertError = null
+          break
+        }
+
+        lastInsertError = insertResult.error
+        const msg = (insertResult.error as any)?.message?.toLowerCase?.() || ''
+        const isUniqueCollision = msg.includes('duplicate') || msg.includes('unique')
+        if (!isUniqueCollision) break
+      }
+
+      if (lastInsertError || !newMember || !membershipId) {
+        setError(`Failed to create member record: ${lastInsertError?.message || 'Unknown error'}`)
         setLoading(false)
         return
       }

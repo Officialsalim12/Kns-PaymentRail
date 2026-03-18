@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  Receipt,
+  FileText,
   History,
   Bell,
   Wallet,
@@ -15,7 +15,7 @@ import {
   Settings,
   LogOut,
   User as UserIcon,
-  Newspaper
+  BookOpen
 } from 'lucide-react'
 import { getOrganizationAbbreviation } from '@/lib/utils/organization'
 import { useRouter } from 'next/navigation'
@@ -54,10 +54,10 @@ export default function MemberSidebar({
 
   const menuItems = [
     { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/member/receipts', label: 'Receipts', icon: Receipt },
+    { href: '/member/receipts', label: 'Receipts', icon: FileText },
     { href: '/member/payment-history', label: 'Payment History', icon: History },
     { href: '/member/members', label: 'Members', icon: UserIcon },
-    { href: '/member/blog', label: 'Blog', icon: Newspaper },
+    { href: '/member/blog', label: 'Blog', icon: BookOpen },
     { href: '/member/notifications', label: 'Notifications', icon: Bell, hiddenOnDesktop: true },
     { href: '/member/payments', label: 'Payment Options', icon: Wallet },
   ]
