@@ -16,6 +16,8 @@ export default async function MemberRegisterPage() {
     <AuthLayout
       title="Create Account"
       subtitle="Join an organization and start managing your payments"
+      largeLogo
+      matchLandingLogo
     >
       <MemberRegistrationForm organizations={organizations || []} />
 

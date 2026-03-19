@@ -105,12 +105,12 @@ export default function MemberSidebar({
               ) : (
                 <div className="h-9 w-9 sm:h-10 sm:w-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
                   <span className="text-white font-bold text-xs">
-                    {organization?.name ? getOrganizationAbbreviation(organization.name) : 'K'}
+                    {organization?.name ? getOrganizationAbbreviation(organization.name) : 'F'}
                   </span>
                 </div>
               )}
               <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900 tracking-tight truncate">
-                {organization?.name || 'KNS MultiRail'}
+                {organization?.name || 'Fundflow'}
               </span>
             </Link>
             <button

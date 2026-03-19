@@ -8,6 +8,8 @@ export default function CrownFundingComingSoonPage() {
     <AuthLayout
       title="Coming soon"
       subtitle="Crown Funding will be available soon."
+      largeLogo
+      matchLandingLogo
     >
       <div className="flex flex-col items-center justify-center text-center space-y-4">
         <div className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden border border-gray-100 bg-black">

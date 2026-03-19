@@ -193,7 +193,7 @@ export default function PaymentCancelled() {
           </div>
 
           <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium">
-            Powered by KNS MultiRail Secure Payments
+            Powered by Fundflow Secure Payments
           </div>
         </div>
       </div>

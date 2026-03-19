@@ -187,7 +187,7 @@ function PaymentSuccessContent() {
           </div>
 
           <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500 font-medium">
-            <span>Powered by KNS MultiRail</span>
+            <span>Powered by Fundflow</span>
             <span>Ref: {paymentId?.substring(0, 8) || 'N/A'}</span>
           </div>
         </div>

@@ -81,10 +81,10 @@ export default function ContactPage() {
                     <h3 className="font-semibold text-gray-900">Email</h3>
                   </div>
                   <a
-                    href="mailto:info@knsmultirail.com"
+                    href="mailto:info@fundflow.com"
                     className="text-primary-600 hover:text-primary-700 text-sm ml-12 block mt-1"
                   >
-                    info@knsmultirail.com
+                    info@fundflow.com
                   </a>
                 </div>
 
@@ -323,7 +323,7 @@ export default function ContactPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 max-w-4xl mx-auto">
               <a
-                href="https://www.facebook.com/knsmultirail"
+                href="https://www.facebook.com/fundflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1877F2] hover:shadow-lg transition-all group"
@@ -333,7 +333,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://twitter.com/knsmultirail"
+                href="https://twitter.com/fundflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#1DA1F2] hover:shadow-lg transition-all group"
@@ -343,7 +343,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://www.linkedin.com/company/knsmultirail"
+                href="https://www.linkedin.com/company/fundflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#0077B5] hover:shadow-lg transition-all group"
@@ -353,7 +353,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://www.instagram.com/knsmultirail"
+                href="https://www.instagram.com/fundflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-[#E4405F] hover:shadow-lg transition-all group"
@@ -363,7 +363,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://github.com/knsmultirail"
+                href="https://github.com/fundflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-xl border-2 border-gray-200 hover:border-gray-800 hover:shadow-lg transition-all group"

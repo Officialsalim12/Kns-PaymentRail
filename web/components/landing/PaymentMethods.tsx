@@ -14,7 +14,7 @@ export default function PaymentMethods() {
                         Delight members with seamless collections
                     </h2>
                     <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-                        Give your members a modern, frictionless way to pay subscriptions and support fundraisers. Integrate KNS MultiRail once and let them contribute however they want.
+                        Give your members a modern, frictionless way to pay subscriptions and support fundraisers. Integrate Fundflow once and let them contribute however they want.
                     </p>
                 </div>
 

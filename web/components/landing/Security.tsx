@@ -11,7 +11,7 @@ export default function Security() {
                     Enterprise-Grade Security
                 </h2>
                 <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-primary-100 leading-relaxed px-2 sm:px-3">
-                    KNS MultiRail meets the highest possible global standards of data security and protection. Our policies move through constant iteration and undergo rigorous testing to proactively mitigate any potential threats to your financial and member data.
+                    Fundflow meets the highest possible global standards of data security and protection. Our policies move through constant iteration and undergo rigorous testing to proactively mitigate any potential threats to your financial and member data.
                 </p>
             </div>
         </section>

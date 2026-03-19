@@ -9,8 +9,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'KNS MultiRail - MultiTenant Payment Management Platform',
-  description: 'Streamline your organization\'s payment tracking, member management, and receipt generation with KNS MultiRail',
+  title: 'Fundflow - MultiTenant Payment Management Platform',
+  description: 'Streamline your organization\'s payment tracking, member management, and receipt generation with Fundflow',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },

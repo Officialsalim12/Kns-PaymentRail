@@ -3,16 +3,24 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Building2 } from 'lucide-react'
 
 interface AuthLayoutProps {
     children: React.ReactNode
     title: string
     subtitle?: string
     imageSrc?: string // Optional image for the left side
+    largeLogo?: boolean
+    matchLandingLogo?: boolean
 }
 
-export default function AuthLayout({ children, title, subtitle, imageSrc }: AuthLayoutProps) {
+export default function AuthLayout({
+    children,
+    title,
+    subtitle,
+    imageSrc,
+    largeLogo = false,
+    matchLandingLogo = false,
+}: AuthLayoutProps) {
     return (
         <div className="min-h-screen flex bg-white">
             {/* Left Interface - Branding/Visual */}
@@ -38,8 +46,14 @@ export default function AuthLayout({ children, title, subtitle, imageSrc }: Auth
                 <div className="relative z-10 w-full flex flex-col justify-between p-12">
                     <div>
                         <Link href="/" className="flex items-center space-x-3 text-white">
-                            <Building2 className="w-8 h-8" />
-                            <span className="text-2xl font-bold tracking-tight">KNS MultiRail</span>
+                            <Image
+                                src="/fundflow-logo.png"
+                                alt="Fundflow"
+                                width={matchLandingLogo ? 1200 : largeLogo ? 840 : 640}
+                                height={matchLandingLogo ? 340 : largeLogo ? 236 : 180}
+                                className={matchLandingLogo ? 'w-[280px] sm:w-[360px] h-auto' : largeLogo ? 'h-40 w-auto' : 'h-32 w-auto'}
+                                priority
+                            />
                         </Link>
                     </div>
 
@@ -55,7 +69,7 @@ export default function AuthLayout({ children, title, subtitle, imageSrc }: Auth
                     </div>
 
                     <div className="flex items-center gap-4 text-sm text-primary-300">
-                        <span>© 2024 KNS Payment Rail</span>
+                        <span>© 2026 Fundflow</span>
                         <span>•</span>
                         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
                         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>

@@ -24,7 +24,7 @@ export default async function ApprovalsPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
-  // Get pending organization requests (if organization is pending)
+  // Get pending organization requests (Pending organization)
   const { data: orgRequest } = await supabase
     .from('organizations')
     .select('id, name, status')

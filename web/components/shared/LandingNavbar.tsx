@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Building2, Menu, X, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { Menu, X } from 'lucide-react'
 
 export default function LandingNavbar() {
     const [isOpen, setIsOpen] = useState(false)
@@ -45,35 +46,33 @@ export default function LandingNavbar() {
                     : 'bg-white/50 backdrop-blur-md py-4 sm:py-5'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-10 sm:h-12">
+            <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-6">
+                <div className="flex justify-between items-center h-28 sm:h-32">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center group transition-transform hover:scale-102">
-                        <div className="relative flex items-center">
-                            <div className="p-1.5 sm:p-2 bg-primary-600 rounded-xl shadow-lg shadow-primary-600/20 group-hover:scale-110 transition-transform">
-                                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" />
-                            </div>
-                            <span className="ml-3 text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-none">
-                                KNS <span className="text-primary-600">MultiRail</span>
-                            </span>
-                        </div>
+                    <Link href="/" className="flex items-center group transition-transform hover:scale-102 -ml-4 sm:-ml-6 lg:-ml-8">
+                        <Image
+                            src="/fundflow-logo.png"
+                            alt="Fundflow"
+                            width={1200}
+                            height={340}
+                            className="w-[280px] sm:w-[360px] h-auto"
+                            priority
+                        />
                     </Link>
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.label}
-                                href={link.href}
-                                className="text-sm font-bold text-gray-500 hover:text-primary-600 transition-colors uppercase tracking-widest"
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </nav>
-
-                    {/* Desktop Actions */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    {/* Desktop Navigation + Actions */}
+                    <div className="hidden md:flex items-center gap-14 ml-auto pr-2 lg:pr-0">
+                        <nav className="flex items-center space-x-12">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    className="text-sm font-bold text-gray-500 hover:text-primary-600 transition-colors uppercase tracking-widest"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
                         <Link
                             href="/get-started"
                             className="px-5 py-2.5 sm:px-6 sm:py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest text-white bg-primary-600 hover:bg-primary-700 rounded-xl transition-all shadow-lg shadow-primary-600/20 hover:shadow-primary-600/40 hover:-translate-y-0.5 active:scale-95"
@@ -95,7 +94,7 @@ export default function LandingNavbar() {
 
             {/* Mobile Menu Overlay */}
             <div
-                className={`fixed inset-0 top-[64px] sm:top-[84px] h-[calc(100vh-64px)] sm:h-[calc(100vh-84px)] bg-white z-40 transition-all duration-300 md:hidden ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible pointer-events-none'
+                className={`fixed inset-0 top-[112px] sm:top-[148px] h-[calc(100vh-112px)] sm:h-[calc(100vh-148px)] bg-white z-40 transition-all duration-300 md:hidden ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible pointer-events-none'
                     }`}
             >
                 <div className="flex flex-col h-full p-6 space-y-8 overflow-y-auto">
@@ -123,7 +122,7 @@ export default function LandingNavbar() {
                     </div>
 
                     <div className="mt-auto text-center pb-12">
-                        <p className="text-gray-400 text-sm font-medium">© {new Date().getFullYear()} KNS MultiRail</p>
+                        <p className="text-gray-400 text-sm font-medium">© {new Date().getFullYear()} Fundflow</p>
                     </div>
                 </div>
             </div>

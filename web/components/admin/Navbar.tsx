@@ -68,11 +68,11 @@ export default function AdminNavbar({ organization }: AdminNavbarProps) {
               ) : (
                 <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xs">
-                    {organization?.name ? getOrganizationAbbreviation(organization.name) : 'K'}
+                    {organization?.name ? getOrganizationAbbreviation(organization.name) : 'F'}
                   </span>
                 </div>
               )}
-              <span className="hidden sm:inline">{organization?.name || 'KNS MultiRail Pay'}</span>
+              <span className="hidden sm:inline">{organization?.name || 'Fundflow'}</span>
             </Link>
 
             {/* Desktop Navigation */}

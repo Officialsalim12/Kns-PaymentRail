@@ -109,7 +109,7 @@ export default function AdminSidebar({
                 </div>
               )}
               <span className="text-lg font-bold text-gray-900 tracking-tight truncate">
-                {organization?.name || 'KNS MultiRail'}
+                {organization?.name || 'Fundflow'}
               </span>
             </Link>
             <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors">

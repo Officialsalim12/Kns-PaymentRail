@@ -50,6 +50,7 @@ export default async function MemberBlogPage({ searchParams }: MemberBlogPagePro
             {posts.map((post) => (
               <article
                 key={post.id}
+                id={`post-${post.id}`}
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {post.image_url && (
@@ -80,7 +81,11 @@ export default async function MemberBlogPage({ searchParams }: MemberBlogPagePro
                   <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
                     {post.content}
                   </p>
-                  <BlogReactions postId={post.id} />
+                  <BlogReactions
+                    postId={post.id}
+                    postTitle={post.title}
+                    sharePath={`/member/blog#post-${post.id}`}
+                  />
                 </div>
               </article>
             ))}

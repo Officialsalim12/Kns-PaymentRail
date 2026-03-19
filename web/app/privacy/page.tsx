@@ -95,7 +95,7 @@ export default function PrivacyPage() {
                   </div>
                 </div>
                 <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
-                  KNS MultiRail (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our multitenant payment management platform.
+                  Fundflow (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our multitenant payment management platform.
                 </p>
               </div>
 
@@ -108,10 +108,10 @@ export default function PrivacyPage() {
                   </h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      At KNS MultiRail, we understand the importance of privacy and are committed to protecting your personal information. This Privacy Policy describes how we collect, use, share, and protect your information when you use our platform.
+                      At Fundflow, we understand the importance of privacy and are committed to protecting your personal information. This Privacy Policy describes how we collect, use, share, and protect your information when you use our platform.
                     </p>
                     <p>
-                      By using KNS MultiRail, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use our services.
+                      By using Fundflow, you agree to the collection and use of information in accordance with this policy. If you do not agree with our policies and practices, please do not use our services.
                     </p>
                   </div>
                 </section>
@@ -175,7 +175,7 @@ export default function PrivacyPage() {
                   </h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      KNS MultiRail uses a multitenant architecture where each organization&apos;s data is completely isolated and secure. Your organization&apos;s data, including member information, payment records, and receipts, is private to your organization only and is not accessible by other organizations using the platform.
+                      Fundflow uses a multitenant architecture where each organization&apos;s data is completely isolated and secure. Your organization&apos;s data, including member information, payment records, and receipts, is private to your organization only and is not accessible by other organizations using the platform.
                     </p>
                     <p>
                       We implement industry-standard security measures to protect your information, including:
@@ -286,8 +286,8 @@ export default function PrivacyPage() {
                       <ul className="space-y-3">
                         <li className="flex items-center gap-3">
                           <Mail className="w-5 h-5 text-primary-600" />
-                          <a href="mailto:info@knsmultirail.com" className="text-primary-600 hover:text-primary-700 font-medium">
-                            info@knsmultirail.com
+                          <a href="mailto:info@fundflow.com" className="text-primary-600 hover:text-primary-700 font-medium">
+                            info@fundflow.com
                           </a>
                         </li>
                         <li className="flex items-center gap-3">

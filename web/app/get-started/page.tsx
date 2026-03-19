@@ -6,6 +6,8 @@ export default function GetStartedPage() {
   return (
     <AuthLayout
       title="Are You an organization or are you looking for funding?"
+      largeLogo
+      matchLandingLogo
     >
       <div className="space-y-6">
         <div className="space-y-4">
@@ -28,7 +30,7 @@ export default function GetStartedPage() {
               href="/crown-funding-coming-soon"
               className="mt-4 inline-flex w-full items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-colors active:scale-[0.99]"
             >
-              Continue to Authentication
+              Continue to page
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -53,7 +55,7 @@ export default function GetStartedPage() {
               href="/login"
               className="mt-4 inline-flex w-full items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-colors active:scale-[0.99]"
             >
-              Continue to Authentication
+              Continue to page
               <ArrowRight className="w-4 h-4" />
             </Link>
 

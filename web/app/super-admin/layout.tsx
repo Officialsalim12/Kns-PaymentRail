@@ -2,7 +2,7 @@ import { requireSuperAdmin } from '@/lib/auth'
 import SuperAdminSidebar from '@/components/super-admin/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import DashboardLayoutWrapper from '@/components/shared/DashboardLayoutWrapper'
-import { ShieldAlert } from 'lucide-react'
+import Image from 'next/image'
 
 export default async function SuperAdminLayout({
   children,
@@ -31,9 +31,14 @@ export default async function SuperAdminLayout({
       unreadNotificationCount={notificationCount || 0}
       leftHeaderContent={
         <div className="flex items-center gap-2">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight leading-none">
-            KNS MultiRail
-          </h1>
+          <Image
+            src="/fundflow-logo.png"
+            alt="Fundflow"
+            width={640}
+            height={180}
+            className="h-32 w-auto"
+            priority
+          />
         </div>
       }
       sidebar={

@@ -67,7 +67,7 @@ export default async function MemberNavbar() {
               </div>
             )}
             <h1 className="text-xl font-semibold text-gray-900">
-              {organization?.name || 'KNS MultiRail'}
+              {organization?.name || 'Fundflow'}
             </h1>
           </div>
           <div className="flex items-center gap-4">

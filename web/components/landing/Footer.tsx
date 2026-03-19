@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Building2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Footer() {
     return (
@@ -7,12 +7,17 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-4 sm:mb-6 md:mb-8 lg:mb-12">
                     <div className="sm:col-span-2 lg:col-span-1">
-                        <div className="flex items-center mb-2 sm:mb-3 md:mb-4">
-                            <Building2 className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-primary-400 mr-1.5 sm:mr-2 flex-shrink-0" />
-                            <span className="text-base sm:text-lg md:text-xl font-bold text-white">KNS MultiRail</span>
+                        <div className="mb-2 sm:mb-3 md:mb-4">
+                            <Image
+                                src="/fundflow-logo.png"
+                                alt="Fundflow"
+                                width={560}
+                                height={156}
+                                className="h-28 sm:h-32 w-auto"
+                            />
                         </div>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            KNS MultiRail helps organizations run subscriptions, manage fundraisers, and track collections. Built for Sierra Leone.
+                            Fundflow helps organizations run subscriptions, manage fundraisers, and track collections. Built for Sierra Leone.
                         </p>
                     </div>
 
@@ -46,7 +51,7 @@ export default function Footer() {
                         </Link>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-400 text-center sm:text-right">
-                        © {new Date().getFullYear()} KNS MultiRail. All rights reserved.
+                        © {new Date().getFullYear()} Fundflow. All rights reserved.
                     </p>
                 </div>
             </div>

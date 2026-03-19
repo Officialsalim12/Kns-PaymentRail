@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
     LayoutDashboard,
@@ -78,8 +79,8 @@ export default function SuperAdminSidebar({
 
             {/* Sidebar */}
             <aside
-                className={`
-          fixed top-0 left-0 h-full w-64 sm:w-72 bg-white border-r border-gray-100 z-50 shadow-xl
+            className={`
+          fixed top-0 left-0 h-full w-72 sm:w-80 bg-white border-r border-gray-100 z-50 shadow-xl
           transform transition-all duration-300 ease-in-out
           lg:translate-x-0 lg:shadow-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -87,15 +88,20 @@ export default function SuperAdminSidebar({
             >
                 <div className="flex flex-col h-full">
                     {/* Logo/Header */}
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                        <Link href="/super-admin" className="flex items-center gap-3 group" onClick={onClose}>
-                            <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                                <ShieldCheck className="text-white h-6 w-6" />
-                            </div>
-                            <div>
-                                <span className="text-lg font-bold text-gray-900 block leading-none">KNS MultiRail</span>
-                                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1 block">Super Admin</span>
-                            </div>
+                    <div className="pl-1 pr-6 pt-8 pb-4 border-b border-gray-50 flex items-center justify-start">
+                        <Link
+                            href="/super-admin"
+                            className="flex items-center group"
+                            onClick={onClose}
+                        >
+                            <Image
+                                src="/fundflow-logo.png"
+                                alt="Fundflow"
+                                width={520}
+                                height={150}
+                                className="w-[260px] h-auto object-contain"
+                                priority
+                            />
                         </Link>
                         <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors">
                             <X className="h-6 w-6" />

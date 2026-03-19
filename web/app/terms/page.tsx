@@ -98,7 +98,7 @@ export default function TermsPage() {
                   </div>
                 </div>
                 <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
-                  Please read these Terms of Service carefully before using KNS MultiRail. By accessing and using our platform, you agree to be bound by these terms and conditions.
+                  Please read these Terms of Service carefully before using Fundflow. By accessing and using our platform, you agree to be bound by these terms and conditions.
                 </p>
               </div>
 
@@ -111,10 +111,10 @@ export default function TermsPage() {
                   </h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      By accessing and using KNS MultiRail (&quot;the Platform&quot;), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+                      By accessing and using Fundflow (&quot;the Platform&quot;), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
                     </p>
                     <p>
-                      These Terms of Service constitute a legally binding agreement between you and KNS MultiRail. Your use of the Platform indicates your acceptance of these terms.
+                      These Terms of Service constitute a legally binding agreement between you and Fundflow. Your use of the Platform indicates your acceptance of these terms.
                     </p>
                   </div>
                 </section>
@@ -126,7 +126,7 @@ export default function TermsPage() {
                   </h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      KNS MultiRail is a multitenant payment management platform that enables organizations to:
+                      Fundflow is a multitenant payment management platform that enables organizations to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Manage member registrations and profiles</li>
@@ -217,7 +217,7 @@ export default function TermsPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Payment Processing</h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      KNS MultiRail integrates with third-party payment gateways to process payments. By using our payment services, you agree to:
+                      Fundflow integrates with third-party payment gateways to process payments. By using our payment services, you agree to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Comply with all applicable payment processing regulations</li>
@@ -289,7 +289,7 @@ export default function TermsPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Intellectual Property</h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      The Platform and its original content, features, and functionality are owned by KNS MultiRail and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.
+                      The Platform and its original content, features, and functionality are owned by Fundflow and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.
                     </p>
                     <p>
                       You may not reproduce, distribute, modify, create derivative works of, publicly display, publicly perform, republish, download, store, or transmit any of the material on our Platform without our prior written consent.
@@ -301,7 +301,7 @@ export default function TermsPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Limitation of Liability</h2>
                   <div className="text-gray-700 leading-relaxed space-y-4">
                     <p>
-                      To the maximum extent permitted by law, KNS MultiRail shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses resulting from your use of the Platform.
+                      To the maximum extent permitted by law, Fundflow shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses resulting from your use of the Platform.
                     </p>
                     <p>
                       Our total liability to you for all claims arising from or related to the use of the Platform shall not exceed the amount you paid to us in the twelve (12) months preceding the claim.
@@ -367,8 +367,8 @@ export default function TermsPage() {
                       <ul className="space-y-3">
                         <li className="flex items-center gap-3">
                           <Mail className="w-5 h-5 text-primary-600" />
-                          <a href="mailto:info@knsmultirail.com" className="text-primary-600 hover:text-primary-700 font-medium">
-                            info@knsmultirail.com
+                          <a href="mailto:info@fundflow.com" className="text-primary-600 hover:text-primary-700 font-medium">
+                            info@fundflow.com
                           </a>
                         </li>
                         <li className="flex items-center gap-3">
