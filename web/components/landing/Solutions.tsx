@@ -40,7 +40,7 @@ export default function Solutions() {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-20">
-                    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                    <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
                             Solutions
                         </span>

@@ -13,7 +13,7 @@ export default function Footer() {
                                 alt="Fundflow"
                                 width={560}
                                 height={156}
-                                className="h-28 sm:h-32 w-auto"
+                                className="h-24 sm:h-28 w-auto max-w-[70vw]"
                             />
                         </div>
                         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">

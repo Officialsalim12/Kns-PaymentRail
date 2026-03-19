@@ -41,25 +41,30 @@ export default function LandingNavbar() {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${(isScrolled || isOpen)
-                    ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm py-3'
-                    : 'bg-white/50 backdrop-blur-md py-4 sm:py-5'
+            className={`fixed top-0 left-0 right-0 z-50 relative transition-all duration-300 ${(isScrolled || isOpen)
+                    ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm py-0'
+                    : 'bg-white/50 backdrop-blur-md py-0'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-6">
-                <div className="flex justify-between items-center h-28 sm:h-32">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center group transition-transform hover:scale-102 -ml-4 sm:-ml-6 lg:-ml-8">
+            {/* Logo pinned to extreme left edge (outside centered container) */}
+            <div className="absolute left-0 top-0 h-16 sm:h-20 flex items-center z-[60]">
+                <Link href="/" className="flex items-center group transition-transform hover:scale-102">
+                    {/* Fixed wrapper prevents stretching/distortion; `object-contain` avoids cropping at edges */}
+                    <div className="relative w-[205px] sm:w-[270px] md:w-[350px] lg:w-[440px] max-w-[76vw] h-[46px] sm:h-[54px] md:h-[58px] lg:h-[62px]">
                         <Image
                             src="/fundflow-logo.png"
                             alt="Fundflow"
-                            width={1200}
-                            height={340}
-                            className="w-[280px] sm:w-[360px] h-auto"
+                            fill
+                            sizes="(max-width: 768px) 76vw, 440px"
+                            className="object-contain object-left"
                             priority
                         />
-                    </Link>
+                    </div>
+                </Link>
+            </div>
 
+            <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-6">
+                <div className="flex items-center justify-end h-20 sm:h-24">
                     {/* Desktop Navigation + Actions */}
                     <div className="hidden md:flex items-center gap-14 ml-auto pr-2 lg:pr-0">
                         <nav className="flex items-center space-x-12">
@@ -93,39 +98,40 @@ export default function LandingNavbar() {
             </div>
 
             {/* Mobile Menu Overlay */}
-            <div
-                className={`fixed inset-0 top-[112px] sm:top-[148px] h-[calc(100vh-112px)] sm:h-[calc(100vh-148px)] bg-white z-40 transition-all duration-300 md:hidden ${isOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible pointer-events-none'
-                    }`}
-            >
-                <div className="flex flex-col h-full p-6 space-y-8 overflow-y-auto">
-                    <nav className="space-y-4">
-                        {navLinks.map((link) => (
+            {isOpen && (
+                <div
+                    className="fixed inset-0 top-[80px] sm:top-[96px] h-[calc(100vh-80px)] sm:h-[calc(100vh-96px)] bg-white z-40 transition-all duration-300 md:hidden"
+                >
+                    <div className="flex flex-col h-full p-6 space-y-8 overflow-y-auto">
+                        <nav className="space-y-4">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    onClick={() => setIsOpen(false)}
+                                    className="block text-2xl font-black text-gray-900 hover:text-primary-600 transition-colors py-3 border-b border-gray-50"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
+
+                        <div className="flex flex-col space-y-4 pt-4">
                             <Link
-                                key={link.label}
-                                href={link.href}
+                                href="/get-started"
                                 onClick={() => setIsOpen(false)}
-                                className="block text-2xl font-black text-gray-900 hover:text-primary-600 transition-colors py-3 border-b border-gray-50"
+                                className="flex items-center justify-center p-5 bg-primary-600 text-white rounded-2xl text-lg font-black uppercase tracking-widest shadow-xl shadow-primary-600/20"
                             >
-                                {link.label}
+                                Get Started
                             </Link>
-                        ))}
-                    </nav>
+                        </div>
 
-                    <div className="flex flex-col space-y-4 pt-4">
-                        <Link
-                            href="/get-started"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center justify-center p-5 bg-primary-600 text-white rounded-2xl text-lg font-black uppercase tracking-widest shadow-xl shadow-primary-600/20"
-                        >
-                            Get Started
-                        </Link>
-                    </div>
-
-                    <div className="mt-auto text-center pb-12">
-                        <p className="text-gray-400 text-sm font-medium">© {new Date().getFullYear()} Fundflow</p>
+                        <div className="mt-auto text-center pb-12">
+                            <p className="text-gray-400 text-sm font-medium">© {new Date().getFullYear()} Fundflow</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </header>
     )
 }

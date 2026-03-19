@@ -94,14 +94,16 @@ export default function SuperAdminSidebar({
                             className="flex items-center group"
                             onClick={onClose}
                         >
-                            <Image
-                                src="/fundflow-logo.png"
-                                alt="Fundflow"
-                                width={520}
-                                height={150}
-                                className="w-[260px] h-auto object-contain"
-                                priority
-                            />
+                            <div className="relative w-[340px] h-[96px]">
+                                <Image
+                                    src="/fundflow-logo.png"
+                                    alt="Fundflow"
+                                    fill
+                                    sizes="340px"
+                                    className="object-contain"
+                                    priority
+                                />
+                            </div>
                         </Link>
                         <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors">
                             <X className="h-6 w-6" />

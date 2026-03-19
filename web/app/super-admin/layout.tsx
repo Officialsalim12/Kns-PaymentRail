@@ -31,14 +31,16 @@ export default async function SuperAdminLayout({
       unreadNotificationCount={notificationCount || 0}
       leftHeaderContent={
         <div className="flex items-center gap-2">
-          <Image
-            src="/fundflow-logo.png"
-            alt="Fundflow"
-            width={640}
-            height={180}
-            className="h-32 w-auto"
-            priority
-          />
+          <div className="relative w-[300px] h-[82px]">
+            <Image
+              src="/fundflow-logo.png"
+              alt="Fundflow"
+              fill
+              sizes="300px"
+              className="object-contain"
+              priority
+            />
+          </div>
         </div>
       }
       sidebar={
