@@ -20,6 +20,20 @@ serve(async (req) => {
   }
 
   try {
+    let appOrigin: string | null = null
+    const originHeader = req.headers.get("origin")
+    const refererHeader = req.headers.get("referer")
+
+    if (originHeader) {
+      appOrigin = originHeader
+    } else if (refererHeader) {
+      try {
+        appOrigin = new URL(refererHeader).origin
+      } catch {
+        appOrigin = null
+      }
+    }
+
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -69,38 +83,40 @@ serve(async (req) => {
       throw new Error(`Payment not found: ${paymentError?.message}`);
     }
 
-    if (!payment.monime_checkout_session_id) {
-      throw new Error("Payment does not have a Monime checkout session ID");
-    }
-
     // Check payment status from Monime API
-    const checkoutSessionId = payment.monime_checkout_session_id;
+    const checkoutSessionId = payment.monime_checkout_session_id || null;
+    const monimePaymentIdFromRecord = payment.monime_payment_id || null;
 
-    console.log(`Checking Monime checkout session: ${checkoutSessionId}`);
+    let sessionData: any = null;
+    let monimePaymentId = monimePaymentIdFromRecord;
 
-    const monimeResponse = await fetch(
-      `${MONIME_API_BASE_URL}/checkout-sessions/${checkoutSessionId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${monimeApiKey}`,
-          "Content-Type": "application/json",
-          "Monime-Space-Id": monimeSpaceId,
-        },
+    if (checkoutSessionId) {
+      console.log(`Checking Monime checkout session: ${checkoutSessionId}`);
+      const monimeResponse = await fetch(
+        `${MONIME_API_BASE_URL}/checkout-sessions/${checkoutSessionId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${monimeApiKey}`,
+            "Content-Type": "application/json",
+            "Monime-Space-Id": monimeSpaceId,
+          },
+        }
+      );
+
+      if (!monimeResponse.ok) {
+        const errorText = await monimeResponse.text();
+        throw new Error(`Monime API error: ${monimeResponse.status} - ${errorText}`);
       }
-    );
 
-    if (!monimeResponse.ok) {
-      const errorText = await monimeResponse.text();
-      throw new Error(`Monime API error: ${monimeResponse.status} - ${errorText}`);
+      const monimeData = await monimeResponse.json();
+      console.log("Monime API response:", JSON.stringify(monimeData, null, 2));
+
+      sessionData = monimeData?.result || monimeData;
+      monimePaymentId = monimePaymentId || sessionData?.paymentId || sessionData?.payment?.id || sessionData?.id;
+    } else {
+      console.warn(`Payment ${paymentId} has no monime_checkout_session_id, falling back to monime_payment_id flow`);
     }
-
-    const monimeData = await monimeResponse.json();
-    console.log("Monime API response:", JSON.stringify(monimeData, null, 2));
-
-    // Extract status and IDs from Monime response
-    const sessionData = monimeData?.result || monimeData;
-    const monimePaymentId = sessionData?.paymentId || sessionData?.payment?.id || sessionData?.id;
 
     // CRITICAL: We must check the actual payment status, not just the checkout session status
     // A checkout session can be "completed" even if the payment hasn't been processed yet
@@ -182,8 +198,8 @@ serve(async (req) => {
         null;
     }
 
-    // Use order number as reference (preferred), fallback to checkout session ID
-    const referenceNumber = orderNumber || checkoutSessionId;
+    // Use order number as reference (preferred), fallback to checkout session ID, then existing DB ref, then payment id
+    const referenceNumber = orderNumber || checkoutSessionId || payment.reference_number || payment.id;
 
     // Determine if payment is completed - ONLY use actual payment status
     // Do NOT rely on checkout session status alone
@@ -301,9 +317,7 @@ serve(async (req) => {
 
         if (!serviceRoleKey || !supabaseUrl) {
           console.error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL environment variables - cannot generate receipt");
-          // Don't throw - payment sync should still succeed even if receipt generation fails
         } else {
-          // Invoke generate-receipt function using direct HTTP fetch (proper way for Edge Function to Edge Function calls)
           const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
           console.log(`Attempting to generate receipt for payment ${payment.id}...`);
 
@@ -313,6 +327,7 @@ serve(async (req) => {
               "Authorization": `Bearer ${serviceRoleKey}`,
               "Content-Type": "application/json",
               "apikey": serviceRoleKey,
+              ...(appOrigin ? { "origin": appOrigin, "referer": appOrigin } : {}),
             },
             body: JSON.stringify({
               paymentId: payment.id,
@@ -324,7 +339,6 @@ serve(async (req) => {
           if (!receiptResponse.ok) {
             const errorText = await receiptResponse.text();
             console.error(`Receipt generation HTTP error (${receiptResponse.status}):`, errorText);
-            // Log to console but don't fail the payment sync
           } else {
             const receiptData = await receiptResponse.json();
             if (!receiptData.success) {
@@ -337,9 +351,33 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error("Error generating receipt:", error);
-        console.error("Error stack:", error.stack);
         console.error("Payment sync will continue, but receipt generation failed. Receipt can be generated manually later.");
-        // Don't throw - payment sync should still succeed even if receipt generation fails
+      }
+
+      // Even if the payment was just updated, always refresh receipt template.
+      // (generate-receipt will insert if missing, otherwise update the existing PDF)
+      try {
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        if (serviceRoleKey && supabaseUrl) {
+          const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
+          await fetch(functionUrl, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${serviceRoleKey}`,
+              "Content-Type": "application/json",
+              "apikey": serviceRoleKey,
+              ...(appOrigin ? { "origin": appOrigin, "referer": appOrigin } : {}),
+            },
+            body: JSON.stringify({
+              paymentId: payment.id,
+              organizationId: payment.organization_id,
+              memberId: payment.member_id,
+            }),
+          });
+        }
+      } catch (receiptRefreshErr) {
+        console.error("Receipt refresh after sync failed:", receiptRefreshErr);
       }
 
       return new Response(
@@ -355,6 +393,32 @@ serve(async (req) => {
         }
       );
     } else {
+      // If payment is already completed, refresh receipt template (even if it exists).
+      if (payment.payment_status === "completed" && payment.member_id && payment.organization_id) {
+        try {
+          const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+          const supabaseUrl = Deno.env.get("SUPABASE_URL");
+          if (serviceRoleKey && supabaseUrl) {
+            const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
+            await fetch(functionUrl, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${serviceRoleKey}`,
+                "Content-Type": "application/json",
+                "apikey": serviceRoleKey,
+              },
+              body: JSON.stringify({
+                paymentId: payment.id,
+                organizationId: payment.organization_id,
+                memberId: payment.member_id,
+              }),
+            });
+          }
+        } catch (receiptRefreshErr) {
+          console.error("Receipt refresh for already-completed payment failed:", receiptRefreshErr);
+        }
+      }
+
       // Payment not completed yet
       return new Response(
         JSON.stringify({

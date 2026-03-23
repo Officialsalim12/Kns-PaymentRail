@@ -39,6 +39,15 @@ serve(async (req) => {
       }
     }
 
+    // Fallback for internal/server-to-server calls where Origin/Referer may be missing.
+    if (!appOrigin) {
+      appOrigin =
+        Deno.env.get("NEXT_PUBLIC_APP_URL") ||
+        Deno.env.get("APP_URL") ||
+        Deno.env.get("PUBLIC_APP_URL") ||
+        null
+    }
+
     const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -64,59 +73,58 @@ serve(async (req) => {
     if (!paymentId || !organizationId || !memberId) throw new Error("Missing required parameters");
 
     // Idempotency check 1: Check if receipt already exists
+    // We don't early-return because the receipt template can change.
+    // If a receipt exists, we regenerate it using the existing receipt number.
     const { data: existingReceipt } = await supabaseClient
       .from("receipts")
-      .select("id, receipt_number, pdf_url")
+      .select("id, receipt_number, pdf_url, pdf_storage_path")
       .eq("payment_id", paymentId)
       .maybeSingle();
 
-    if (existingReceipt) {
-      return new Response(JSON.stringify({ success: true, receipt: existingReceipt }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
+    const existingReceiptId = existingReceipt?.id || null
+    const existingReceiptNumber = existingReceipt?.receipt_number || null
+    const shouldSendSideEffects = !existingReceipt
 
     // Idempotency check 2: Distributed Lock using receipt_generation_logs
-    // Try to insert a 'processing' record. If it fails (constraint violation), another process is working on it.
-    // The table should have a unique constraint on payment_id.
-    const { error: lockError } = await supabaseClient
-      .from("receipt_generation_logs")
-      .insert({
-        payment_id: paymentId,
-        status: "processing",
-        started_at: new Date().toISOString(),
-        idempotency_key: idempotencyKey
-      });
-
-    if (lockError) {
-      console.log(`Receipt generation lock failed for payment ${paymentId}:`, lockError.message);
-
-      // Check if it failed because it's already processing or completed
-      const { data: logEntry } = await supabaseClient
+    // Only required for first-time generation.
+    if (!existingReceipt) {
+      // Try to insert a 'processing' record. If it fails (constraint violation), another process is working on it.
+      // The table should have a unique constraint on payment_id.
+      const { error: lockError } = await supabaseClient
         .from("receipt_generation_logs")
-        .select("status, created_at")
-        .eq("payment_id", paymentId)
-        .maybeSingle();
+        .insert({
+          payment_id: paymentId,
+          status: "processing",
+          started_at: new Date().toISOString(),
+          idempotency_key: idempotencyKey
+        });
 
-      if (logEntry) {
-        // If it was created less than 1 minute ago, assume it's still processing vs stale lock
-        const lockTime = new Date(logEntry.created_at).getTime();
-        const now = Date.now();
-        if (now - lockTime < 60000) { // 1 minute timeout
-          return new Response(JSON.stringify({
-            success: true,
-            message: "Receipt generation already in progress",
-            processing: true
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          });
-        } else {
-          // Stale lock - we could theoretically delete and retry, but for now let's just log and continue carefully
-          // or fail safely. Let's try to take over the lock if it's stale? 
-          // Simpler for now: just fail safe.
-          console.warn(`Found stale lock for payment ${paymentId} from ${logEntry.created_at}.`);
+      if (lockError) {
+        console.log(`Receipt generation lock failed for payment ${paymentId}:`, lockError.message);
+
+        // Check if it failed because it's already processing or completed
+        const { data: logEntry } = await supabaseClient
+          .from("receipt_generation_logs")
+          .select("status, created_at")
+          .eq("payment_id", paymentId)
+          .maybeSingle();
+
+        if (logEntry) {
+          // If it was created less than 1 minute ago, assume it's still processing vs stale lock
+          const lockTime = new Date(logEntry.created_at).getTime();
+          const now = Date.now();
+          if (now - lockTime < 60000) { // 1 minute timeout
+            return new Response(JSON.stringify({
+              success: true,
+              message: "Receipt generation already in progress",
+              processing: true
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            });
+          } else {
+            console.warn(`Found stale lock for payment ${paymentId} from ${logEntry.created_at}.`);
+          }
         }
       }
     }
@@ -146,7 +154,8 @@ serve(async (req) => {
 
     // Generate PDF
     const orgPrefix = payment.member.organization.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, "");
-    const receiptNumber = `RCP-${orgPrefix}-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Date.now().toString().slice(-6)}`;
+    const generatedReceiptNumber = `RCP-${orgPrefix}-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Date.now().toString().slice(-6)}`;
+    const receiptNumber = existingReceiptNumber || generatedReceiptNumber;
     let fundflowLogoBytes: Uint8Array | null = null;
     if (appOrigin) {
       try {
@@ -165,23 +174,53 @@ serve(async (req) => {
     const pdfContent = await generateReceiptPDF(payment, receiptNumber, monimePaymentData, fundflowLogoBytes);
 
     // Upload
-    const storagePath = `${organizationId}/${receiptNumber}.pdf`;
-    const { error: uploadError } = await supabaseClient.storage.from("receipts").upload(storagePath, pdfContent, { contentType: "application/pdf" });
+    const storagePath = existingReceipt?.pdf_storage_path || `${organizationId}/${receiptNumber}.pdf`;
+    const { error: uploadError } = await supabaseClient.storage.from("receipts").upload(
+      storagePath,
+      pdfContent,
+      { contentType: "application/pdf", upsert: true }
+    );
     if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 
     const { data: { publicUrl } } = supabaseClient.storage.from("receipts").getPublicUrl(storagePath);
 
-    // Save record
-    const { data: receipt, error: receiptError } = await supabaseClient
-      .from("receipts")
-      .insert({ organization_id: organizationId, payment_id: paymentId, member_id: memberId, receipt_number: receiptNumber, pdf_url: publicUrl, pdf_storage_path: storagePath })
-      .select().single();
+    // Save record (update existing receipt to refresh template; insert if missing)
+    let receipt: any = null
+    let receiptError: any = null
+    if (existingReceiptId) {
+      const updated = await supabaseClient
+        .from("receipts")
+        .update({
+          organization_id: organizationId,
+          payment_id: paymentId,
+          member_id: memberId,
+          receipt_number: receiptNumber,
+          pdf_url: publicUrl,
+          pdf_storage_path: storagePath
+        })
+        .eq("id", existingReceiptId)
+        .select()
+        .single()
 
-    // Release Lock (Update status to completed)
-    await supabaseClient
-      .from("receipt_generation_logs")
-      .update({ status: "completed", completed_at: new Date().toISOString(), receipt_number: receiptNumber })
-      .eq("payment_id", paymentId);
+      receipt = updated.data
+      receiptError = updated.error
+    } else {
+      const inserted = await supabaseClient
+        .from("receipts")
+        .insert({ organization_id: organizationId, payment_id: paymentId, member_id: memberId, receipt_number: receiptNumber, pdf_url: publicUrl, pdf_storage_path: storagePath })
+        .select().single()
+
+      receipt = inserted.data
+      receiptError = inserted.error
+    }
+
+    // Release Lock (Update status to completed) only for first-time generation
+    if (!existingReceipt) {
+      await supabaseClient
+        .from("receipt_generation_logs")
+        .update({ status: "completed", completed_at: new Date().toISOString(), receipt_number: receiptNumber })
+        .eq("payment_id", paymentId);
+    }
 
     if (receiptError) {
       await supabaseClient.storage.from("receipts").remove([storagePath]);
@@ -189,15 +228,20 @@ serve(async (req) => {
     }
 
     // Notify & Email
-    if (payment.member.user_id) {
-      await supabaseClient.from("notifications").insert({
-        organization_id: organizationId, recipient_id: payment.member.user_id, title: "Receipt Generated",
-        message: `Your receipt ${receiptNumber} is ready.`, type: "receipt"
-      });
-    }
+    if (shouldSendSideEffects) {
+      if (payment.member.user_id) {
+        await supabaseClient.from("notifications").insert({
+          organization_id: organizationId,
+          recipient_id: payment.member.user_id,
+          title: "Receipt Generated",
+          message: `Your receipt ${receiptNumber} is ready.`,
+          type: "receipt"
+        });
+      }
 
-    if (payment.member.email) {
-      await sendReceiptEmail(payment.member.email, payment.member.full_name, receiptNumber, publicUrl, payment, payment.member.organization.name, monimePaymentData);
+      if (payment.member.email) {
+        await sendReceiptEmail(payment.member.email, payment.member.full_name, receiptNumber, publicUrl, payment, payment.member.organization.name, monimePaymentData);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, receipt }), {

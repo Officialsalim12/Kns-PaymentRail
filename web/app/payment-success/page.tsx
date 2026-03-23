@@ -46,16 +46,32 @@ function PaymentSuccessContent() {
         if (paymentId) {
           setSyncing(true)
           try {
-            const { data, error } = await invokeEdgeFunction(
-              supabase,
-              'sync-payment-status',
-              {
-                body: { paymentId },
-              }
-            )
+            // Retry a few times because some providers finalize asynchronously.
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              const { data, error } = await invokeEdgeFunction(
+                supabase,
+                'sync-payment-status',
+                {
+                  body: { paymentId },
+                }
+              )
 
-            if (error) {
-              console.error('Error syncing payment:', error)
+              if (error) {
+                console.error(`Error syncing payment (attempt ${attempt}):`, error)
+              }
+
+              const status =
+                (data as any)?.paymentStatus ||
+                (data as any)?.monimePaymentStatus ||
+                null
+
+              if (status === 'completed' || (data as any)?.success) {
+                break
+              }
+
+              if (attempt < 3) {
+                await new Promise((resolve) => setTimeout(resolve, 1500))
+              }
             }
           } catch (syncError) {
             console.error('Error syncing payment status:', syncError)
