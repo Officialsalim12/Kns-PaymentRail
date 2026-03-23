@@ -6,8 +6,6 @@ export default function GetStartedPage() {
   return (
     <AuthLayout
       title="Are You an organization or are you looking for funding?"
-      largeLogo
-      matchLandingLogo
     >
       <div className="space-y-6">
         <div className="space-y-4">

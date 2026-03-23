@@ -8,7 +8,7 @@ const benefits = [
     },
     {
         icon: Shield,
-        title: 'Role-Based Access Control',
+        title: 'Role Based Access Control',
         description: 'Granular permissions for Super Admins, Org Admins, and Members',
     },
     {

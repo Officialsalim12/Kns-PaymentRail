@@ -91,8 +91,9 @@ export default function AdminNavbar({ organization }: AdminNavbarProps) {
 
           {/* Mobile Menu Toggle */}
           <button
+            type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 -mr-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all active:scale-90"
+            className="md:hidden relative z-[70] p-2 -mr-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all active:scale-90 touch-target"
             aria-label="Toggle menu"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

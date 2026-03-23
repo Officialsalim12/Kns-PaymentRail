@@ -87,27 +87,33 @@ export default function SuperAdminSidebar({
         `}
             >
                 <div className="flex flex-col h-full">
-                    {/* Logo/Header */}
-                    <div className="pl-1 pr-6 pt-8 pb-4 border-b border-gray-50 flex items-center justify-start">
-                        <Link
-                            href="/super-admin"
-                            className="flex items-center group"
-                            onClick={onClose}
-                        >
-                            <div className="relative w-[340px] h-[96px]">
-                                <Image
-                                    src="/fundflow-logo.png"
-                                    alt="Fundflow"
-                                    fill
-                                    sizes="340px"
-                                    className="object-contain"
-                                    priority
-                                />
-                            </div>
-                        </Link>
-                        <button onClick={onClose} className="lg:hidden p-2 text-gray-400 hover:text-gray-900 transition-colors">
-                            <X className="h-6 w-6" />
-                        </button>
+                    <div className="border-b border-gray-50 px-3 sm:px-4 pt-5 sm:pt-6 pb-3 sm:pb-4">
+                        <div className="flex items-center justify-between gap-2">
+                            <Link
+                                href="/super-admin"
+                                className="hidden lg:flex group min-w-0 flex-1 items-center"
+                                onClick={onClose}
+                            >
+                                <div className="relative h-[82px] w-full max-w-[320px] sm:h-[88px] sm:max-w-[360px] lg:h-[96px] lg:max-w-[420px]">
+                                    <Image
+                                        src="/fundflow-logo.png"
+                                        alt="Fundflow"
+                                        fill
+                                        sizes="(max-width: 1024px) 420px, 460px"
+                                        className="object-contain object-left"
+                                        priority
+                                    />
+                                </div>
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="shrink-0 ml-auto rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-900 lg:hidden"
+                                aria-label="Close menu"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Navigation */}

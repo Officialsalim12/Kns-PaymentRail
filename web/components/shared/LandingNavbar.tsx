@@ -47,15 +47,15 @@ export default function LandingNavbar() {
                 }`}
         >
             {/* Logo pinned to extreme left edge (outside centered container) */}
-            <div className="absolute left-0 top-0 h-16 sm:h-20 flex items-center z-[60]">
+            <div className="absolute left-0 top-0 h-40 sm:h-44 md:h-48 flex items-center z-[60]">
                 <Link href="/" className="flex items-center group transition-transform hover:scale-102">
                     {/* Fixed wrapper prevents stretching/distortion; `object-contain` avoids cropping at edges */}
-                    <div className="relative w-[205px] sm:w-[270px] md:w-[350px] lg:w-[440px] max-w-[76vw] h-[46px] sm:h-[54px] md:h-[58px] lg:h-[62px]">
+                    <div className="relative w-[600px] sm:w-[700px] md:w-[880px] lg:w-[1360px] max-w-[100vw] h-[110px] sm:h-[126px] md:h-[142px] lg:h-[175px]">
                         <Image
                             src="/fundflow-logo.png"
                             alt="Fundflow"
                             fill
-                            sizes="(max-width: 768px) 76vw, 440px"
+                            sizes="(max-width: 768px) 100vw, 1360px"
                             className="object-contain object-left"
                             priority
                         />
@@ -64,7 +64,7 @@ export default function LandingNavbar() {
             </div>
 
             <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-6">
-                <div className="flex items-center justify-end h-20 sm:h-24">
+                <div className="flex items-center justify-end h-40 sm:h-44 md:h-48">
                     {/* Desktop Navigation + Actions */}
                     <div className="hidden md:flex items-center gap-14 ml-auto pr-2 lg:pr-0">
                         <nav className="flex items-center space-x-12">
@@ -88,8 +88,9 @@ export default function LandingNavbar() {
 
                     {/* Mobile Menu Toggle */}
                     <button
+                        type="button"
                         onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden p-2 -mr-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-all active:scale-90"
+                        className="md:hidden relative z-[70] p-2 -mr-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-all active:scale-90 touch-target"
                         aria-label="Toggle menu"
                     >
                         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -100,7 +101,7 @@ export default function LandingNavbar() {
             {/* Mobile Menu Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 top-[80px] sm:top-[96px] h-[calc(100vh-80px)] sm:h-[calc(100vh-96px)] bg-white z-40 transition-all duration-300 md:hidden"
+                    className="fixed inset-0 top-[144px] sm:top-[160px] h-[calc(100vh-144px)] sm:h-[calc(100vh-160px)] bg-white z-40 transition-all duration-300 md:hidden"
                 >
                     <div className="flex flex-col h-full p-6 space-y-8 overflow-y-auto">
                         <nav className="space-y-4">

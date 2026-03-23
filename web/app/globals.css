@@ -75,8 +75,8 @@ body {
 
 @media (min-width: 1536px) {
   .main-container {
-    max-width: 1600px;
-    /* Cap width on ultra-wide screens but allow it to be wider than before */
+    max-width: min(1600px, 100%);
+    /* Cap width on ultra-wide screens but stay within the viewport */
   }
 }
 

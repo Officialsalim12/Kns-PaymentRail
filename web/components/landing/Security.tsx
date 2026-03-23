@@ -8,7 +8,7 @@ export default function Security() {
                     <Shield className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
                 </div>
                 <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 sm:mb-3 md:mb-4 px-1 sm:px-2">
-                    Enterprise-Grade Security
+                    Enterprise Grade Security
                 </h2>
                 <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-primary-100 leading-relaxed px-2 sm:px-3">
                     Fundflow meets the highest possible global standards of data security and protection. Our policies move through constant iteration and undergo rigorous testing to proactively mitigate any potential threats to your financial and member data.

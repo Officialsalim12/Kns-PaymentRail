@@ -230,7 +230,7 @@ export default function ActivityLogs({ initialLogs, users, organizations }: Prop
   const hasActiveFilters = searchQuery || selectedUser !== 'all' || selectedOrganization !== 'all' || selectedAction !== 'all' || selectedDateRange !== 'all'
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>

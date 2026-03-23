@@ -21,6 +21,11 @@ interface DashboardLayoutWrapperProps {
   role: 'admin' | 'member' | 'super_admin'
   leftHeaderContent?: React.ReactNode
   theme?: DashboardTheme
+  /**
+   * Left margin for `<main>` at `lg+` — must match the fixed sidebar width.
+   * Default `lg:ml-64` matches `w-64` sidebars (admin/member). Super admin uses `w-72 sm:w-80`, so pass `lg:ml-80`.
+   */
+  mainOffsetClassName?: string
 }
 
 export default function DashboardLayoutWrapper({
@@ -32,6 +37,7 @@ export default function DashboardLayoutWrapper({
   role,
   leftHeaderContent,
   theme,
+  mainOffsetClassName = 'lg:ml-64',
 }: DashboardLayoutWrapperProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const pathname = usePathname()
@@ -78,9 +84,11 @@ export default function DashboardLayoutWrapper({
           onClose: () => setIsSidebarOpen(false),
         })}
 
-        <main className="flex-1 lg:ml-64 min-h-[calc(100vh-64px)] transition-all duration-300 min-w-0 text-[color:var(--org-text-color)]">
-          <div className="py-4 sm:py-8 min-h-full">
-            <div className="main-container">
+        <main
+          className={`flex-1 w-full min-h-[calc(100vh-64px)] min-w-0 transition-all duration-300 text-[color:var(--org-text-color)] ${mainOffsetClassName}`}
+        >
+          <div className="min-h-full w-full max-w-full py-4 sm:py-8">
+            <div className="main-container w-full max-w-full">
               {children}
             </div>
           </div>

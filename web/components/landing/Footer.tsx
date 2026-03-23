@@ -7,16 +7,17 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-4 sm:mb-6 md:mb-8 lg:mb-12">
                     <div className="sm:col-span-2 lg:col-span-1">
-                        <div className="mb-2 sm:mb-3 md:mb-4">
+                        <div className="mb-0">
                             <Image
                                 src="/fundflow-logo.png"
                                 alt="Fundflow"
                                 width={560}
                                 height={156}
-                                className="h-24 sm:h-28 w-auto max-w-[70vw]"
+                                className="object-contain block h-[80px] sm:h-[95px] md:h-[125px] lg:h-[155px] w-auto max-w-[90vw]"
+                                priority
                             />
                         </div>
-                        <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-gray-400 leading-relaxed mt-[-6px] sm:mt-[-7px] md:mt-[-8px]">
                             Fundflow helps organizations run subscriptions, manage fundraisers, and track collections. Built for Sierra Leone.
                         </p>
                     </div>

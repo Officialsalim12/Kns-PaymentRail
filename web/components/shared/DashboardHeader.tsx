@@ -115,7 +115,7 @@ export default function DashboardHeader({
             <div className="px-2 sm:px-6 lg:px-8 xl:px-10 py-2 sm:py-4">
                 <div className="flex items-center justify-between gap-1 sm:gap-4">
                     {/* Left: Menu/Mobile Toggle and Branding/Title */}
-                    <div className="flex items-center gap-1.5 xs:gap-3 sm:gap-4">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 xs:gap-3 sm:gap-4">
                         {onMenuClick && (
                             <button
                                 onClick={onMenuClick}
@@ -127,7 +127,7 @@ export default function DashboardHeader({
                         )}
 
                         {leftContent && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex min-w-0 max-w-full items-center gap-2">
                                 {leftContent}
                             </div>
                         )}

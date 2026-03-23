@@ -25,7 +25,7 @@ export default async function SuperAdminPendingPage() {
     (pendingPasswordResets && pendingPasswordResets.length > 0)
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 max-w-full space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Pending Items</h1>
         <p className="text-sm text-gray-500 mt-1">

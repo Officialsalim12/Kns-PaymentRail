@@ -29,15 +29,16 @@ export default async function SuperAdminLayout({
       userFullName={userFullName}
       profilePhotoUrl={profilePhotoUrl}
       unreadNotificationCount={notificationCount || 0}
+      mainOffsetClassName="lg:ml-80"
       leftHeaderContent={
-        <div className="flex items-center gap-2">
-          <div className="relative w-[300px] h-[82px]">
+        <div className="flex min-w-0 items-center">
+          <div className="relative h-[86px] w-[235px] max-w-[72vw] max-h-[18vh] shrink-0 sm:h-[96px] sm:w-[265px] md:h-[102px] md:w-[310px] lg:h-[110px] lg:w-[380px] xl:h-[122px] xl:w-[440px]">
             <Image
               src="/fundflow-logo.png"
               alt="Fundflow"
               fill
-              sizes="300px"
-              className="object-contain"
+              sizes="(max-width: 640px) 240px, (max-width: 1024px) 320px, 440px"
+              className="object-contain object-left"
               priority
             />
           </div>

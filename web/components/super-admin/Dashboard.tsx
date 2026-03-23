@@ -124,7 +124,7 @@ export default function SuperAdminDashboard({
   }
 
   return (
-    <div className="space-y-8 pb-20 md:pb-8">
+    <div className="w-full min-w-0 max-w-full space-y-8 pb-20 md:pb-8">
       {/* Welcome Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-b-2xl md:rounded-2xl shadow-xl">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />

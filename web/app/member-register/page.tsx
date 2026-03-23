@@ -16,8 +16,6 @@ export default async function MemberRegisterPage() {
     <AuthLayout
       title="Create Account"
       subtitle="Join an organization and start managing your payments"
-      largeLogo
-      matchLandingLogo
     >
       <MemberRegistrationForm organizations={organizations || []} />
 
@@ -31,14 +29,6 @@ export default async function MemberRegisterPage() {
         <span className="text-gray-500">Organisation Admin? </span>
         <Link href="/organization/register" className="font-medium text-primary-600 hover:text-primary-500">
           Register Organization
-        </Link>
-      </div>
-      <div className="mt-4 text-center">
-        <Link href="/" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Home
         </Link>
       </div>
     </AuthLayout>

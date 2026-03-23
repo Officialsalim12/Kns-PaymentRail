@@ -22,8 +22,6 @@ export default async function LoginPage() {
     <AuthLayout
       title="Welcome back"
       subtitle="Enter your details to access your account"
-      largeLogo
-      matchLandingLogo
     >
       <LoginForm />
 
