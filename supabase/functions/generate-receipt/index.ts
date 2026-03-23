@@ -25,6 +25,20 @@ serve(async (req) => {
   let paymentId, organizationId, memberId;
 
   try {
+    let appOrigin: string | null = null
+    const originHeader = req.headers.get("origin")
+    const refererHeader = req.headers.get("referer")
+
+    if (originHeader) {
+      appOrigin = originHeader
+    } else if (refererHeader) {
+      try {
+        appOrigin = new URL(refererHeader).origin
+      } catch {
+        appOrigin = null
+      }
+    }
+
     const authHeader = req.headers.get("Authorization");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -133,7 +147,22 @@ serve(async (req) => {
     // Generate PDF
     const orgPrefix = payment.member.organization.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, "");
     const receiptNumber = `RCP-${orgPrefix}-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Date.now().toString().slice(-6)}`;
-    const pdfContent = await generateReceiptPDF(payment, receiptNumber, monimePaymentData);
+    let fundflowLogoBytes: Uint8Array | null = null;
+    if (appOrigin) {
+      try {
+        const logoUrl = `${appOrigin.replace(/\/$/, "")}/fundflow-logo.png`;
+        const logoRes = await fetch(logoUrl);
+        if (logoRes.ok) {
+          fundflowLogoBytes = new Uint8Array(await logoRes.arrayBuffer());
+        } else {
+          console.warn(`Fundflow logo fetch failed (${logoRes.status}) from:`, logoUrl);
+        }
+      } catch (logoErr) {
+        console.warn("Fundflow logo fetch error:", logoErr);
+      }
+    }
+
+    const pdfContent = await generateReceiptPDF(payment, receiptNumber, monimePaymentData, fundflowLogoBytes);
 
     // Upload
     const storagePath = `${organizationId}/${receiptNumber}.pdf`;

@@ -1,7 +1,8 @@
 export async function generateReceiptPDF(
     payment: any,
     receiptNumber: string,
-    monimePaymentData: any = null
+    monimePaymentData: any = null,
+    fundflowLogoBytes: Uint8Array | null = null
 ): Promise<Uint8Array> {
     const { PDFDocument, rgb, StandardFonts } = await import(
         "https://esm.sh/pdf-lib@1.17.1"
@@ -14,26 +15,9 @@ export async function generateReceiptPDF(
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Try to embed the Fundflow logo from the app's public assets.
-    // If we can't fetch it (misconfigured env / network), we simply skip the logo.
     let fundflowLogo: any = null
-    try {
-      const appUrl =
-        Deno.env.get("NEXT_PUBLIC_APP_URL") ||
-        Deno.env.get("APP_URL") ||
-        Deno.env.get("PUBLIC_APP_URL") ||
-        null
-
-      if (appUrl) {
-        const logoUrl = `${String(appUrl).replace(/\/$/, "")}/fundflow-logo.png`
-        const logoRes = await fetch(logoUrl)
-        if (logoRes.ok) {
-          const logoBytes = new Uint8Array(await logoRes.arrayBuffer())
-          fundflowLogo = await pdfDoc.embedPng(logoBytes)
-        }
-      }
-    } catch {
-      // Silent fail: printing/receipt generation should still work without the logo.
+    if (fundflowLogoBytes) {
+      fundflowLogo = await pdfDoc.embedPng(fundflowLogoBytes)
     }
 
     const marginX = 50;
