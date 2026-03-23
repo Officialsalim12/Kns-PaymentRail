@@ -85,6 +85,11 @@ export default function AdminDashboard({
 
   const totalPendingApprovals = pendingApprovals.length
 
+  const toSafeAmount = (value: any) => {
+    const numeric = typeof value === 'number' ? value : parseFloat(String(value ?? 0))
+    return Number.isFinite(numeric) ? numeric : 0
+  }
+
   // Generate chart data for last 7 days
   const chartData = Array.from({ length: 7 }).map((_, i) => {
     const date = subDays(new Date(), 6 - i)
@@ -93,13 +98,14 @@ export default function AdminDashboard({
 
     const dailyPayments = revenueHistory
       .filter(p => {
-        const pDate = new Date(p.created_at || p.payment_date)
+        const pDate = new Date(p.payment_date || p.created_at)
+        if (Number.isNaN(pDate.getTime())) return false
         return pDate >= dayStart && pDate <= dayEnd
       })
 
     const dayTotal = dailyPayments
       .filter(p => p.payment_status === 'completed' || p.status === 'completed')
-      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+      .reduce((sum, p) => sum + toSafeAmount(p.amount), 0)
 
     const transactionCount = dailyPayments.length
 
@@ -111,7 +117,8 @@ export default function AdminDashboard({
     }
   })
 
-  const maxAmount = Math.max(...chartData.map(d => d.amount), 1)
+  const maxAmount = Math.max(1, ...chartData.map(d => toSafeAmount(d.amount)))
+  const hasGraphData = chartData.some(d => d.count > 0 || d.amount > 0)
 
   // Use paymentStatusDistribution if available, otherwise fallback to stats (though page now provides it)
   const statusData = paymentStatusDistribution || {
@@ -240,44 +247,50 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          {/* Analytics Tab Content */}
-          <div className={`${mobileTab === 'analytics' ? 'block' : 'hidden md:block'} space-y-8`}>
+          {/* Analytics Content (always visible so charts are never hidden) */}
+          <div className="space-y-8">
             {/* Revenue Performance (existing bar chart) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
               <h2 className="text-lg font-bold text-gray-900 mb-8 sm:mb-10 text-center sm:text-left">Revenue Performance</h2>
-              <div className="h-64 sm:h-80 flex items-end justify-between gap-1 xs:gap-3 sm:gap-6 lg:gap-8 px-1 xs:px-4">
-                {chartData.map((day) => {
-                  const height = Math.max(8, (day.amount / maxAmount) * 100)
-                  return (
-                    <div key={day.date} className="relative flex-1 flex flex-col items-center group">
-                      <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all z-10 pointer-events-none">
-                        <div className="bg-gray-900/95 text-white text-[10px] px-2 py-1 rounded shadow-xl whitespace-nowrap text-center">
-                          <div className="font-bold">{formatCurrency(day.amount)}</div>
-                          <div className="font-medium text-gray-300">{day.count} Transactions</div>
+              {hasGraphData ? (
+                <div className="h-64 sm:h-80 flex items-end justify-between gap-1 xs:gap-3 sm:gap-6 lg:gap-8 px-1 xs:px-4">
+                  {chartData.map((day) => {
+                    const safeAmount = toSafeAmount(day.amount)
+                    const height = Math.max(8, (safeAmount / maxAmount) * 100)
+                    return (
+                      <div key={day.date} className="relative flex-1 flex flex-col items-center group">
+                        <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all z-10 pointer-events-none">
+                          <div className="bg-gray-900/95 text-white text-[10px] px-2 py-1 rounded shadow-xl whitespace-nowrap text-center">
+                            <div className="font-bold">{formatCurrency(safeAmount)}</div>
+                            <div className="font-medium text-gray-300">{day.count} Transactions</div>
+                          </div>
+                        </div>
+                        <div
+                          className="w-full max-w-[12px] xs:max-w-[20px] sm:max-w-[32px] rounded-t-lg bg-slate-200 hover:bg-slate-300 active:bg-slate-300 transition-all relative overflow-hidden group/bar border border-slate-300"
+                          style={{ height: `${height}%` }}
+                        >
+                          <div
+                            className="absolute bottom-0 left-0 right-0 bg-[#0f172a]"
+                            style={{ height: '100%' }}
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-col items-center">
+                          <p className="text-[8px] xs:text-[10px] font-bold text-gray-500 uppercase tracking-tighter xs:tracking-widest">
+                            {day.date}
+                          </p>
+                          {day.count > 0 && (
+                            <span className="text-[8px] text-gray-400 font-mono mt-0.5">{day.count}</span>
+                          )}
                         </div>
                       </div>
-                      {/* Use primary colors so the chart stays visible on the white card background. */}
-                      <div
-                        className="w-full max-w-[12px] xs:max-w-[20px] sm:max-w-[32px] rounded-t-lg bg-primary-600/15 hover:bg-primary-600/25 active:bg-primary-600/35 transition-all relative overflow-hidden group/bar"
-                        style={{ height: `${height}%` }}
-                      >
-                        <div
-                          className="absolute bottom-0 left-0 right-0 bg-primary-600/80"
-                          style={{ height: '100%' }}
-                        />
-                      </div>
-                      <div className="mt-3 flex flex-col items-center">
-                        <p className="text-[8px] xs:text-[10px] font-bold text-gray-500 uppercase tracking-tighter xs:tracking-widest">
-                          {day.date}
-                        </p>
-                        {day.count > 0 && (
-                          <span className="text-[8px] text-gray-400 font-mono mt-0.5">{day.count}</span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="h-64 sm:h-80 flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
+                  <p className="text-sm text-gray-500">No payment data for the selected period yet.</p>
+                </div>
+              )}
             </div>
 
             {/* Member Payment Participation chart */}
@@ -291,7 +304,7 @@ export default function AdminDashboard({
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0f172a]" />
                     <span className="font-semibold text-gray-600">Paying members</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -311,7 +324,8 @@ export default function AdminDashboard({
                   const membersWhoPaid = new Set(
                     revenueHistory
                       .filter(p => {
-                        const pDate = new Date(p.created_at || p.payment_date)
+                        const pDate = new Date(p.payment_date || p.created_at)
+                        if (Number.isNaN(pDate.getTime())) return false
                         return (
                           p.payment_status === 'completed' &&
                           p.member_id &&
@@ -337,9 +351,9 @@ export default function AdminDashboard({
                           </div>
                         </div>
                       </div>
-                      <div className="w-full max-w-[16px] xs:max-w-[22px] sm:max-w-[30px] rounded-t-lg bg-slate-200/80 overflow-hidden flex flex-col justify-end">
+                      <div className="w-full max-w-[16px] xs:max-w-[22px] sm:max-w-[30px] rounded-t-lg bg-slate-200 overflow-hidden flex flex-col justify-end border border-slate-300">
                         <div
-                          className="bg-emerald-500 transition-all duration-700"
+                          className="bg-[#0f172a] transition-all duration-700"
                           style={{ height: `${payingPct}%` }}
                         />
                         <div

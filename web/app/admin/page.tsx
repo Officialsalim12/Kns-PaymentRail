@@ -88,7 +88,7 @@ export default async function AdminDashboardPage() {
   const now = new Date()
   const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthlyPayments = payments.filter(p => {
-    const paymentDate = new Date(p.created_at)
+    const paymentDate = new Date(p.payment_date || p.created_at)
     return paymentDate >= startOfCurrentMonth
   })
   const monthlyRevenue = monthlyPayments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
@@ -97,7 +97,7 @@ export default async function AdminDashboardPage() {
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const endOfLastMonth = startOfCurrentMonth
   const lastMonthPayments = payments.filter(p => {
-    const date = new Date(p.created_at)
+    const date = new Date(p.payment_date || p.created_at)
     return date >= startOfLastMonth && date < endOfLastMonth
   })
   const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
@@ -112,7 +112,7 @@ export default async function AdminDashboardPage() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   sevenDaysAgo.setHours(0, 0, 0, 0)
   const recentPaymentsData = payments.filter(p => {
-    const paymentDate = new Date(p.created_at)
+    const paymentDate = new Date(p.payment_date || p.created_at)
     return paymentDate >= sevenDaysAgo
   })
 
@@ -122,7 +122,7 @@ export default async function AdminDashboardPage() {
     .select('*, member:members(full_name, membership_id)')
     .eq('organization_id', organizationId)
     .eq('payment_status', 'completed')
-    .order('created_at', { ascending: false })
+    .order('payment_date', { ascending: false })
     .limit(10)
 
   // Get pending member approvals
