@@ -1,5 +1,5 @@
 import { requireSuperAdmin } from '@/lib/auth'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import OrganizationDetail from '@/components/super-admin/OrganizationDetail'
 
@@ -9,7 +9,8 @@ export default async function OrganizationDetailPage({
   params: { id: string }
 }) {
   await requireSuperAdmin()
-  const supabase = await createClient()
+  // Super admin reads should bypass RLS to keep audit pages consistent.
+  const supabase = createServiceRoleClient()
 
   // Get organization details
   const { data: organization } = await supabase
@@ -25,7 +26,7 @@ export default async function OrganizationDetailPage({
   // Get all members of this organization
   const { data: members, error: membersError } = await supabase
     .from('members')
-    .select('*, user:users(id, email, full_name, phone_number, created_at)')
+    .select('id, full_name, email, phone_number, membership_id, status, created_at')
     .eq('organization_id', params.id)
     .order('created_at', { ascending: false })
 

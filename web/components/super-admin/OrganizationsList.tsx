@@ -246,7 +246,7 @@ export default function OrganizationsList({ organizations: initialOrgs, filter }
                       {org.admin_email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
+                      <span className={`inline-flex items-center leading-none px-2 py-1 text-xs font-semibold rounded-md whitespace-nowrap ${
                         org.status === 'approved' ? 'bg-green-100 text-green-800' :
                         org.status === 'pending' ? 'bg-orange-100 text-orange-800' :
                         'bg-red-100 text-red-800'

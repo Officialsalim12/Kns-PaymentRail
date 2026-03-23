@@ -100,8 +100,11 @@ export default function OrganizationDetail({
   const [showPasswords, setShowPasswords] = useState<{ [key: string]: boolean }>({})
   const [logoError, setLogoError] = useState(false)
 
+  const memberRoleCount = users.filter(u => u.role === 'member').length
+  const memberRoleUsers = users.filter(u => u.role === 'member')
+
   const tabs = [
-    { id: 'members', label: 'Members', icon: Users, count: members.length },
+    { id: 'members', label: 'Members', icon: Users, count: memberRoleCount },
     { id: 'payments', label: 'Payments', icon: Wallet, count: payments.length },
     { id: 'logs', label: 'Activity Logs', icon: FileText, count: logs.length },
     { id: 'credentials', label: 'User Credentials', icon: Users, count: users.length },
@@ -141,7 +144,7 @@ export default function OrganizationDetail({
               Created: {format(new Date(organization.created_at), 'MMM dd, yyyy')}
             </p>
           </div>
-          <span className={`px-3 py-1 text-sm font-semibold rounded-md ${organization.status === 'approved'
+          <span className={`inline-flex items-center leading-none px-3 py-1 text-sm font-semibold rounded-md whitespace-nowrap ${organization.status === 'approved'
               ? 'bg-green-100 text-green-800'
               : organization.status === 'pending'
                 ? 'bg-orange-100 text-orange-800'
@@ -159,7 +162,7 @@ export default function OrganizationDetail({
             <Users className="h-8 w-8 text-blue-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Members</p>
-              <p className="text-2xl font-semibold text-gray-900">{members.length}</p>
+              <p className="text-2xl font-semibold text-gray-900">{memberRoleCount}</p>
             </div>
           </div>
         </div>
@@ -227,19 +230,7 @@ export default function OrganizationDetail({
           {/* Members Tab */}
           {activeTab === 'members' && (
             <div className="space-y-4">
-              {members.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No members found</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Members will appear here once they register with this organization.
-                    {users.filter(u => u.role === 'member').length > 0 && (
-                      <span className="block mt-2 text-orange-600">
-                        Note: There are {users.filter(u => u.role === 'member').length} user(s) with member role but no member records found.
-                      </span>
-                    )}
-                  </p>
-                </div>
-              ) : (
+              {members.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-blue-200">
                     <thead className="bg-blue-50">
@@ -282,6 +273,54 @@ export default function OrganizationDetail({
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : memberRoleUsers.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-blue-200">
+                    <thead className="bg-blue-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Membership ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Phone</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-blue-200">
+                      {memberRoleUsers.map((u) => (
+                        <tr key={u.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {u.full_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            N/A
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {u.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {u.phone || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center leading-none px-2 py-1 text-xs font-semibold rounded-md bg-orange-100 text-orange-800">
+                              Not registered
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {format(new Date(u.created_at), 'MMM dd, yyyy')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No members found</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Members will appear here once they register with this organization.
+                  </p>
                 </div>
               )}
             </div>

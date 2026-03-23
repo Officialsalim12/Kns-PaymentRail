@@ -14,7 +14,6 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 interface ActivityLog {
   id: string
@@ -63,7 +62,6 @@ interface Props {
 }
 
 export default function ActivityLogs({ initialLogs, users, organizations }: Props) {
-  const router = useRouter()
   const [logs, setLogs] = useState(initialLogs)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUser, setSelectedUser] = useState<string>('all')
@@ -137,29 +135,60 @@ export default function ActivityLogs({ initialLogs, users, organizations }: Prop
   const handleRefresh = async () => {
     setLoading(true)
     try {
-      router.refresh()
       const supabase = createClient()
-      const { data: newLogs } = await supabase
+
+      const { data: newLogs, error: logsError } = await supabase
         .from('activity_logs')
-        .select(`
-          *,
-          user:users!activity_logs_user_id_fkey(
-            id,
-            email,
-            full_name,
-            role,
-            organization_id
-          ),
-          organization:organizations!activity_logs_organization_id_fkey(
-            id,
-            name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(1000)
 
-      if (newLogs) {
+      if (newLogs && !logsError) {
         setLogs(newLogs as ActivityLog[])
+        return
+      }
+
+      const activityMissing = !!logsError && (logsError as any).code === 'PGRST205'
+      if (activityMissing) {
+        const { data: webhookRows } = await supabase
+          .from('webhook_logs')
+          .select('*')
+          .limit(1000)
+
+        const mapped: ActivityLog[] = (webhookRows || []).map((row: any) => {
+          const payload = row?.payload || {}
+          const body = payload?.body
+          const createdAt =
+            payload?.timestamp || row?.created_at || row?.timestamp || new Date().toISOString()
+
+          const description =
+            typeof body === 'string'
+              ? body.slice(0, 500)
+              : body
+                ? JSON.stringify(body).slice(0, 500)
+                : `Webhook received (${row?.event_type || 'webhook'})`
+
+          return {
+            id: String(row?.id ?? `${row?.event_type || 'webhook'}-${createdAt}`),
+            user_id: 'webhook',
+            user_name: 'Webhook',
+            organization_id: null,
+            action: String(row?.event_type || 'webhook'),
+            entity_type: null,
+            entity_id: null,
+            description,
+            metadata: null,
+            ip_address: payload?.ip ?? null,
+            user_agent: null,
+            created_at: createdAt,
+            user: null,
+            organization: null,
+          }
+        })
+
+        setLogs(mapped)
+      } else {
+        console.error('Error refreshing logs:', logsError)
       }
     } catch (error) {
       console.error('Error refreshing logs:', error)
