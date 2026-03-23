@@ -14,6 +14,28 @@ export async function generateReceiptPDF(
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+    // Try to embed the Fundflow logo from the app's public assets.
+    // If we can't fetch it (misconfigured env / network), we simply skip the logo.
+    let fundflowLogo: any = null
+    try {
+      const appUrl =
+        Deno.env.get("NEXT_PUBLIC_APP_URL") ||
+        Deno.env.get("APP_URL") ||
+        Deno.env.get("PUBLIC_APP_URL") ||
+        null
+
+      if (appUrl) {
+        const logoUrl = `${String(appUrl).replace(/\/$/, "")}/fundflow-logo.png`
+        const logoRes = await fetch(logoUrl)
+        if (logoRes.ok) {
+          const logoBytes = new Uint8Array(await logoRes.arrayBuffer())
+          fundflowLogo = await pdfDoc.embedPng(logoBytes)
+        }
+      }
+    } catch {
+      // Silent fail: printing/receipt generation should still work without the logo.
+    }
+
     const marginX = 50;
     const rightEdge = width - marginX;
 
@@ -56,10 +78,18 @@ export async function generateReceiptPDF(
       page.drawText(safeText, { x, y, size, font, color })
     }
 
-    const drawLabelValueRow = (label: string, value: string, y: number, opts?: { valueColor?: any }) => {
-      page.drawText(truncate(label, 22) + ':', { x: labelX, y, size: 10, font: helveticaFont, color: rgb(0.2, 0.2, 0.2) })
+    const drawLabelValueRow = (
+      label: string,
+      value: string,
+      y: number,
+      opts?: { valueColor?: any }
+    ) => {
+      const labelText = truncate(label, 22)
       const v = value ?? ''
-      page.drawText(truncate(String(v), maxValueChars), { x: valueX, y, size: 10, font: helveticaFont, color: opts?.valueColor ?? rgb(0, 0, 0) })
+      const valueText = truncate(String(v), maxValueChars)
+      const line = `${labelText}: ${valueText}`
+
+      drawCentered(line, y, 10, helveticaFont, opts?.valueColor ?? rgb(0, 0, 0))
     }
 
     const drawAvatar = (initial: string, centerX: number, centerY: number, radius: number) => {
@@ -124,13 +154,18 @@ export async function generateReceiptPDF(
       color: rgb(0.92, 0.94, 1)
     })
 
-    page.drawText("PAYMENT RECEIPT", {
-      x: marginX,
-      y: yPosition + 6,
-      size: 22,
-      font: helveticaBoldFont,
-      color: rgb(0, 0, 0)
-    })
+    if (fundflowLogo) {
+      const logoW = 120
+      const logoH = 34
+      page.drawImage(fundflowLogo, {
+        x: (width - logoW) / 2,
+        y: height - 100,
+        width: logoW,
+        height: logoH
+      })
+    }
+
+    drawCentered("TRANSACTION RECEIPT", yPosition + 6, 22, helveticaBoldFont, rgb(0, 0, 0))
 
     // Avatar + top identity row
     drawAvatar(memberInitial, marginX + 22, yPosition - 10, 18)
@@ -143,7 +178,7 @@ export async function generateReceiptPDF(
     yPosition -= sectionGap
 
     // Organization
-    page.drawText("Organization", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    drawCentered("Organization", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
     yPosition -= sectionGap / 1.2
     drawLabelValueRow("Name", payment?.member?.organization?.name || 'N/A', yPosition)
     yPosition -= rowHeight
@@ -154,7 +189,7 @@ export async function generateReceiptPDF(
     yPosition -= sectionGap
 
     // Member
-    page.drawText("Member", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    drawCentered("Member", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
     yPosition -= sectionGap / 1.2
     drawLabelValueRow("Name", memberName, yPosition)
     yPosition -= rowHeight
@@ -177,13 +212,13 @@ export async function generateReceiptPDF(
     const paymentCurrency = payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le')
     const amountText = `${paymentCurrency} ${paymentAmount.toFixed(2)}`
 
-    page.drawText("Amount Paid", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+    drawCentered("Amount Paid", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
     yPosition -= 12
     drawCentered(amountText, yPosition, 22, helveticaBoldFont, rgb(0, 0, 0))
     yPosition -= 28
 
     // Payment details
-    page.drawText("Payment Details", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    drawCentered("Payment Details", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
     yPosition -= sectionGap / 1.2
     drawLabelValueRow("Transaction ID", String(payment?.id || 'N/A'), yPosition)
     yPosition -= rowHeight
@@ -240,11 +275,11 @@ export async function generateReceiptPDF(
 
     if (monimeDescription) {
       yPosition -= 6
-      page.drawText("Description", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+      drawCentered("Description", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
       yPosition -= 12
       const lines = wrapText(String(monimeDescription), 80, 4)
       for (const line of lines) {
-        page.drawText(line, { x: marginX, y: yPosition, size: 10, font: helveticaFont, color: rgb(0, 0, 0) })
+        drawCentered(line, yPosition, 10, helveticaFont, rgb(0, 0, 0))
         yPosition -= rowHeight
       }
       yPosition -= 8
@@ -252,7 +287,7 @@ export async function generateReceiptPDF(
 
     // Line items (if any)
     if (monimePaymentData?.line_items?.length > 0) {
-      page.drawText("Line Items", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+      drawCentered("Line Items", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
       yPosition -= 14
 
       for (let i = 0; i < monimePaymentData.line_items.length; i++) {
@@ -265,7 +300,7 @@ export async function generateReceiptPDF(
         const itemQuantity = item?.quantity || 1
 
         const line = `${truncate(String(itemName), 28)} - ${itemCurrency} ${parseFloat(String(itemPrice)).toFixed(2)} x ${itemQuantity}`
-        page.drawText(line, { x: marginX + 5, y: yPosition, size: 9.5, font: helveticaFont, color: rgb(0, 0, 0) })
+        drawCentered(line, yPosition, 9.5, helveticaFont, rgb(0, 0, 0))
         yPosition -= 14
       }
     }
@@ -283,13 +318,13 @@ export async function generateReceiptPDF(
     })
 
     drawCentered("Thank you for your payment!", thankYouY, 12, helveticaBoldFont, rgb(0, 0, 0))
-    page.drawText("This is an official receipt for your records.", {
-      x: marginX,
-      y: officialY,
-      size: 9,
-      font: helveticaFont,
-      color: rgb(0.5, 0.5, 0.5),
-    })
+    drawCentered(
+      "This is an official receipt for your records.",
+      officialY,
+      9,
+      helveticaFont,
+      rgb(0.5, 0.5, 0.5)
+    )
 
     const pdfBytes = await pdfDoc.save();
     return new Uint8Array(pdfBytes);
