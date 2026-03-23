@@ -246,14 +246,28 @@ async function checkAndUnfreezeMember(
     }
 
     // Notify user
-    await supabaseClient.from("notifications").insert({
-        organization_id: organizationId || member.organization_id,
-        recipient_id: member.user_id,
-        member_id: memberId,
-        title: "Account Reactivated",
-        message: "Welcome back! Your account has been reactivated since all outstanding balances are now settled.",
-        type: "success",
-    })
+    const { data: existingReactivationNotif } = await supabaseClient
+        .from("notifications")
+        .select("id")
+        .eq("recipient_id", member.user_id)
+        .eq("member_id", memberId)
+        .eq("title", "Account Reactivated")
+        .eq("type", "success")
+        .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .maybeSingle();
+
+    if (!existingReactivationNotif) {
+        await supabaseClient.from("notifications").insert({
+            organization_id: organizationId || member.organization_id,
+            recipient_id: member.user_id,
+            member_id: memberId,
+            title: "Account Reactivated",
+            message: "Welcome back! Your account has been reactivated since all outstanding balances are now settled.",
+            type: "success",
+        })
+    } else {
+        console.log(`Skipping duplicate Account Reactivated notification for member ${memberId}`)
+    }
 
     console.log("Member successfully unfrozen")
 }

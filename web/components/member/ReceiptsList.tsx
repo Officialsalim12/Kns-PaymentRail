@@ -1,7 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Download, FileText, ExternalLink } from 'lucide-react'
+import { Download, FileText, Printer } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
 import { getMemberDisplayAmount } from '@/lib/utils/payment-display'
@@ -27,6 +27,131 @@ interface Props {
 }
 
 export default function ReceiptsList({ receipts }: Props) {
+  const resolveReceiptUrlForPrint = async (
+    pdfUrl: string | null | undefined,
+    storagePath?: string | null
+  ) => {
+    const supabase = createClient()
+
+    let path = storagePath || null
+    if (!path && pdfUrl) {
+      const match = pdfUrl.match(/\/receipts\/(.+)$/)
+      if (match) path = match[1]
+    }
+
+    if (pdfUrl && pdfUrl.startsWith('http')) return pdfUrl
+
+    if (!path) return null
+
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from('receipts')
+      .createSignedUrl(path, 60)
+
+    if (!signedUrlError && signedUrlData?.signedUrl) return signedUrlData.signedUrl
+
+    const { data: { publicUrl: generatedUrl } } = supabase.storage.from('receipts').getPublicUrl(path)
+    return generatedUrl || null
+  }
+
+  const getReceiptBlobForPrint = async (
+    pdfUrl: string | null | undefined,
+    receiptNumber: string | null | undefined,
+    storagePath?: string | null
+  ): Promise<Blob | null> => {
+    if (!receiptNumber) return null
+
+    const supabase = createClient()
+
+    let path = storagePath || null
+    if (!path && pdfUrl) {
+      const match = pdfUrl.match(/\/receipts\/(.+)$/)
+      if (match) path = match[1]
+    }
+
+    let publicUrl = pdfUrl || null
+    if (!publicUrl && path) {
+      try {
+        const { data: { publicUrl: generatedUrl } } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(path)
+        publicUrl = generatedUrl || null
+      } catch {
+      }
+    }
+
+    if (!path && !publicUrl) return null
+
+    if (path) {
+      try {
+        const { data: downloadData, error: downloadError } = await supabase
+          .storage
+          .from('receipts')
+          .download(path)
+
+        if (downloadData && !downloadError && downloadData.size > 0) return downloadData
+      } catch {
+      }
+    }
+
+    if (path) {
+      try {
+        const { data: signedUrlData, error: signedUrlError } = await supabase
+          .storage
+          .from('receipts')
+          .createSignedUrl(path, 60)
+
+        if (signedUrlData?.signedUrl && !signedUrlError) {
+          const response = await fetch(signedUrlData.signedUrl)
+          if (response.ok) {
+            const blob = await response.blob()
+            if (blob.size > 0) return blob
+          }
+        }
+      } catch {
+      }
+    }
+
+    if (publicUrl && publicUrl.startsWith('http')) {
+      try {
+        const response = await fetch(publicUrl)
+        if (response.ok) {
+          const blob = await response.blob()
+          if (blob.size > 0) return blob
+        }
+      } catch {
+      }
+    }
+
+    return null
+  }
+
+  const handlePrint = async (
+    pdfUrl: string | null | undefined,
+    receiptNumber: string | null | undefined,
+    storagePath?: string | null
+  ) => {
+    try {
+      if (!receiptNumber) {
+        alert('Receipt number is not available. Please contact support.')
+        return
+      }
+
+      const blob = await getReceiptBlobForPrint(pdfUrl, receiptNumber, storagePath || null)
+      if (!blob) {
+        if (pdfUrl && pdfUrl.startsWith('http')) window.open(pdfUrl, '_blank')
+        else alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        return
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob)
+      window.open(blobUrl, '_blank')
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
+    } catch (error) {
+      console.error('Error printing receipt:', error)
+      alert('Unable to open receipt for printing. Please contact support.')
+    }
+  }
+
   const handleDownload = async (pdfUrl: string | null | undefined, receiptNumber: string | null | undefined, storagePath?: string | null) => {
     try {
       // Early validation
@@ -180,29 +305,48 @@ export default function ReceiptsList({ receipts }: Props) {
                       <p className="text-sm text-gray-500 mt-1">{format(new Date(receipt.payment.payment_date), 'MMM dd, yyyy')}</p>
                     </div>
                     {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
-                      <button
-                        onClick={() => {
-                          if (receipt.receipt_number) {
-                            handleDownload(
-                              receipt.pdf_url || null,
-                              receipt.receipt_number,
-                              receipt.pdf_storage_path || null
-                            )
-                          }
-                        }}
-                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors text-xs"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </button>
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (receipt.receipt_number) {
+                              handleDownload(
+                                receipt.pdf_url || null,
+                                receipt.receipt_number,
+                                receipt.pdf_storage_path || null
+                              )
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors text-xs"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </button>
+                        <button
+                          onClick={() => handlePrint(receipt.pdf_url || null, receipt.receipt_number, receipt.pdf_storage_path || null)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-md transition-colors text-xs"
+                          title="Print receipt"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Print
+                        </button>
+                      </div>
                     ) : (
-                      <span 
-                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-not-allowed text-xs"
-                        title="Receipt URL is not available"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </span>
+                      <div className="flex-shrink-0 flex items-center gap-2">
+                        <span
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-not-allowed border border-gray-200 rounded-md text-xs"
+                          title="Receipt URL is not available"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </span>
+                        <span
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-not-allowed border border-gray-200 rounded-md text-xs"
+                          title="Receipt URL is not available"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Print
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="space-y-2 text-sm">
@@ -257,7 +401,8 @@ export default function ReceiptsList({ receipts }: Props) {
                         {receipt.payment.description || 'N/A'}
                       </td>
                       <td className="px-4 lg:px-6 py-4 text-sm">
-                        {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
+                      {receipt.receipt_number && (receipt.pdf_url || receipt.pdf_storage_path) ? (
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => {
                               if (receipt.receipt_number) {
@@ -268,20 +413,38 @@ export default function ReceiptsList({ receipts }: Props) {
                                 )
                               }
                             }}
-                            className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                            className="flex items-center gap-2 px-3 py-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors text-xs"
                           >
                             <Download className="h-4 w-4" />
                             Download
                           </button>
-                        ) : (
-                          <span 
-                            className="flex items-center gap-2 px-3 py-1.5 text-gray-400 cursor-not-allowed"
+                          <button
+                            onClick={() => handlePrint(receipt.pdf_url || null, receipt.receipt_number, receipt.pdf_storage_path || null)}
+                            className="flex items-center gap-2 px-3 py-1.5 text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-md transition-colors text-xs"
+                            title="Print receipt"
+                          >
+                            <Printer className="h-4 w-4" />
+                            Print
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="flex items-center gap-2 px-3 py-1.5 text-gray-400 cursor-not-allowed border border-gray-200 rounded-md text-xs"
                             title="Receipt URL is not available. The receipt may not have been generated yet. Please contact support."
                           >
                             <Download className="h-4 w-4" />
                             Download
                           </span>
-                        )}
+                          <span
+                            className="flex items-center gap-2 px-3 py-1.5 text-gray-400 cursor-not-allowed border border-gray-200 rounded-md text-xs"
+                            title="Receipt URL is not available. The receipt may not have been generated yet. Please contact support."
+                          >
+                            <Printer className="h-4 w-4" />
+                            Print
+                          </span>
+                        </div>
+                      )}
                       </td>
                     </tr>
                   ))}

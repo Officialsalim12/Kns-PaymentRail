@@ -14,18 +14,78 @@ export async function generateReceiptPDF(
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let yPosition = height - 50;
+    const marginX = 50;
+    const rightEdge = width - marginX;
 
-    // Header
-    page.drawText("PAYMENT RECEIPT", {
-        x: 50,
-        y: yPosition,
-        size: 24,
+    const labelX = marginX;
+    const valueX = marginX + 200;
+    const maxValueChars = 34;
+    const rowHeight = 16;
+    const sectionGap = 18;
+
+    const truncate = (input: string, maxChars: number) => {
+      if (!input) return ''
+      if (input.length <= maxChars) return input
+      return input.slice(0, Math.max(0, maxChars - 3)) + '...'
+    }
+
+    const wrapText = (input: string, maxCharsPerLine: number, maxLines: number) => {
+      if (!input) return []
+      const words = input.split(/\s+/).filter(Boolean)
+      const lines: string[] = []
+      let current = ''
+
+      for (const w of words) {
+        const next = current ? `${current} ${w}` : w
+        if (next.length <= maxCharsPerLine) {
+          current = next
+          continue
+        }
+        if (current) lines.push(current)
+        current = w
+        if (lines.length >= maxLines) break
+      }
+      if (lines.length < maxLines && current) lines.push(current)
+      return lines
+    }
+
+    const drawCentered = (text: string, y: number, size: number, font: any, color: any) => {
+      const safeText = text || ''
+      const textWidth = font.widthOfTextAtSize(safeText, size)
+      const x = (width - textWidth) / 2
+      page.drawText(safeText, { x, y, size, font, color })
+    }
+
+    const drawLabelValueRow = (label: string, value: string, y: number, opts?: { valueColor?: any }) => {
+      page.drawText(truncate(label, 22) + ':', { x: labelX, y, size: 10, font: helveticaFont, color: rgb(0.2, 0.2, 0.2) })
+      const v = value ?? ''
+      page.drawText(truncate(String(v), maxValueChars), { x: valueX, y, size: 10, font: helveticaFont, color: opts?.valueColor ?? rgb(0, 0, 0) })
+    }
+
+    const drawAvatar = (initial: string, centerX: number, centerY: number, radius: number) => {
+      const bg = rgb(0.95, 0.97, 1)
+      const border = rgb(0.2, 0.6, 1)
+      page.drawEllipse({
+        x: centerX,
+        y: centerY,
+        xScale: radius,
+        yScale: radius,
+        color: bg,
+        borderColor: border,
+        borderWidth: 1
+      })
+
+      const letter = (initial || '?').toUpperCase().slice(0, 1)
+      const fontSize = 16
+      const letterWidth = helveticaBoldFont.widthOfTextAtSize(letter, fontSize)
+      page.drawText(letter, {
+        x: centerX - letterWidth / 2,
+        y: centerY - fontSize / 3,
+        size: fontSize,
         font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 40;
+        color: rgb(0.1, 0.2, 0.35)
+      })
+    }
 
     // Always prefer the platform's recorded payment timestamp for the receipt,
     // and only fall back to Monime metadata if those fields are missing.
@@ -38,312 +98,198 @@ export async function generateReceiptPDF(
         monimePaymentData?.paidAt ||
         monimePaymentData?.completed_at ||
         monimePaymentData?.completedAt ||
-        new Date().toISOString();
+        new Date().toISOString()
 
-    const actualPaymentDate = new Date(paymentTimestamp);
+    const actualPaymentDate = new Date(paymentTimestamp)
+    const formattedDate = actualPaymentDate.toLocaleString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    })
 
-    // Receipt Number and Date
-    yPosition -= 30;
-    page.drawText(`Receipt Number: ${receiptNumber}`, {
-        x: 50,
-        y: yPosition,
-        size: 12,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
+    const memberName = payment?.member?.full_name || 'Member'
+    const memberInitial = memberName?.[0] || 'M'
 
-    yPosition -= 20;
-    page.drawText(`Date: ${actualPaymentDate.toLocaleString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-    })}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0.5, 0.5, 0.5),
-    });
+    let yPosition = height - 56
 
-    yPosition -= 40;
+    // Header
+    page.drawLine({
+      start: { x: marginX, y: yPosition + 14 },
+      end: { x: rightEdge, y: yPosition + 14 },
+      thickness: 1,
+      color: rgb(0.92, 0.94, 1)
+    })
 
-    // Organization Information
-    page.drawText("Organization Information", {
-        x: 50,
-        y: yPosition,
-        size: 14,
-        font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
+    page.drawText("PAYMENT RECEIPT", {
+      x: marginX,
+      y: yPosition + 6,
+      size: 22,
+      font: helveticaBoldFont,
+      color: rgb(0, 0, 0)
+    })
 
-    yPosition -= 25;
-    page.drawText(`Name: ${payment.member.organization.name}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
+    // Avatar + top identity row
+    drawAvatar(memberInitial, marginX + 22, yPosition - 10, 18)
+    drawCentered("Receipt Information", yPosition - 2, 12, helveticaBoldFont, rgb(0, 0, 0))
+    yPosition -= 44
 
-    yPosition -= 15;
-    if (payment.member.organization.organization_type) {
-        page.drawText(`Type: ${payment.member.organization.organization_type}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 15;
+    drawLabelValueRow("Receipt No", receiptNumber, yPosition)
+    yPosition -= rowHeight
+    drawLabelValueRow("Date", formattedDate, yPosition)
+    yPosition -= sectionGap
+
+    // Organization
+    page.drawText("Organization", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    yPosition -= sectionGap / 1.2
+    drawLabelValueRow("Name", payment?.member?.organization?.name || 'N/A', yPosition)
+    yPosition -= rowHeight
+    if (payment?.member?.organization?.organization_type) {
+      drawLabelValueRow("Type", payment.member.organization.organization_type, yPosition)
+      yPosition -= rowHeight
     }
+    yPosition -= sectionGap
 
-    yPosition -= 20;
-
-    // Member Information
-    page.drawText("Member Information", {
-        x: 50,
-        y: yPosition,
-        size: 14,
-        font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 25;
-    page.drawText(`Name: ${payment.member.full_name}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 15;
-    page.drawText(`Membership ID: ${payment.member.membership_id}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 15;
-    if (payment.member.email) {
-        page.drawText(`Email: ${payment.member.email}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 15;
+    // Member
+    page.drawText("Member", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    yPosition -= sectionGap / 1.2
+    drawLabelValueRow("Name", memberName, yPosition)
+    yPosition -= rowHeight
+    drawLabelValueRow("Membership ID", String(payment?.member?.membership_id || 'N/A'), yPosition)
+    yPosition -= rowHeight
+    if (payment?.member?.email) {
+      drawLabelValueRow("Email", String(payment.member.email), yPosition)
+      yPosition -= rowHeight
     }
-
-    if (payment.member.phone_number) {
-        page.drawText(`Phone: ${payment.member.phone_number}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 15;
+    if (payment?.member?.phone_number) {
+      drawLabelValueRow("Phone", String(payment.member.phone_number), yPosition)
+      yPosition -= rowHeight
     }
+    yPosition -= sectionGap
 
-    yPosition -= 20;
+    // Amount
+    const paymentAmount =
+      typeof payment.amount === 'string' ? parseFloat(payment.amount) : (payment.amount || 0)
 
-    // Payment Details
-    page.drawText("Payment Details", {
-        x: 50,
-        y: yPosition,
-        size: 14,
-        font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
+    const paymentCurrency = payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le')
+    const amountText = `${paymentCurrency} ${paymentAmount.toFixed(2)}`
 
-    yPosition -= 25;
-    page.drawText(`Transaction ID: ${payment.id}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
+    page.drawText("Amount Paid", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+    yPosition -= 12
+    drawCentered(amountText, yPosition, 22, helveticaBoldFont, rgb(0, 0, 0))
+    yPosition -= 28
 
-    yPosition -= 15;
+    // Payment details
+    page.drawText("Payment Details", { x: marginX, y: yPosition, size: 13, font: helveticaBoldFont, color: rgb(0, 0, 0) })
+    yPosition -= sectionGap / 1.2
+    drawLabelValueRow("Transaction ID", String(payment?.id || 'N/A'), yPosition)
+    yPosition -= rowHeight
 
-    const orderNumber = monimePaymentData?.order_number ||
-        monimePaymentData?.orderNumber ||
-        monimePaymentData?.order_id ||
-        monimePaymentData?.orderId ||
-        monimePaymentData?.order?.number ||
-        monimePaymentData?.order?.id ||
-        payment.reference_number ||
-        null;
+    const orderNumber =
+      monimePaymentData?.order_number ||
+      monimePaymentData?.orderNumber ||
+      monimePaymentData?.order_id ||
+      monimePaymentData?.orderId ||
+      monimePaymentData?.order?.number ||
+      monimePaymentData?.order?.id ||
+      payment?.reference_number ||
+      null
 
     if (orderNumber) {
-        page.drawText(`Order Number: ${orderNumber}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 15;
+      drawLabelValueRow("Order No", String(orderNumber), yPosition)
+      yPosition -= rowHeight
     }
 
-    const monimePaymentId = monimePaymentData?.id || payment.monime_payment_id;
+    const monimePaymentId = monimePaymentData?.id || payment?.monime_payment_id
     if (monimePaymentId) {
-        page.drawText(`Monime Payment ID: ${monimePaymentId}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 15;
+      drawLabelValueRow("Monime Pay ID", String(monimePaymentId), yPosition)
+      yPosition -= rowHeight
     }
 
-    page.drawText(`Payment Provider: Monime`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
+    drawLabelValueRow("Provider", "Monime", yPosition)
+    yPosition -= rowHeight
 
-    yPosition -= 25;
+    const monimePaymentMethod =
+      monimePaymentData?.payment_method ||
+      monimePaymentData?.paymentMethod ||
+      monimePaymentData?.method ||
+      payment?.payment_method ||
+      "Mobile Payment"
 
-    const paymentAmount = typeof payment.amount === 'string'
-        ? parseFloat(payment.amount)
-        : (payment.amount || 0);
+    drawLabelValueRow("Method", String(monimePaymentMethod), yPosition)
+    yPosition -= rowHeight
 
-    const paymentCurrency = payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le');
+    const monimeStatus =
+      monimePaymentData?.status ||
+      monimePaymentData?.payment_status ||
+      payment?.payment_status ||
+      "Completed"
 
-    const amountText = `Amount: ${paymentCurrency} ${paymentAmount.toFixed(2)}`;
-    page.drawText(amountText, {
-        x: 50,
-        y: yPosition,
-        size: 16,
-        font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
+    drawLabelValueRow("Status", String(monimeStatus), yPosition, { valueColor: rgb(0, 0.6, 0) })
+    yPosition -= rowHeight
 
-    yPosition -= 25;
-    page.drawText(`Payment Date: ${actualPaymentDate.toLocaleString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-    })}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 15;
-
-    const monimePaymentMethod = monimePaymentData?.payment_method ||
-        monimePaymentData?.paymentMethod ||
-        monimePaymentData?.method ||
-        payment.payment_method ||
-        "Mobile Payment";
-
-    page.drawText(`Payment Method: ${monimePaymentMethod}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0, 0),
-    });
-
-    yPosition -= 15;
-
-    const monimeStatus = monimePaymentData?.status ||
-        monimePaymentData?.payment_status ||
-        payment.payment_status ||
-        "Completed";
-
-    page.drawText(`Payment Status: ${monimeStatus}`, {
-        x: 50,
-        y: yPosition,
-        size: 10,
-        font: helveticaFont,
-        color: rgb(0, 0.6, 0),
-    });
-
-    yPosition -= 20;
-
-    const monimeDescription = monimePaymentData?.description ||
-        monimePaymentData?.name ||
-        payment.description ||
-        null;
+    // Description
+    const monimeDescription =
+      monimePaymentData?.description ||
+      monimePaymentData?.name ||
+      payment?.description ||
+      null
 
     if (monimeDescription) {
-        page.drawText(`Description: ${monimeDescription}`, {
-            x: 50,
-            y: yPosition,
-            size: 10,
-            font: helveticaFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 20;
+      yPosition -= 6
+      page.drawText("Description", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+      yPosition -= 12
+      const lines = wrapText(String(monimeDescription), 80, 4)
+      for (const line of lines) {
+        page.drawText(line, { x: marginX, y: yPosition, size: 10, font: helveticaFont, color: rgb(0, 0, 0) })
+        yPosition -= rowHeight
+      }
+      yPosition -= 8
     }
 
+    // Line items (if any)
     if (monimePaymentData?.line_items?.length > 0) {
-        yPosition -= 10;
-        page.drawText("Line Items:", {
-            x: 50,
-            y: yPosition,
-            size: 12,
-            font: helveticaBoldFont,
-            color: rgb(0, 0, 0),
-        });
-        yPosition -= 20;
+      page.drawText("Line Items", { x: marginX, y: yPosition, size: 11, font: helveticaBoldFont, color: rgb(0.2, 0.2, 0.2) })
+      yPosition -= 14
 
-        monimePaymentData.line_items.forEach((item: any, index: number) => {
-            if (yPosition < 100) return;
-            const itemName = item.name || item.description || `Item ${index + 1}`;
-            const itemPrice = item.price?.value || item.price || item.amount || 0;
-            const itemCurrency = item.price?.currency || item.currency || paymentCurrency;
-            const itemQuantity = item.quantity || 1;
+      for (let i = 0; i < monimePaymentData.line_items.length; i++) {
+        // Keep space for the footer at the bottom of the page.
+        if (yPosition < 170) break
+        const item = monimePaymentData.line_items[i]
+        const itemName = item?.name || item?.description || `Item ${i + 1}`
+        const itemPrice = item?.price?.value || item?.price || item?.amount || 0
+        const itemCurrency = item?.price?.currency || item?.currency || paymentCurrency
+        const itemQuantity = item?.quantity || 1
 
-            page.drawText(`${itemName} - ${itemCurrency} ${parseFloat(itemPrice.toString()).toFixed(2)} x ${itemQuantity}`, {
-                x: 60,
-                y: yPosition,
-                size: 9,
-                font: helveticaFont,
-                color: rgb(0, 0, 0),
-            });
-            yPosition -= 15;
-        });
+        const line = `${truncate(String(itemName), 28)} - ${itemCurrency} ${parseFloat(String(itemPrice)).toFixed(2)} x ${itemQuantity}`
+        page.drawText(line, { x: marginX + 5, y: yPosition, size: 9.5, font: helveticaFont, color: rgb(0, 0, 0) })
+        yPosition -= 14
+      }
     }
 
-    yPosition = 50;
-    page.drawText("Thank you for your payment!", {
-        x: 50,
-        y: yPosition,
-        size: 12,
-        font: helveticaBoldFont,
-        color: rgb(0, 0, 0),
-    });
+    // Footer
+    const footerLineY = 70
+    const thankYouY = 50
+    const officialY = 30
 
-    yPosition -= 20;
+    page.drawLine({
+      start: { x: marginX, y: footerLineY },
+      end: { x: rightEdge, y: footerLineY },
+      thickness: 1,
+      color: rgb(0.92, 0.94, 1),
+    })
+
+    drawCentered("Thank you for your payment!", thankYouY, 12, helveticaBoldFont, rgb(0, 0, 0))
     page.drawText("This is an official receipt for your records.", {
-        x: 50,
-        y: yPosition,
-        size: 9,
-        font: helveticaFont,
-        color: rgb(0.5, 0.5, 0.5),
-    });
+      x: marginX,
+      y: officialY,
+      size: 9,
+      font: helveticaFont,
+      color: rgb(0.5, 0.5, 0.5),
+    })
 
     const pdfBytes = await pdfDoc.save();
     return new Uint8Array(pdfBytes);

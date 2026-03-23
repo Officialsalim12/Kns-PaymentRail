@@ -677,14 +677,28 @@ async function handlePaymentCompleted(
               .eq("id", payment.member_id);
 
             if (payment.member?.user_id) {
-              await supabaseClient.from("notifications").insert({
-                organization_id: payment.organization_id,
-                recipient_id: payment.member.user_id,
-                member_id: payment.member_id,
-                title: "Account Reactivated",
-                message: "Welcome back! Your account has been reactivated since your balance is now cleared.",
-                type: "success",
-              });
+              const { data: existingReactivationNotif } = await supabaseClient
+                .from("notifications")
+                .select("id")
+                .eq("recipient_id", payment.member.user_id)
+                .eq("member_id", payment.member_id)
+                .eq("title", "Account Reactivated")
+                .eq("type", "success")
+                .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+                .maybeSingle();
+
+              if (!existingReactivationNotif) {
+                await supabaseClient.from("notifications").insert({
+                  organization_id: payment.organization_id,
+                  recipient_id: payment.member.user_id,
+                  member_id: payment.member_id,
+                  title: "Account Reactivated",
+                  message: "Welcome back! Your account has been reactivated since your balance is now cleared.",
+                  type: "success",
+                });
+              } else {
+                console.log(`Skipping duplicate Account Reactivated notification for member ${payment.member_id}`);
+              }
             }
           }
         } catch (recalcError) {
@@ -891,16 +905,17 @@ async function handlePaymentCompleted(
   // Send notification to member
   if (payment.member?.user_id) {
     const memberNotificationMessage = `Your payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} has been completed successfully. Reference: ${payment.reference_number || payment.id}.`;
+    const paymentReferenceForDedupe = payment.reference_number || payment.id
 
-    // Check for duplicate member notification (within 5 minutes) to handle potential double-webhook or trigger conflicts
     const { data: existingMemberNotif } = await supabaseClient
       .from("notifications")
       .select("id")
       .eq("recipient_id", payment.member.user_id)
       .eq("title", "Payment Completed")
       .eq("type", "payment")
-      .eq("message", memberNotificationMessage)
-      .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .eq("member_id", payment.member_id)
+      .ilike("message", `%Reference: ${paymentReferenceForDedupe}%`)
+      .gt("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString())
       .maybeSingle();
 
     if (!existingMemberNotif) {
@@ -963,16 +978,17 @@ async function handlePaymentCompleted(
 
     if (adminUser) {
       const adminNotificationMessage = `Payment of ${payment.amount} ${data.currency === 'SLE' ? 'Le' : (data.currency || "Le")} from ${payment.member?.full_name || "Member"} (${payment.reference_number || payment.id}) has been completed.`;
+      const paymentReferenceForDedupe = payment.reference_number || payment.id
 
-      // Check for duplicate admin notification (within 5 minutes)
       const { data: existingAdminNotif } = await supabaseClient
         .from("notifications")
         .select("id")
         .eq("recipient_id", adminUser.id)
         .eq("title", "New Payment Received")
         .eq("type", "payment")
-        .eq("message", adminNotificationMessage)
-        .gt("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .eq("member_id", payment.member_id)
+        .ilike("message", `%${paymentReferenceForDedupe}%`)
+        .gt("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString())
         .maybeSingle();
 
       if (!existingAdminNotif) {

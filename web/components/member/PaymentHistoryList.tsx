@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { CheckCircle, Clock, XCircle, Download, ExternalLink, FileText, Loader2 } from 'lucide-react'
+import { CheckCircle, Clock, XCircle, Download, FileText, Loader2, Printer } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -360,6 +360,98 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
     }
   }
 
+  const handlePrintReceipt = async (pdfUrl: string | null | undefined, receiptNumber: string | null | undefined, storagePath?: string | null) => {
+    try {
+      if (!receiptNumber || typeof receiptNumber !== 'string' || receiptNumber.trim().length === 0) {
+        alert('Receipt number is not available. Please contact support.')
+        return
+      }
+
+      const supabase = createClient()
+
+      let path = storagePath || null
+      if (!path && pdfUrl) {
+        const match = pdfUrl.match(/\/receipts\/(.+)$/)
+        if (match) path = match[1]
+      }
+
+      let publicUrl = pdfUrl || null
+      if (!publicUrl && path) {
+        try {
+          const { data: { publicUrl: generatedUrl } } = supabase.storage
+            .from('receipts')
+            .getPublicUrl(path)
+          publicUrl = generatedUrl || null
+        } catch {
+        }
+      }
+
+      if (!path && !publicUrl) {
+        alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        return
+      }
+
+      let blob: Blob | null = null
+
+      if (path) {
+        try {
+          const { data: downloadData, error: downloadError } = await supabase
+            .storage
+            .from('receipts')
+            .download(path)
+
+          if (downloadData && !downloadError && downloadData.size > 0) blob = downloadData
+        } catch {
+        }
+      }
+
+      if (!blob && path) {
+        try {
+          const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+            .from('receipts')
+            .createSignedUrl(path, 60)
+
+          if (!signedUrlError && signedUrlData?.signedUrl) {
+            const response = await fetch(signedUrlData.signedUrl)
+            if (response.ok) {
+              const fetchedBlob = await response.blob()
+              if (fetchedBlob.size > 0) blob = fetchedBlob
+            }
+          }
+        } catch {
+        }
+      }
+
+      if (!blob && publicUrl && publicUrl.startsWith('http')) {
+        try {
+          const response = await fetch(publicUrl)
+          if (response.ok) {
+            const fetchedBlob = await response.blob()
+            if (fetchedBlob.size > 0) blob = fetchedBlob
+          }
+        } catch {
+        }
+      }
+
+      if (blob) {
+        const blobUrl = window.URL.createObjectURL(blob)
+        window.open(blobUrl, '_blank')
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
+        return
+      }
+
+      if (pdfUrl && pdfUrl.startsWith('http')) {
+        window.open(pdfUrl, '_blank')
+        return
+      }
+
+      alert('Unable to open the receipt for printing. Please contact support.')
+    } catch (error) {
+      console.error('Error printing receipt:', error)
+      alert('Unable to open receipt for printing. Please contact support.')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
@@ -457,22 +549,41 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
 
                       if (hasReceiptUrl) {
                         return (
-                          <button
-                            onClick={() => {
-                              const receiptNum = normalizedReceipt?.receipt_number
-                              if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
-                                handleDownloadReceipt(
-                                  normalizedReceipt.pdf_url || null,
-                                  receiptNum,
-                                  normalizedReceipt.pdf_storage_path || null
-                                )
-                              }
-                            }}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary-100 active:scale-95 transition-all"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            Download Receipt
-                          </button>
+                          <div className="w-full flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const receiptNum = normalizedReceipt?.receipt_number
+                                if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
+                                  handleDownloadReceipt(
+                                    normalizedReceipt.pdf_url || null,
+                                    receiptNum,
+                                    normalizedReceipt.pdf_storage_path || null
+                                  )
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-primary-100 active:scale-95 transition-all"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Download
+                            </button>
+                            <button
+                              onClick={() => {
+                                const receiptNum = normalizedReceipt?.receipt_number
+                                if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
+                                  handlePrintReceipt(
+                                    normalizedReceipt.pdf_url || null,
+                                    receiptNum,
+                                    normalizedReceipt.pdf_storage_path || null
+                                  )
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-primary-200 text-primary-700 text-xs font-bold rounded-xl hover:bg-primary-50 active:scale-95 transition-all"
+                              title="Print receipt"
+                            >
+                              <Printer className="h-3.5 w-3.5" />
+                              Print
+                            </button>
+                          </div>
                         )
                       }
                       return null
@@ -556,22 +667,41 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
 
                           if (hasReceiptUrl) {
                             return (
-                              <button
-                                onClick={() => {
-                                  const receiptNum = normalizedReceipt?.receipt_number
-                                  if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
-                                    handleDownloadReceipt(
-                                      normalizedReceipt.pdf_url || null,
-                                      receiptNum,
-                                      normalizedReceipt.pdf_storage_path || null
-                                    )
-                                  }
-                                }}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-xs font-bold transition-all shadow-sm shadow-primary-100"
-                              >
-                                <Download className="h-3 w-3" />
-                                Download
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    const receiptNum = normalizedReceipt?.receipt_number
+                                    if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
+                                      handleDownloadReceipt(
+                                        normalizedReceipt.pdf_url || null,
+                                        receiptNum,
+                                        normalizedReceipt.pdf_storage_path || null
+                                      )
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-xs font-bold transition-all shadow-sm shadow-primary-100"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  Download
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const receiptNum = normalizedReceipt?.receipt_number
+                                    if (receiptNum && typeof receiptNum === 'string' && receiptNum.trim().length > 0) {
+                                      handlePrintReceipt(
+                                        normalizedReceipt.pdf_url || null,
+                                        receiptNum,
+                                        normalizedReceipt.pdf_storage_path || null
+                                      )
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-primary-200 text-primary-700 hover:bg-primary-50 rounded-lg text-xs font-bold transition-all"
+                                  title="Print receipt"
+                                >
+                                  <Printer className="h-3 w-3" />
+                                  Print
+                                </button>
+                              </div>
                             )
                           }
                           return <span className="text-gray-300">-</span>
