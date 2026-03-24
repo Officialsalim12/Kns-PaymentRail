@@ -31,10 +31,12 @@ export default function MembersManagement({ members: initialMembers, organizatio
   const [members, setMembers] = useState(initialMembers)
   const [loading, setLoading] = useState<string | null>(null)
   const [approveModal, setApproveModal] = useState<{ memberId: string; memberName: string } | null>(null)
-  const [initialBalance, setInitialBalance] = useState<string>('0')
+
   const [tabsManager, setTabsManager] = useState<{ memberId: string; memberName: string; organizationId: string } | null>(null)
   const [showBulkTabCreator, setShowBulkTabCreator] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
 
   // Close dropdown when clicking outside
@@ -76,15 +78,11 @@ export default function MembersManagement({ members: initialMembers, organizatio
     }
   }, [organizationId, router])
 
-  const updateMemberStatus = async (memberId: string, newStatus: string, balance?: number) => {
+  const updateMemberStatus = async (memberId: string, newStatus: string) => {
     setLoading(memberId)
     try {
       const supabase = createClient()
-      const updateData: { status: string; unpaid_balance?: number } = { status: newStatus }
-
-      if (newStatus === 'active' && balance !== undefined) {
-        updateData.unpaid_balance = balance
-      }
+      const updateData = { status: newStatus }
 
       const { error } = await supabase
         .from('members')
@@ -94,10 +92,10 @@ export default function MembersManagement({ members: initialMembers, organizatio
       if (error) throw error
 
       setMembers(members.map(m =>
-        m.id === memberId ? { ...m, status: newStatus, unpaid_balance: balance !== undefined ? balance : m.unpaid_balance } : m
+        m.id === memberId ? { ...m, status: newStatus } : m
       ))
       setApproveModal(null)
-      setInitialBalance('0')
+
       router.refresh()
     } catch (error: any) {
       alert(`Error updating member: ${error.message}`)
@@ -107,106 +105,12 @@ export default function MembersManagement({ members: initialMembers, organizatio
   }
 
   const handleApproveClick = (memberId: string, memberName: string) => {
-    const member = members.find(m => m.id === memberId)
-    setInitialBalance(member?.unpaid_balance?.toString() || '0')
-    setApproveModal({ memberId, memberName })
-  }
-
-  const handleApproveSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!approveModal) return
-
-    const balance = parseFloat(initialBalance) || 0
-    updateMemberStatus(approveModal.memberId, 'active', balance)
-  }
-
-  const recalculateBalance = async (memberId: string) => {
-    if (!confirm("This will recalculate the member's balance based on existing payments. Continue?")) {
-      return
-    }
-
-    setLoading(memberId)
-    try {
-      const supabase = createClient()
-      const { data: payments, error: paymentsError } = await supabase
-        .from('payments')
-        .select('description, amount')
-        .eq('member_id', memberId)
-
-      if (paymentsError) {
-        throw new Error(`Failed to fetch payments: ${paymentsError.message}`)
-      }
-
-      let totalBalanceAdded = 0
-      if (payments && payments.length > 0) {
-        payments.forEach((payment) => {
-          if (payment.description) {
-            const balanceMatch = payment.description.match(/\[BALANCE_ADDED:\s*([\d]+\.?[\d]*)\]/i)
-            if (balanceMatch && balanceMatch[1]) {
-              const balanceAmount = parseFloat(balanceMatch[1])
-              if (!isNaN(balanceAmount)) {
-                totalBalanceAdded += balanceAmount
-              }
-            }
-          }
-        })
-      }
-
-      const { error: updateError } = await supabase
-        .from('members')
-        .update({ unpaid_balance: totalBalanceAdded })
-        .eq('id', memberId)
-
-      if (updateError) {
-        if (updateError.message.includes('unpaid_balance') && (updateError.message.includes('schema cache') || updateError.message.includes('Could not find'))) {
-          throw new Error(`The 'unpaid_balance' column does not exist in the members table. Please run the SQL script in database/add_unpaid_balance_column.sql in your Supabase SQL Editor to add this column.`)
-        }
-        throw new Error(`Failed to update balance: ${updateError.message}`)
-      }
-
-      setMembers(members.map(m =>
-        m.id === memberId ? { ...m, unpaid_balance: totalBalanceAdded } : m
-      ))
-
-      alert(`Balance recalculated successfully. New balance: ${totalBalanceAdded.toFixed(2)}`)
-      router.refresh()
-    } catch (error: any) {
-      alert(`Error recalculating balance: ${error.message}`)
-    } finally {
-      setLoading(null)
+    if (confirm(`Are you sure you want to approve ${memberName}?`)) {
+      updateMemberStatus(memberId, 'active')
     }
   }
 
-  const resetBalance = async (memberId: string) => {
-    if (!confirm("This will reset the member's balance to 0. Continue?")) {
-      return
-    }
 
-    setLoading(memberId)
-    try {
-      const supabase = createClient()
-
-      const { error: updateError } = await supabase
-        .from('members')
-        .update({ unpaid_balance: 0 })
-        .eq('id', memberId)
-
-      if (updateError) {
-        throw new Error(`Failed to reset balance: ${updateError.message}`)
-      }
-
-      setMembers(members.map(m =>
-        m.id === memberId ? { ...m, unpaid_balance: 0 } : m
-      ))
-
-      alert('Balance reset to 0 successfully')
-      router.refresh()
-    } catch (error: any) {
-      alert(`Error resetting balance: ${error.message}`)
-    } finally {
-      setLoading(null)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -234,15 +138,31 @@ export default function MembersManagement({ members: initialMembers, organizatio
     }
   }
 
-  // Filter members based on search query
+  // Filter members based on search query and date range
   const filteredMembers = members.filter((member) => {
-    if (!searchQuery.trim()) return true
-
+    // Search query filter (Name and Membership ID)
     const query = searchQuery.toLowerCase().trim()
-    const nameMatch = member.full_name?.toLowerCase().includes(query)
-    const idMatch = member.membership_id?.toLowerCase().includes(query)
+    const matchesQuery = !query || 
+      member.full_name?.toLowerCase().includes(query) || 
+      member.membership_id?.toLowerCase().includes(query)
 
-    return nameMatch || idMatch
+    // Date range filter (Admission Date)
+    let matchesDate = true
+    if (member.created_at) {
+      const joinDate = new Date(member.created_at).getTime()
+      if (startDate) {
+        const start = new Date(startDate).getTime()
+        if (joinDate < start) matchesDate = false
+      }
+      if (endDate) {
+        const end = new Date(endDate).getTime()
+        // Set end date to end of day
+        const endOfDay = end + (24 * 60 * 60 * 1000) - 1
+        if (joinDate > endOfDay) matchesDate = false
+      }
+    }
+
+    return matchesQuery && matchesDate
   })
 
   return (
@@ -270,29 +190,68 @@ export default function MembersManagement({ members: initialMembers, organizatio
             </div>
           </div>
 
-          {/* Search Box */}
-          <div className="relative group">
-            <label htmlFor="member-search" className="sr-only">Search members</label>
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-600 text-gray-400">
-              <Search className="h-5 w-5" />
+          {/* Search Table Toolbar */}
+          <div className="flex flex-col xl:flex-row gap-4 mb-8">
+            {/* Search Box */}
+            <div className="relative group flex-1">
+              <label htmlFor="member-search" className="sr-only">Search members</label>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-600 text-gray-400">
+                <Search className="h-5 w-5" />
+              </div>
+              <input
+                id="member-search"
+                name="member-search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or membership ID..."
+                className="block w-full pl-12 pr-12 py-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 text-sm font-medium transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
-            <input
-              id="member-search"
-              name="member-search"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or membership ID..."
-              className="block w-full pl-12 pr-12 py-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 text-sm font-medium transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
+
+            {/* Date Filters */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+              <div className="relative flex-1 sm:flex-none sm:w-44">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 text-sm font-medium transition-all"
+                />
+                <span className="absolute -top-2.5 left-4 px-1 bg-white text-[10px] font-bold text-gray-400 uppercase tracking-wider">Joined After</span>
+              </div>
+              <div className="relative flex-1 sm:flex-none sm:w-44">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-3.5 border border-gray-100 bg-gray-50/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-600 text-sm font-medium transition-all"
+                />
+                <span className="absolute -top-2.5 left-4 px-1 bg-white text-[10px] font-bold text-gray-400 uppercase tracking-wider">Joined Before</span>
+              </div>
+              
+              {(searchQuery || startDate || endDate) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setStartDate('')
+                    setEndDate('')
+                  }}
+                  className="flex items-center gap-2 px-4 py-3.5 text-red-600 hover:bg-red-50 rounded-2xl transition-all font-bold text-xs uppercase tracking-widest whitespace-nowrap"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className="p-4 sm:p-6 lg:p-8 xl:p-10">
@@ -329,10 +288,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
                         <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">Email</p>
                         <p className="text-gray-900 truncate">{member.email || 'N/A'}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">Balance</p>
-                        <p className="text-gray-900 font-bold">{formatCurrency(member.unpaid_balance || 0)}</p>
-                      </div>
+
                     </div>
 
                     <div className="flex justify-end pt-2">
@@ -403,26 +359,6 @@ export default function MembersManagement({ members: initialMembers, organizatio
                                 >
                                   Manage Tabs
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    recalculateBalance(member.id)
-                                    setOpenDropdown(null)
-                                  }}
-                                  disabled={loading === member.id}
-                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50"
-                                >
-                                  {loading === member.id ? 'Recalculating...' : 'Recalculate Balance'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    resetBalance(member.id)
-                                    setOpenDropdown(null)
-                                  }}
-                                  disabled={loading === member.id}
-                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                                >
-                                  {loading === member.id ? 'Resetting...' : 'Reset Balance'}
-                                </button>
                               </>
                             )}
                           </div>
@@ -444,7 +380,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Email</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Phone</th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Balance</th>
+
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
                       </tr>
                     </thead>
@@ -469,9 +405,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
                               {member.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="text-sm font-bold text-gray-900">{formatCurrency(member.unpaid_balance || 0)}</div>
-                          </td>
+
                           <td className="px-4 py-3 whitespace-nowrap text-xs font-bold">
                             <div className="flex flex-wrap gap-2">
                               {member.status === 'pending' && (
@@ -526,24 +460,6 @@ export default function MembersManagement({ members: initialMembers, organizatio
                                     <Settings2 className="h-3.5 w-3.5" />
                                     <span>Tabs</span>
                                   </button>
-                                  <button
-                                    onClick={() => recalculateBalance(member.id)}
-                                    disabled={loading === member.id}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200 disabled:opacity-50"
-                                    title="Recalculate Balance"
-                                  >
-                                    <RotateCw className={`h-3.5 w-3.5 ${loading === member.id ? 'animate-spin' : ''}`} />
-                                    <span>Recalculate</span>
-                                  </button>
-                                  <button
-                                    onClick={() => resetBalance(member.id)}
-                                    disabled={loading === member.id}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 disabled:opacity-50"
-                                    title="Reset Balance"
-                                  >
-                                    <RefreshCcw className="h-3.5 w-3.5" />
-                                    <span>Reset</span>
-                                  </button>
                                 </>
                               )}
                             </div>
@@ -559,54 +475,7 @@ export default function MembersManagement({ members: initialMembers, organizatio
         </div>
       </div>
 
-      {approveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md xl:max-w-lg 2xl:max-w-xl w-full mx-4">
-            <div className="p-4 sm:p-6 xl:p-8 border-b border-gray-200">
-              <h3 className="text-lg sm:text-xl xl:text-2xl font-semibold text-gray-900">Approve Member</h3>
-              <p className="text-sm sm:text-base xl:text-lg text-gray-500 mt-1">Set initial balance for {approveModal.memberName}</p>
-            </div>
-            <form onSubmit={handleApproveSubmit} className="p-4 sm:p-6 xl:p-8 space-y-4 xl:space-y-6">
-              <div>
-                <label htmlFor="balance" className="block text-sm xl:text-base font-medium text-gray-700 mb-1 xl:mb-2">
-                  Initial Unpaid Balance
-                </label>
-                <input
-                  id="balance"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={initialBalance}
-                  onChange={(e) => setInitialBalance(e.target.value)}
-                  className="w-full px-3 xl:px-4 py-2 xl:py-3 text-sm xl:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="0.00"
-                  required
-                />
-                <p className="mt-1 xl:mt-2 text-xs xl:text-sm text-gray-500">Enter 0 if no initial balance</p>
-              </div>
-              <div className="flex gap-3 xl:gap-4 pt-4 xl:pt-6">
-                <button
-                  type="submit"
-                  disabled={loading === approveModal.memberId}
-                  className="flex-1 bg-green-600 text-white px-4 xl:px-6 py-2 xl:py-3 text-sm xl:text-base rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                >
-                  {loading === approveModal.memberId ? 'Approving...' : 'Approve'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setApproveModal(null)
-                    setInitialBalance('0')
-                  }}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 xl:px-6 py-2 xl:py-3 text-sm xl:text-base rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {tabsManager && (
         <MemberTabsManager

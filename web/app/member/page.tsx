@@ -13,12 +13,24 @@ export default async function MemberDashboardPage() {
     .eq('user_id', user.id)
     .single()
 
+  let obligations = []
+
   // Only fetch data if member exists
   let payments = []
   let receipts = []
   let tabs = []
 
   if (member?.id) {
+    const { data: obligationsData, error: obligationsError } = await supabase
+      .from('payment_obligations')
+      .select('*')
+      .eq('member_id', member.id)
+      .in('status', ['pending', 'partial', 'overdue'])
+    
+    if (obligationsError) {
+      console.error('Error fetching member obligations:', obligationsError)
+    }
+    obligations = obligationsData || []
     // Get only completed payments (incomplete payments should not be recorded)
     const { data: paymentsData } = await supabase
       .from('payments')
@@ -76,6 +88,7 @@ export default async function MemberDashboardPage() {
       receipts={receipts}
       notifications={notifications || []}
       tabs={tabs}
+      obligations={obligations}
       profilePhotoUrl={profilePhotoUrl}
       unreadNotificationCount={notificationCount || 0}
     />

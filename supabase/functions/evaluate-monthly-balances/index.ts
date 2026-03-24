@@ -26,18 +26,14 @@ serve(async (req) => {
         const previousMonthStart = startOfMonth(subMonths(today, 1))
         const previousMonthEnd = endOfMonth(subMonths(today, 1))
 
-        // Step 1: Close previous month's balances
-        await closePreviousMonthBalances(
-            supabaseClient,
-            previousMonthStart,
-            previousMonthEnd
-        )
+        // Step 1: Create current month's obligation records
+        await createCurrentMonthObligations(supabaseClient, currentMonthStart)
 
-        // Step 2: Create current month's balance records
-        await createCurrentMonthBalances(supabaseClient, currentMonthStart)
+        // Step 2: (Legacy) Close previous month's balances - disabled or can be removed
+        // await closePreviousMonthBalances(...)
 
-        // Step 3: Check for 3-month delinquency and freeze accounts
-        await checkAndFreezeDelinquentAccounts(supabaseClient)
+        // Step 3: Check for delinquent accounts (This is now largely handled by DB triggers, but we can still log)
+        await checkAndLogDelinquentAccounts(supabaseClient)
 
         console.log("=== Monthly Balance Evaluation Complete ===")
 
@@ -200,64 +196,74 @@ async function closePreviousMonthBalances(
     console.log("Finished closing previous month balances")
 }
 
-async function createCurrentMonthBalances(
+async function createCurrentMonthObligations(
     supabaseClient: any,
     monthStart: Date
 ) {
-    const monthEnd = endOfMonth(monthStart)
+    const period = monthStart.toISOString().slice(0, 7) // "YYYY-MM"
+    const dueDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), 28) // Due at end of month
 
-    console.log(
-        `Creating balances for current month: ${monthStart.toISOString()} to ${monthEnd.toISOString()}`
-    )
+    console.log(`Creating obligations for period: ${period}`)
 
-    // Get all active compulsory tabs
-    const { data: compulsoryTabs, error: tabsError } = await supabaseClient
+    // Get all active payment tabs
+    const { data: tabs, error: tabsError } = await supabaseClient
         .from("member_tabs")
         .select("id, member_id, organization_id, monthly_cost, tab_name, billing_cycle")
-        .eq("payment_nature", "compulsory")
         .eq("is_active", true)
 
     if (tabsError) {
-        console.error("Error fetching compulsory tabs:", tabsError)
+        console.error("Error fetching tabs:", tabsError)
         throw tabsError
     }
 
-    if (!compulsoryTabs || compulsoryTabs.length === 0) {
-        console.log("No active compulsory tabs found")
+    if (!tabs || tabs.length === 0) {
+        console.log("No active tabs found")
         return
     }
 
-    console.log(`Found ${compulsoryTabs.length} active compulsory tabs`)
-
-    const balanceRecords = compulsoryTabs
-        // Skip donation/one-time style tabs for monthly balances
+    const obligationRecords = tabs
+        // Skip one-time style tabs for recurring monthly obligations
         .filter((tab) => tab.billing_cycle !== "one_time")
         .map((tab) => ({
             organization_id: tab.organization_id,
             member_id: tab.member_id,
             tab_id: tab.id,
-            month_start: monthStart.toISOString().split("T")[0],
-            month_end: monthEnd.toISOString().split("T")[0],
-            required_amount: tab.monthly_cost,
-            paid_amount: 0,
-            unpaid_amount: 0,
-            is_settled: false,
+            period: period,
+            amount_due: tab.monthly_cost,
+            amount_paid: 0,
+            status: 'pending',
+            due_date: dueDate.toISOString().split("T")[0],
         }))
 
-    // Insert with ON CONFLICT DO NOTHING (idempotency)
+    // Insert with ON CONFLICT (idempotency)
+    // Note: You might need to add a unique constraint (member_id, tab_id, period) to payment_obligations if not already there.
     const { error: insertError } = await supabaseClient
-        .from("monthly_balances")
-        .upsert(balanceRecords, {
-            onConflict: "member_id,tab_id,month_start",
+        .from("payment_obligations")
+        .upsert(obligationRecords, {
+            onConflict: "member_id,tab_id,period",
             ignoreDuplicates: true,
         })
 
     if (insertError) {
-        console.error("Error creating monthly balances:", insertError)
+        console.error("Error creating payment obligations:", insertError)
         throw insertError
     }
 
-    console.log(`Successfully created/verified ${balanceRecords.length} monthly balance records`)
+    console.log(`Successfully created/verified ${obligationRecords.length} obligation records`)
+}
+
+async function checkAndLogDelinquentAccounts(supabaseClient: any) {
+    console.log("Checking for delinquent accounts")
+    
+    // We can fetch members with status 'suspended' directly now as the trigger handles it
+    const { data: suspendedMembers, error: queryError } = await supabaseClient
+        .from("members")
+        .select("id, full_name, status")
+        .eq("status", "suspended")
+
+    if (queryError) throw queryError
+
+    console.log(`Found ${suspendedMembers?.length || 0} suspended members.`)
 }
 
 async function checkAndFreezeDelinquentAccounts(supabaseClient: any) {

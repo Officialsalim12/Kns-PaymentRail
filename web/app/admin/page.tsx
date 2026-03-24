@@ -37,8 +37,22 @@ export default async function AdminDashboardPage() {
   // Get organization stats
   const { data: members } = await supabase
     .from('members')
-    .select('id, status, unpaid_balance')
+    .select('id, status')
     .eq('organization_id', organizationId)
+
+  // Get all active obligations for dynamic balance summary
+  const { data: obligations } = await supabase
+    .from('payment_obligations')
+    .select('member_id, amount_due, amount_paid')
+    .eq('organization_id', organizationId)
+    .in('status', ['pending', 'partial', 'overdue'])
+
+  // Map members with computed balance for accurate summary
+  const membersWithBalance = (members || []).map(m => {
+    const memberObligations = (obligations || []).filter(obs => obs.member_id === m.id)
+    const computedBalance = memberObligations.reduce((sum, obs) => sum + (obs.amount_due - obs.amount_paid), 0)
+    return { ...m, unpaid_balance: computedBalance }
+  })
 
   // Get all payments for status distribution and chart
   const { data: allPayments } = await supabase
@@ -70,14 +84,14 @@ export default async function AdminDashboardPage() {
 
   // Calculate paid vs unpaid members
   // A member is "Paid" only if they have made at least one payment AND have no balance
-  const paidMembers = members?.filter(m => {
+  const paidMembers = membersWithBalance?.filter(m => {
     const hasMadePayment = paidMemberIds.has(m.id)
-    const balance = m.unpaid_balance || 0
-    return hasMadePayment && (balance === 0 || balance === null)
+    const balance = m.unpaid_balance
+    return hasMadePayment && balance === 0
   }).length || 0
 
-  const unpaidMembers = members?.filter(m => {
-    const balance = m.unpaid_balance || 0
+  const unpaidMembers = membersWithBalance?.filter(m => {
+    const balance = m.unpaid_balance
     return balance > 0
   }).length || 0
 
@@ -165,15 +179,15 @@ export default async function AdminDashboardPage() {
     ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
     : 0
 
-  const memberGrowth = members && members.length > 0
-    ? (activeMembers / members.length) * 100
+  const memberGrowth = membersWithBalance && membersWithBalance.length > 0
+    ? (activeMembers / membersWithBalance.length) * 100
     : 0
 
   return (
     <AdminDashboard
       organization={organization || null}
       stats={{
-        totalMembers: members?.length || 0,
+        totalMembers: membersWithBalance?.length || 0,
         activeMembers,
         totalPayments,
         monthlyRevenue,

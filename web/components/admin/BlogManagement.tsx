@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { FileText, Loader2 } from 'lucide-react'
+import { FileText, Loader2, Trash2 } from 'lucide-react'
 
 interface BlogPost {
   id: string
@@ -24,6 +24,7 @@ export default function BlogManagement({ initialPosts }: Props) {
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
   const [loading, setLoading] = useState(false)
   const [savingToggleId, setSavingToggleId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -136,6 +137,37 @@ export default function BlogManagement({ initialPosts }: Props) {
       setError(err.message || 'Failed to update post')
     } finally {
       setSavingToggleId(null)
+    }
+  }
+
+  const handleDelete = async (postId: string) => {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return
+    }
+
+    setError(null)
+    setSuccess(null)
+    setDeletingId(postId)
+
+    try {
+      const supabase = createClient()
+      const { error: deleteError } = await supabase
+        .from('news_posts')
+        .delete()
+        .eq('id', postId)
+
+      if (deleteError) {
+        throw new Error(deleteError.message)
+      }
+
+      setPosts((prev) => prev.filter((p) => p.id !== postId))
+      setSuccess('Post deleted successfully')
+      setTimeout(() => setSuccess(null), 3000)
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete post')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -272,21 +304,37 @@ export default function BlogManagement({ initialPosts }: Props) {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleTogglePublished(post)}
-                    disabled={savingToggleId === post.id}
-                    className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${
-                      post.is_published
-                        ? 'border border-green-100 bg-green-50 text-green-700'
-                        : 'border border-gray-200 bg-gray-50 text-gray-600'
-                    } disabled:opacity-60`}
-                  >
-                    {savingToggleId === post.id && (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    )}
-                    {post.is_published ? 'Published' : 'Draft'}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePublished(post)}
+                      disabled={savingToggleId === post.id || deletingId === post.id}
+                      className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${
+                        post.is_published
+                          ? 'border border-green-100 bg-green-50 text-green-700'
+                          : 'border border-gray-200 bg-gray-50 text-gray-600'
+                      } disabled:opacity-60 transition-colors hover:opacity-80`}
+                    >
+                      {savingToggleId === post.id && (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      )}
+                      {post.is_published ? 'Published' : 'Draft'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(post.id)}
+                      disabled={deletingId === post.id || savingToggleId === post.id}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                      title="Delete post"
+                    >
+                      {deletingId === post.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

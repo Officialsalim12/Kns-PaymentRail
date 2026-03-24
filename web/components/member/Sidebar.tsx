@@ -56,6 +56,7 @@ export default function MemberSidebar({
     { href: '/member', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/member/receipts', label: 'Receipts', icon: FileText },
     { href: '/member/payment-history', label: 'Payment History', icon: History },
+    { href: '/member/obligations', label: 'Outstanding Balances', icon: Wallet },
     { href: '/member/members', label: 'Members', icon: UserIcon },
     { href: '/member/blog', label: 'Blog', icon: BookOpen },
     { href: '/member/notifications', label: 'Notifications', icon: Bell, hiddenOnDesktop: true },

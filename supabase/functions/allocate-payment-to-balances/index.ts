@@ -64,101 +64,72 @@ serve(async (req) => {
             )
         }
 
-        // Get all unpaid balances for this member+tab, oldest first
-        const { data: unpaidBalances, error: balancesError } = await supabaseClient
-            .from("monthly_balances")
+        // Get all unpaid obligations for this member, oldest first
+        const { data: unpaidObligations, error: obligationsError } = await supabaseClient
+            .from("payment_obligations")
             .select("*")
             .eq("member_id", memberId)
-            .eq("tab_id", tabId)
-            .eq("is_settled", false)
-            .order("month_start", { ascending: true }) // OLDEST FIRST
+            // Optional: Filter by tabId if provided and desired, but FIFO usually spans across tabs
+            .in("status", ["pending", "partial", "overdue"])
+            .order("due_date", { ascending: true }) // OLDEST FIRST
 
-        if (balancesError) {
-            throw new Error(`Error fetching balances: ${balancesError.message}`)
+        if (obligationsError) {
+            throw new Error(`Error fetching obligations: ${obligationsError.message}`)
         }
 
-        if (!unpaidBalances || unpaidBalances.length === 0) {
-            console.log("No unpaid balances found")
+        if (!unpaidObligations || unpaidObligations.length === 0) {
+            console.log("No unpaid obligations found")
             return new Response(
                 JSON.stringify({
                     success: true,
-                    message: "No unpaid balances to allocate to",
+                    message: "No unpaid obligations to allocate to",
                     allocated: 0,
                 }),
                 { headers: { "Content-Type": "application/json" }, status: 200 }
             )
         }
 
-        console.log(`Found ${unpaidBalances.length} unpaid balances`)
+        console.log(`Found ${unpaidObligations.length} unpaid obligations`)
 
         let remainingPayment = paymentAmount
         let totalAllocated = 0
         const allocations: any[] = []
 
-        for (const balance of unpaidBalances) {
+        for (const obs of unpaidObligations) {
             if (remainingPayment <= 0) break
 
-            const amountOwed = balance.required_amount - balance.paid_amount
+            const amountOwed = obs.amount_due - obs.amount_paid
             const amountToApply = Math.min(remainingPayment, amountOwed)
 
-            const newPaidAmount = balance.paid_amount + amountToApply
-            const newUnpaidAmount = Math.max(0, amountOwed - amountToApply)
-            const isNowSettled = newPaidAmount >= balance.required_amount
+            const newPaidAmount = obs.amount_paid + amountToApply
+            const isNowPaid = newPaidAmount >= obs.amount_due
 
-            console.log(`Applying ${amountToApply} to balance ${balance.id} (month: ${balance.month_start})`)
+            console.log(`Applying ${amountToApply} to obligation ${obs.id} (period: ${obs.period})`)
 
-            // Update balance
+            // Update obligation
             const { error: updateError } = await supabaseClient
-                .from("monthly_balances")
+                .from("payment_obligations")
                 .update({
-                    paid_amount: newPaidAmount,
-                    unpaid_amount: newUnpaidAmount,
-                    is_settled: isNowSettled,
-                    settled_at: isNowSettled ? new Date().toISOString() : null,
+                    amount_paid: newPaidAmount,
+                    status: isNowPaid ? 'paid' : 'partial',
                     updated_at: new Date().toISOString(),
                 })
-                .eq("id", balance.id)
+                .eq("id", obs.id)
 
             if (updateError) {
-                console.error(`Error updating balance ${balance.id}:`, updateError)
+                console.error(`Error updating obligation ${obs.id}:`, updateError)
                 continue
             }
 
-            // Audit log
-            await supabaseClient.from("balance_audit_log").insert({
-                monthly_balance_id: balance.id,
-                action: "payment_applied",
-                amount: amountToApply,
-                previous_unpaid: balance.unpaid_amount,
-                new_unpaid: newUnpaidAmount,
-                notes: `Payment ${paymentId} applied`,
-                metadata: { payment_id: paymentId },
-            })
-
             allocations.push({
-                balance_id: balance.id,
-                month_start: balance.month_start,
+                obligation_id: obs.id,
+                period: obs.period,
                 amount_applied: amountToApply,
-                settled: isNowSettled,
+                settled: isNowPaid,
             })
 
             remainingPayment -= amountToApply
             totalAllocated += amountToApply
-
-            // If this balance was unsettled and now settled, reduce member's unpaid_balance
-            if (balance.unpaid_amount > 0 && isNowSettled) {
-                const { error: decrementError } = await supabaseClient.rpc(
-                    "increment_member_unpaid_balance",
-                    {
-                        p_member_id: memberId,
-                        p_amount: -balance.unpaid_amount, // Negative to decrement
-                    }
-                )
-
-                if (decrementError) {
-                    console.error(`Error decrementing member unpaid balance:`, decrementError)
-                }
-            }
         }
 
         console.log(`Total allocated: ${totalAllocated}`)
@@ -201,7 +172,7 @@ async function checkAndUnfreezeMember(
     memberId: string,
     organizationId?: string
 ) {
-    console.log(`Checking if member ${memberId} should be unfrozen`)
+    console.log(`Checking if member ${memberId} should be reactivated`)
 
     const { data: member } = await supabaseClient
         .from("members")
@@ -209,21 +180,21 @@ async function checkAndUnfreezeMember(
         .eq("id", memberId)
         .single()
 
-    if (!member || member.status !== "frozen") {
-        console.log("Member is not frozen, no action needed")
+    if (!member || (member.status !== "frozen" && member.status !== "suspended")) {
+        console.log("Member is not frozen/suspended, no action needed")
         return
     }
 
-    // Check if all balances are now settled
-    const { data: unpaidBalances } = await supabaseClient
-        .from("monthly_balances")
+    // Check if all obligations are now settled
+    const { data: unpaidObligations } = await supabaseClient
+        .from("payment_obligations")
         .select("id")
         .eq("member_id", memberId)
-        .eq("is_settled", false)
+        .in("status", ["pending", "partial", "overdue"])
         .limit(1)
 
-    if (unpaidBalances && unpaidBalances.length > 0) {
-        console.log("Member still has unpaid balances, cannot unfreeze")
+    if (unpaidObligations && unpaidObligations.length > 0) {
+        console.log("Member still has unpaid obligations, cannot reactivate")
         return
     }
 

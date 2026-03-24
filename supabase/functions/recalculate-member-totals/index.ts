@@ -90,7 +90,6 @@ serve(async (req) => {
         .from("members")
         .update({
           total_paid: Math.max(0, totalPaid),
-          unpaid_balance: unpaidBalance,
           updated_at: now.toISOString()
         })
         .eq("id", member.id)
@@ -101,7 +100,7 @@ serve(async (req) => {
       }
 
       updatedCount++
-      results.push({ id: member.id, name: member.full_name, totalPaid, expectedTotal, unpaidBalance })
+      results.push({ id: member.id, name: member.full_name, totalPaid, expectedTotal })
     }
 
     return new Response(JSON.stringify({

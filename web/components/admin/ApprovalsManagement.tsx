@@ -64,7 +64,7 @@ export default function ApprovalsManagement({
   const [loading, setLoading] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending')
   const [approveModal, setApproveModal] = useState<{ memberId: string; memberName: string } | null>(null)
-  const [initialBalance, setInitialBalance] = useState<string>('0')
+
 
   // Set up real-time subscriptions
   useEffect(() => {
@@ -106,14 +106,15 @@ export default function ApprovalsManagement({
     }
   }, [organizationId, router])
 
-  const updateMemberStatus = async (memberId: string, newStatus: string, balance?: number) => {
+  const updateMemberStatus = async (memberId: string, newStatus: string) => {
     setLoading(memberId)
     try {
       // Atomic DB update (member status + optional notification) via RPC.
+      // initialUnpaidBalance is now always undefined for new activations
       await setMemberStatusAtomic({
         memberId,
         newStatus: newStatus as 'active' | 'inactive' | 'suspended',
-        initialUnpaidBalance: newStatus === 'active' ? (balance ?? 0) : undefined,
+        initialUnpaidBalance: undefined,
       })
 
       router.refresh()
@@ -122,21 +123,13 @@ export default function ApprovalsManagement({
     } finally {
       setLoading(null)
       setApproveModal(null)
-      setInitialBalance('0')
     }
   }
 
   const handleApproveClick = (memberId: string, memberName: string) => {
-    const member = [...pendingApprovals.members, ...approvedMembers].find(m => m.id === memberId)
-    setInitialBalance(member?.unpaid_balance?.toString() || '0')
-    setApproveModal({ memberId, memberName })
-  }
-
-  const handleApproveSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!approveModal) return
-    const balance = parseFloat(initialBalance) || 0
-    updateMemberStatus(approveModal.memberId, 'active', balance)
+    if (confirm(`Are you sure you want to approve ${memberName}?`)) {
+      updateMemberStatus(memberId, 'active')
+    }
   }
 
   const totalPending =
@@ -352,57 +345,7 @@ export default function ApprovalsManagement({
         )}
       </div>
 
-      {/* Approve Modal */}
-      {approveModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-6 border-b border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900">Approve Membership</h3>
-              <p className="text-sm text-gray-500 mt-1">Set initial balance for {approveModal.memberName}</p>
-            </div>
-            <form onSubmit={handleApproveSubmit} className="p-6 space-y-6">
-              <div>
-                <label htmlFor="balance" className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                  Initial Unpaid Balance
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <span className="text-sm font-bold">₦</span>
-                  </div>
-                  <input
-                    id="balance"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={initialBalance}
-                    onChange={(e) => setInitialBalance(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-bold"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <p className="mt-2 text-xs text-gray-400">Enter the starting balance for this member.</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setApproveModal(null)}
-                  className="flex-1 py-3 text-sm font-bold text-gray-500 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading === approveModal.memberId}
-                  className="flex-1 py-3 text-sm font-bold text-white bg-green-600 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-100 disabled:opacity-50"
-                >
-                  {loading === approveModal.memberId ? 'Approving...' : 'Confirm Approval'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }

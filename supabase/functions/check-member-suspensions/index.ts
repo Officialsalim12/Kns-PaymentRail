@@ -24,7 +24,7 @@ serve(async (req) => {
     // Only check members who aren't already inactive
     const { data: members, error: queryError } = await supabase
       .from('members')
-      .select('id, full_name, user_id, email, phone_number, status, organization_id, activated_at, unpaid_balance')
+      .select('id, full_name, user_id, email, phone_number, status, organization_id, activated_at')
       .not('status', 'in', '("suspended","inactive")')
 
     if (queryError) throw queryError
@@ -39,6 +39,7 @@ serve(async (req) => {
     const results = []
 
     for (const member of members) {
+      // ... (code omitted for brevity, logic remains same)
       const { data: lastPayment } = await supabase
         .from('payments')
         .select('created_at')
@@ -86,7 +87,6 @@ serve(async (req) => {
           id: member.id,
           name: member.full_name,
           reason,
-          unpaid_balance: member.unpaid_balance || 0,
           current_status: member.status,
         })
       }

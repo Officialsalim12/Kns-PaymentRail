@@ -15,7 +15,6 @@ interface Member {
   full_name: string
   membership_id: string
   status: string
-  unpaid_balance: number
   total_paid: number
 }
 
@@ -47,7 +46,7 @@ interface Notification {
 interface MemberTab {
   id: string
   tab_name: string
-  tab_type: 'payment' | 'donation'
+  tab_type: 'payment' | 'donation' | 'obligation'
   description: string | null
   monthly_cost: number | null
   is_active: boolean
@@ -68,17 +67,26 @@ interface Receipt {
   }
 }
 
+interface Obligation {
+  id: string
+  amount_due: number
+  amount_paid: number
+  status: string
+  due_date: string
+}
+
 interface Props {
   member: Member | null
   payments: Payment[]
   receipts: Receipt[]
   notifications: Notification[]
   tabs: MemberTab[]
+  obligations?: Obligation[]
   profilePhotoUrl?: string | null
   unreadNotificationCount?: number
 }
 
-export default function MemberDashboard({ member, payments: initialPayments, receipts: initialReceipts, notifications: initialNotifications, tabs, profilePhotoUrl, unreadNotificationCount = 0 }: Props) {
+export default function MemberDashboard({ member, payments: initialPayments, receipts: initialReceipts, notifications: initialNotifications, tabs, obligations = [], profilePhotoUrl, unreadNotificationCount = 0 }: Props) {
   const router = useRouter()
   const [notifications, setNotifications] = useState(initialNotifications || [])
   const [payments, setPayments] = useState(initialPayments)
@@ -88,6 +96,13 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
   const [selectedTab, setSelectedTab] = useState<MemberTab | null>(null)
   const [memberData, setMemberData] = useState(member)
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return "Good morning"
+    if (hour < 17) return "Good afternoon"
+    return "Good evening"
+  }
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -165,6 +180,14 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
   // Always use recalculated value from actual completed payments - don't fall back to database value
   const recalculatedTotalPaid = calculateCompletedPaymentsDisplayAmount(payments)
   const displayTotalPaid = recalculatedTotalPaid
+
+  // Calculate unpaid balance dynamically from obligations
+  const computeUnpaidBalance = () => {
+    return obligations.reduce((sum, obs) => {
+      return sum + (obs.amount_due - obs.amount_paid)
+    }, 0)
+  }
+  const computedUnpaidBalance = computeUnpaidBalance()
 
   const refreshMemberData = async () => {
     setIsRefreshing(true)
@@ -350,8 +373,8 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
           </div>
 
           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Unpaid Balance</p>
-            <p className="text-3xl font-black text-gray-900">{formatCurrency(memberData.unpaid_balance || 0)}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
+            <p className="text-3xl font-black text-gray-900">{formatCurrency(computedUnpaidBalance)}</p>
           </div>
 
           <p className="text-xs text-gray-400 font-medium italic">
@@ -417,20 +440,22 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
-      {/* Welcome Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-b-2xl shadow-xl w-full">
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-        <div className="relative p-6 sm:p-8 md:p-10">
-          <div className="flex flex-col items-center justify-center gap-4">
-            <h1 className="text-2xl xs:text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight text-center">
-              {memberData.full_name}
-            </h1>
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center gap-2 text-primary-100/90 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                  <Sparkles className="h-3.5 w-3.5 text-primary-200" />
-                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Welcome</p>
+      {/* Professional Welcome Header */}
+      <div className="relative overflow-hidden bg-white/50 backdrop-blur-sm border-b border-gray-100 w-full mb-6">
+        <div className="absolute inset-0 bg-grid-gray-900/[0.02] bg-[size:32px_32px]" />
+        <div className="relative p-6 sm:p-8 md:px-10 md:py-12">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                {getGreeting()}, <span className="text-primary-600">{memberData.full_name}</span>
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                  <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                  <span className="text-[11px] font-bold text-gray-600">{format(new Date(), 'EEEE, MMMM dd')}</span>
                 </div>
               </div>
+            </div>
           </div>
         </div>
       </div>
@@ -524,8 +549,9 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
                 <div className="p-2.5 bg-orange-500 rounded-lg mb-3">
                   <Wallet className="h-5 w-5 text-white" />
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Unpaid</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(memberData.unpaid_balance || 0)}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(computedUnpaidBalance)}</p>
+                <Link href="/member/obligations" className="mt-2 text-[10px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider underline">View Details</Link>
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">

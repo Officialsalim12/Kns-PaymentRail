@@ -11,7 +11,7 @@ import { createOrReusePendingPayment } from '@/app/actions/member-payments'
 interface Props {
   memberId: string
   tabName: string
-  tabType: 'payment' | 'donation'
+  tabType: 'payment' | 'donation' | 'obligation'
   monthlyCost: number | null
   onSuccess: () => void
   onCancel: () => void
@@ -22,7 +22,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
   const isSubmitting = useRef(false)
   const [formData, setFormData] = useState({
     months: tabType === 'payment' && monthlyCost ? '1' : '',
-    amount: '',
+    amount: tabType === 'obligation' && monthlyCost ? monthlyCost.toString() : '',
     payment_date: new Date().toISOString().split('T')[0],
   })
   const [error, setError] = useState<string | null>(null)
@@ -172,7 +172,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-3xl sm:rounded-t-2xl">
           <div>
             <h3 className="text-xl font-bold text-gray-900 tracking-tight">
-              {tabType === 'payment' ? 'Checkout' : 'Donation'}
+              {tabType === 'payment' ? 'Checkout' : tabType === 'obligation' ? 'Pay Balance' : 'Donation'}
             </h3>
             <p className="text-xs text-gray-500 font-medium mt-0.5">{tabName}</p>
           </div>
@@ -273,7 +273,7 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
               disabled={loading}
               className="w-full py-4 bg-primary-600 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary-100 hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-50"
             >
-              {loading ? 'Processing...' : `Confirm ${tabType === 'payment' ? 'Payment' : 'Donation'}`}
+              {loading ? 'Processing...' : `Confirm ${tabType === 'donation' ? 'Donation' : 'Payment'}`}
             </button>
             <button
               type="button"

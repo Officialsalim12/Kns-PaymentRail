@@ -23,7 +23,7 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
   const [formData, setFormData] = useState({
     member_id: '',
     amount: '',
-    balance: '',
+
     payment_date: new Date().toISOString().split('T')[0],
     payment_method: 'afrimoney',
     description: '',
@@ -58,15 +58,7 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
         throw new Error('Organization not found')
       }
 
-      const balanceToAdd = formData.balance && parseFloat(formData.balance) > 0
-        ? parseFloat(formData.balance)
-        : 0
-
-      const paymentDescription = balanceToAdd > 0
-        ? (formData.description
-          ? `${formData.description} [BALANCE_ADDED:${balanceToAdd}]`
-          : `[BALANCE_ADDED:${balanceToAdd}]`)
-        : formData.description
+      const paymentDescription = formData.description
 
       const paymentAmount = parseFloat(formData.amount)
 
@@ -252,23 +244,7 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
           <p className="mt-1 text-xs text-gray-500">Amount for this payment</p>
         </div>
 
-        <div>
-          <label htmlFor="balance" className="block text-sm font-medium text-gray-700">
-            Add to Balance (Optional)
-          </label>
-          <input
-            id="balance"
-            name="balance"
-            type="number"
-            step="0.01"
-            min="0"
-            className="mt-1 block w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            value={formData.balance}
-            onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
-            placeholder="0.00"
-          />
-          <p className="mt-1 text-xs text-gray-500">Additional balance to add to member&apos;s account (separate from payment amount)</p>
-        </div>
+
 
         <div>
           <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700">
