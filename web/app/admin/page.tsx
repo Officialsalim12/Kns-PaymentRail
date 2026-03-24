@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
   // Get all payments for status distribution and chart
   const { data: allPayments } = await supabase
     .from('payments')
-    .select('amount, created_at, payment_status, member_id')
+    .select('amount, created_at, payment_date, payment_status, member_id')
     .eq('organization_id', organizationId)
 
   // Filter for completed payments for revenue calculations

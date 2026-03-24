@@ -161,6 +161,7 @@ export default function BlogReactions({ postId, postTitle = 'Fundflow Blog', sha
   useEffect(() => {
     if (!showComments) return
     loadComments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showComments, postId])
 
   const handleToggle = async () => {
