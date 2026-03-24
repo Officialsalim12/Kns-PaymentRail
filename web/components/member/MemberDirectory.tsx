@@ -147,7 +147,7 @@ export default function MemberDirectory({ initialMembers }: Props) {
           </div>
           <h3 className="text-lg font-bold text-gray-900">No members found</h3>
           <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
-            Try adjusting your search query or filters to find what you're looking for.
+            Try adjusting your search query or filters to find what you&apos;re looking for.
           </p>
           <button
             onClick={() => {
