@@ -133,58 +133,69 @@ export default function PaymentCancelled() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <div className="text-yellow-600 mb-4">
-            <XCircle className="h-16 w-16 mx-auto" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Cancelled</h1>
-          <p className="text-gray-600 mb-6">
-            Your payment was cancelled. No charges were made. You can try again anytime.
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-yellow-50 to-white p-4">
-      <div className="main-container max-w-lg">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-yellow-100 transition-all duration-500 hover:shadow-2xl">
-          <div className="bg-yellow-600 p-8 text-white text-center relative">
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            <XCircle className="h-20 w-20 mx-auto mb-4" />
-            <h1 className="text-3xl font-extrabold tracking-tight">Payment Cancelled</h1>
-            <p className="mt-2 text-yellow-50 opacity-90 font-medium">Operation aborted at your request</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB] p-4 relative overflow-hidden text-slate-900">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-50 rounded-full blur-[100px] opacity-60" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-50 rounded-full blur-[100px] opacity-60" />
+
+      <div className="w-full max-w-xl relative z-10">
+        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/20 backdrop-blur-sm overflow-hidden transition-all duration-700 hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]">
+          
+          {/* Header Section */}
+          <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-12 text-white text-center relative overflow-hidden">
+            {/* Subtle Gradient Overlay */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent)]" />
+            
+            <div className="relative z-10">
+              <div className="inline-flex p-4 rounded-full bg-white/10 backdrop-blur-md mb-6 animate-in zoom-in-50 duration-500">
+                <XCircle className="h-16 w-16 text-white" />
+              </div>
+              <h1 className="text-4xl font-extrabold tracking-tight mb-2">Payment Cancelled</h1>
+              <p className="text-amber-50/90 text-lg font-medium">No charges were made to your account</p>
+            </div>
           </div>
 
-          <div className="p-8 text-center">
-            <div className="space-y-6">
-              <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-100 inline-block w-full">
-                <p className="text-sm text-yellow-700 font-bold uppercase tracking-wider mb-2">Notice</p>
-                <p className="text-gray-600 leading-relaxed font-medium">
-                  Your payment was cancelled. No charges were made to your account. You can return to your dashboard or try making the payment again.
-                </p>
+          {/* Content Section */}
+          <div className="p-10 text-center">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="bg-gray-50/80 rounded-3xl p-8 border border-gray-100 group transition-all hover:bg-white hover:shadow-lg hover:shadow-gray-100/50">
+                <div className="text-left space-y-4">
+                  <p className="text-slate-600 font-medium leading-relaxed">
+                    The payment process was interrupted. This could be due to a manual cancellation or a timeout from the payment provider.
+                  </p>
+                  <div className="h-px bg-gray-200/50 w-full" />
+                  <p className="text-sm text-slate-500 font-medium">
+                    Don't worry, you can always return to your dashboard or attempt the payment again whenever you're ready.
+                  </p>
+                </div>
               </div>
 
               {paymentId && (
-                <p className="text-xs text-gray-400 font-medium">
-                  Reference ID: <span className="font-mono">{paymentId.substring(0, 8)}...</span>
-                </p>
+                <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-gray-400">
+                  <span>Reference ID</span>
+                  <span className="text-gray-900 font-mono tracking-normal lowercase">{paymentId.substring(0, 12)}...</span>
+                </div>
               )}
 
-              <div className="pt-4 flex flex-col sm:flex-row gap-4">
+              <div className="pt-2 flex flex-col sm:flex-row gap-4">
                 <button
                   type="button"
                   onClick={handleGoBack}
-                  className="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all active:scale-[0.98]"
+                  className="flex-1 px-8 py-5 bg-slate-100 text-slate-700 rounded-2xl font-black text-lg hover:bg-slate-200 transition-all active:scale-[0.98] border border-slate-200/50"
                 >
                   Try Again
                 </button>
                 <button
                   type="button"
                   onClick={handleGoToDashboard}
-                  className="flex-1 px-6 py-4 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-all shadow-lg hover:shadow-primary-200 transform hover:-translate-y-0.5 active:scale-[0.98]"
+                  className="flex-1 px-8 py-5 bg-primary-600 text-white rounded-2xl font-black text-lg hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/20 hover:shadow-primary-600/40 hover:-translate-y-1 active:scale-[0.98]"
                 >
                   Dashboard
                 </button>
@@ -192,8 +203,13 @@ export default function PaymentCancelled() {
             </div>
           </div>
 
-          <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center text-xs text-gray-400 font-medium">
-            Powered by Fundflow Secure Payments
+          {/* Footer Section */}
+          <div className="bg-gray-50/50 px-10 py-6 border-t border-gray-100/50 text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-300 flex items-center justify-center gap-3">
+              <span className="w-8 h-px bg-gray-200" />
+              Secure Checkout via Fundflow
+              <span className="w-8 h-px bg-gray-200" />
+            </p>
           </div>
         </div>
       </div>
