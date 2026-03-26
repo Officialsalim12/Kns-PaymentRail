@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
 import { createOrReusePendingPayment } from '@/app/actions/member-payments'
+import { getSiteUrl } from '@/lib/url'
 
 interface Props {
   memberId: string
@@ -101,12 +102,8 @@ export default function MemberPaymentForm({ memberId, tabName, tabType, monthlyC
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription,
-            successUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-success?payment_id=${paymentId}`
-              : `/payment-success?payment_id=${paymentId}`,
-            cancelUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-cancelled?payment_id=${paymentId}`
-              : `/payment-cancelled?payment_id=${paymentId}`,
+            successUrl: `${getSiteUrl()}/payment-success?payment_id=${paymentId}`,
+            cancelUrl: `${getSiteUrl()}/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
               payment_id: paymentId,
               organization_id: member.organization_id,

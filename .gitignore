@@ -86,3 +86,7 @@ insert_results.txt
 # Private production documentation
 PRODUCTION_CHECKLIST.md
 SECURITY.md
+
+# Local temp/build
+supabase/.temp/
+*.zip

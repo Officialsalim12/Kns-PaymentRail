@@ -147,6 +147,7 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
         created_by: user.id,
       }
 
+      // Always include billing_cycle (constraint requires a value)
       if (formData.tab_type === 'payment') {
         insertData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
         insertData.billing_cycle = formData.billing_cycle
@@ -154,6 +155,9 @@ export default function BulkTabCreator({ organizationId, onClose }: Props) {
         insertData.duration_months = formData.duration_months && formData.payment_nature === 'compulsory'
           ? parseInt(formData.duration_months)
           : null
+      } else {
+        insertData.monthly_cost = null
+        insertData.billing_cycle = 'monthly' // Default for donations
       }
 
       // Create tabs for all selected members or as a general tab

@@ -131,8 +131,8 @@ export default function MemberRegistrationForm({ organizations }: Props) {
             email: formData.email.trim(),
             membership_id: membershipId,
             status: 'pending',
-            unpaid_balance: 0.0,
-            total_paid: 0.0,
+            // These balance columns may not exist yet in older DB schemas.
+            // They are recomputed/displayed elsewhere (and/or set via server-side logic).
           })
           .select()
           .single()

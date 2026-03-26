@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { X, Mail, Lock, User } from 'lucide-react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { getSiteUrl } from '@/lib/url'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -101,7 +102,7 @@ export default function LoginForm() {
     try {
       const supabase = createClient()
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${getSiteUrl()}/reset-password`,
       })
 
       if (resetError) {

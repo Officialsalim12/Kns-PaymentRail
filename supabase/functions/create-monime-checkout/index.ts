@@ -209,11 +209,7 @@ serve(async (req) => {
     const finalCurrency = currency || 'SLE';
     const finalAmountMinor = Math.round(amountValue * 100); // Convert to minor units
 
-    // Monime API requires: name (string) and lineItems (array) - camelCase
-    // Does NOT allow: space_id, amount, currency, success_url, cancel_url in body
-    // space_id is sent as Monime-Space-Id header (required for Space-scoped endpoints)
-    // price in lineItems must be a MoneyAlias object with amount (in minor units) and currency
-    // Metadata: All values must be strings, max 100 characters each
+    // Monime API configuration
 
     // Convert metadata to string map (matching Monime integration guide)
     const toStringMap = (input: any): Record<string, string> => {
@@ -287,10 +283,11 @@ serve(async (req) => {
       lineItemName = lineItemName.substring(0, 197) + '...';
     }
 
-    // Build line items with proper structure matching Monime integration guide
-    const effectiveQuantity = metadata?.quantity
-      ? parseInt(metadata.quantity.toString())
-      : (metadata?.months ? parseInt(metadata.months.toString()) : 1);
+    // The frontend passes the FINAL calculated total amount (e.g. 3 months * 100 = 300)
+    // If we pass effectiveQuantity > 1 along with the total amount as the unit price, 
+    // Monime will multiply them again (300 * 3 = 900).
+    // So we must fix the quantity to 1 because finalAmountMinor is already the total.
+    const effectiveQuantity = 1;
 
     // Create payload matching Monime integration guide structure
     const monimeRequestBody: any = {
@@ -311,19 +308,16 @@ serve(async (req) => {
       metadata: safeMetadata,
     };
 
-    // Idempotency key: check headers first, then generate UUID
-    // This matches the Monime integration guide pattern
     const clientIdemFromHeader = req.headers.get('Idempotency-Key') || req.headers.get('X-Idempotency-Key');
     const clientIdemFromBody = metadata?.idempotencyKey && typeof metadata.idempotencyKey === 'string' && metadata.idempotencyKey.trim()
       ? metadata.idempotencyKey.trim()
       : null;
 
-    // Generate UUID for idempotency (Deno compatible)
+    // Generate Idempotency Key
     let idempotencyKey = clientIdemFromHeader || clientIdemFromBody;
     if (!idempotencyKey) {
-      // Generate UUID-like string for Deno (crypto.randomUUID() might not be available)
       const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 15);
+      const random = Math.random().toString(36).substring(2, 10);
       idempotencyKey = `${paymentId}-${timestamp}-${random}`;
     }
 
@@ -464,17 +458,12 @@ serve(async (req) => {
       data?.orderId ||
       null;
 
-    console.log("Monime checkout response:", JSON.stringify(data, null, 2));
-    console.log("Extracted order number:", orderNumber);
-    console.log("Extracted session ID:", sessionId);
-
     if (!redirectUrl) {
       throw new Error("Invalid response from payment provider: No redirectUrl in response");
     }
 
     // Use order number as reference (preferred), fallback to session ID
     const referenceNumber = orderNumber || sessionId;
-    console.log("Using reference number:", referenceNumber);
 
     // Update payment with checkout session ID and set reference_number to match Monime order
     if (sessionId) {
@@ -486,26 +475,16 @@ serve(async (req) => {
       // Always set reference_number to match Monime order number or checkout session ID
       if (referenceNumber) {
         updatePayload.reference_number = referenceNumber;
-        console.log(`Setting reference_number to: ${referenceNumber} for payment: ${paymentId}`);
-      } else {
-        console.warn(`No reference number available for payment: ${paymentId}, sessionId: ${sessionId}`);
       }
 
-      const { error: updateError, data: updatedPayment } = await supabaseClient
+      const { error: updateError } = await supabaseClient
         .from("payments")
         .update(updatePayload)
-        .eq("id", paymentId)
-        .select("reference_number, monime_checkout_session_id")
-        .single();
+        .eq("id", paymentId);
 
       if (updateError) {
         console.error("Error updating payment with checkout session ID:", updateError);
         throw new Error(`Failed to update payment: ${updateError.message}`);
-      } else {
-        console.log(`Payment ${paymentId} updated successfully:`, {
-          reference_number: updatedPayment?.reference_number,
-          monime_checkout_session_id: updatedPayment?.monime_checkout_session_id,
-        });
       }
     } else {
       console.error("No sessionId received from Monime for payment:", paymentId);

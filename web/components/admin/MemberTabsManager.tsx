@@ -138,10 +138,13 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
           created_by: user.id,
         }
 
-        // Only include monthly_cost if tab_type is payment
+        // Always include billing_cycle (constraint requires a value)
         if (formData.tab_type === 'payment') {
           insertData.monthly_cost = formData.monthly_cost ? parseFloat(formData.monthly_cost) : null
           insertData.billing_cycle = formData.billing_cycle
+        } else {
+          insertData.monthly_cost = null
+          insertData.billing_cycle = 'monthly' // Default for donations
         }
 
         const { error } = await supabase

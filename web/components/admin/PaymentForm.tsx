@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
+import { getSiteUrl } from '@/lib/url'
 
 interface Member {
   id: string
@@ -127,12 +128,8 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription || `Payment for member`,
-            successUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-success?payment_id=${paymentId}`
-              : `/payment-success?payment_id=${paymentId}`,
-            cancelUrl: typeof window !== 'undefined'
-              ? `${window.location.origin}/payment-cancelled?payment_id=${paymentId}`
-              : `/payment-cancelled?payment_id=${paymentId}`,
+            successUrl: `${getSiteUrl()}/payment-success?payment_id=${paymentId}`,
+            cancelUrl: `${getSiteUrl()}/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
               payment_id: paymentId,
               organization_id: profile.organization_id,

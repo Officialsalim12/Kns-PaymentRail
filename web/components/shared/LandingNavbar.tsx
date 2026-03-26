@@ -9,7 +9,7 @@ export default function LandingNavbar() {
     const [isOpen, setIsOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
-    // Handle scroll effect
+
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
@@ -18,7 +18,7 @@ export default function LandingNavbar() {
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
 
-    // Prevent scroll when menu is open
+
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
@@ -41,16 +41,16 @@ export default function LandingNavbar() {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 relative transition-all duration-300 ${(isScrolled || isOpen)
-                    ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm py-0'
-                    : 'bg-white/50 backdrop-blur-md py-0'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${(isScrolled || isOpen)
+                    ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm'
+                    : 'bg-transparent'
                 }`}
         >
             {/* Logo pinned to extreme left edge (outside centered container) */}
-            <div className="absolute left-0 top-0 h-40 sm:h-44 md:h-48 flex items-center z-[60]">
+            <div className="absolute left-0 top-0 h-56 sm:h-44 md:h-48 flex items-center z-[60]">
                 <Link href="/" className="flex items-center group transition-transform hover:scale-102">
                     {/* Fixed wrapper prevents stretching/distortion; `object-contain` avoids cropping at edges */}
-                    <div className="relative w-[600px] sm:w-[700px] md:w-[880px] lg:w-[1360px] max-w-[100vw] h-[110px] sm:h-[126px] md:h-[142px] lg:h-[175px]">
+                    <div className="relative w-[350px] sm:w-[700px] md:w-[880px] lg:w-[1360px] max-w-[100vw] h-[100px] sm:h-[126px] md:h-[142px] lg:h-[175px]">
                         <Image
                             src="/fundflow-logo.png"
                             alt="Fundflow"
@@ -64,7 +64,7 @@ export default function LandingNavbar() {
             </div>
 
             <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-6">
-                <div className="flex items-center justify-end h-40 sm:h-44 md:h-48">
+                <div className="flex items-center justify-end h-56 sm:h-44 md:h-48">
                     {/* Desktop Navigation + Actions */}
                     <div className="hidden md:flex items-center gap-14 ml-auto pr-2 lg:pr-0">
                         <nav className="flex items-center space-x-12">
@@ -101,7 +101,7 @@ export default function LandingNavbar() {
             {/* Mobile Menu Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 top-[144px] sm:top-[160px] h-[calc(100vh-144px)] sm:h-[calc(100vh-160px)] bg-white z-40 transition-all duration-300 md:hidden"
+                    className="fixed inset-0 top-[224px] sm:top-[176px] h-[calc(100vh-224px)] sm:h-[calc(100vh-176px)] bg-white z-40 transition-all duration-300 md:hidden"
                 >
                     <div className="flex flex-col h-full p-6 space-y-8 overflow-y-auto">
                         <nav className="space-y-4">

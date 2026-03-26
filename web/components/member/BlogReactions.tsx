@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { MessageCircle, Share2, ThumbsUp } from 'lucide-react'
+import { getSiteUrl } from '@/lib/url'
 
 interface Props {
   postId: string
@@ -45,9 +46,8 @@ export default function BlogReactions({ postId, postTitle = 'Fundflow Blog', sha
   const [replyText, setReplyText] = useState('')
 
   const getShareUrl = () => {
-    if (typeof window === 'undefined') return ''
     const path = sharePath || `/member/blog#post-${postId}`
-    return `${window.location.origin}${path}`
+    return `${getSiteUrl()}${path}`
   }
 
   const loadComments = async () => {

@@ -9,16 +9,21 @@ export async function setMemberStatusAtomic(params: {
 }) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc('set_member_status_atomic', {
-    p_member_id: params.memberId,
-    p_new_status: params.newStatus,
-    p_initial_unpaid_balance: params.initialUnpaidBalance ?? null,
-  })
+  const updatePayload: Record<string, unknown> = {
+    status: params.newStatus,
+  }
+
+  // Stamp activated_at when a member is approved for the first time
+  if (params.newStatus === 'active') {
+    updatePayload.activated_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from('members')
+    .update(updatePayload)
+    .eq('id', params.memberId)
 
   if (error) {
     throw new Error(error.message)
   }
-
-  return data
 }
-
