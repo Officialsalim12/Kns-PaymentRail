@@ -172,7 +172,7 @@ export default function PaymentCancelled() {
                   </p>
                   <div className="h-px bg-slate-200/50 w-full" />
                   <p className="text-sm text-slate-500 font-medium">
-                    Don't worry, you can always return to your dashboard or attempt the payment again whenever you're ready.
+                    Don&apos;t worry, you can always return to your dashboard or attempt the payment again whenever you&apos;re ready.
                   </p>
                 </div>
               </div>

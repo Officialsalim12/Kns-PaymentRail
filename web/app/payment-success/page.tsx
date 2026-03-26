@@ -175,7 +175,7 @@ function PaymentSuccessContent() {
                 </div>
                 <p className="text-slate-900 font-bold text-xl mt-8">Finalizing your payment...</p>
                 <p className="text-slate-500 mt-2 max-w-[280px] mx-auto text-sm leading-relaxed">
-                  We're securely syncing your transaction details to your organization's dashboard.
+                  We&apos;re securely syncing your transaction details to your organization&apos;s dashboard.
                 </p>
               </div>
             ) : (
