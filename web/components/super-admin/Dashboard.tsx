@@ -131,8 +131,8 @@ export default function SuperAdminDashboard({
         <div className="relative p-7 sm:p-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
-              <div className="space-y-2">
-                <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+              <div className="space-y-2 min-w-0">
+                <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight truncate">
                   Super Admin
                 </h1>
                 <p className="text-blue-100 font-medium tracking-wide">System Management & Control</p>

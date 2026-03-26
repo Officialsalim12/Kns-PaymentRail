@@ -445,11 +445,14 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
         <div className="absolute inset-0 bg-grid-gray-900/[0.02] bg-[size:32px_32px]" />
         <div className="relative p-6 sm:p-8 md:px-10 md:py-12">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                {getGreeting()}, <span className="text-primary-600">{memberData.full_name}</span>
+            <div className="space-y-1 sm:space-y-2 min-w-0">
+              <p className="text-sm sm:text-base font-bold text-gray-500 tracking-wide">
+                {getGreeting()},
+              </p>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-primary-600 tracking-tight truncate">
+                {memberData.full_name}
               </h1>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-1 sm:pt-2">
                 <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                   <Calendar className="h-3.5 w-3.5 text-gray-500" />
                   <span className="text-[11px] font-bold text-gray-600">{format(new Date(), 'EEEE, MMMM dd')}</span>

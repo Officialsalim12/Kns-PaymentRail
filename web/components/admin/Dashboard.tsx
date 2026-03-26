@@ -143,9 +143,9 @@ export default function AdminDashboard({
           <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-primary-400/20 rounded-full blur-2xl" />
 
           <div className="relative p-5 xs:p-6 sm:p-8 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-4 sm:mb-0">
               {organization.logo_url && !logoError ? (
-                <div className="relative h-10 w-10">
+                <div className="relative h-10 w-10 shrink-0">
                   <Image
                     src={organization.logo_url}
                     alt={organization.name}
@@ -155,18 +155,18 @@ export default function AdminDashboard({
                   />
                 </div>
               ) : (
-                <div className="relative h-10 w-10 rounded-lg bg-white/10 flex items-center justify-center ring-2 ring-white/20 shadow-2xl">
+                <div className="relative h-10 w-10 shrink-0 rounded-lg bg-white/10 flex items-center justify-center ring-2 ring-white/20 shadow-2xl">
                   <Building2 className="h-6 w-6 text-white opacity-80" />
                 </div>
               )}
-              <div className="space-y-1">
-                <h1 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+              <div className="space-y-1 min-w-0 w-full sm:w-auto">
+                <h1 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight truncate">
                   {organization.name}
                 </h1>
                 <p className="text-primary-100 text-[10px] xs:text-xs sm:text-sm font-medium opacity-80">Organization Dashboard</p>
               </div>
             </div>
-            <div className="flex flex-col items-center sm:items-end gap-4 w-full lg:w-auto">
+            <div className="flex flex-col items-center sm:items-end gap-4 w-full sm:w-auto sm:absolute sm:top-5 sm:right-5 md:top-8 md:right-8">
               <button
                 onClick={() => setShowBulkTabCreator(true)}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3.5 bg-white text-primary-700 rounded-xl sm:rounded-2xl hover:bg-primary-50 transition-all shadow-lg font-bold text-xs sm:text-sm tracking-wide active:scale-95 group"
