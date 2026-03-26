@@ -13,8 +13,11 @@ export const metadata: Metadata = {
   description: 'Streamline your organization\'s payment tracking, member management, and receipt generation with Fundflow',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg?v=1', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=1', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/favicon.svg?v=1', type: 'image/svg+xml' },
     ],
   },
 }
