@@ -9,7 +9,7 @@ export default function PaymentCancelled() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [paymentId, setPaymentId] = useState<string | null>(null)
-  const [dashboardPath, setDashboardPath] = useState('/admin')
+  const [dashboardPath, setDashboardPath] = useState<string | null>('/admin')
   const [mounted, setMounted] = useState(false)
   const [cleanupDone, setCleanupDone] = useState(false)
 
@@ -95,7 +95,7 @@ export default function PaymentCancelled() {
             .single()
           setDashboardPath(profile?.role === 'member' ? '/member' : '/admin')
         } else {
-          setDashboardPath('/admin')
+          setDashboardPath(null)
         }
       } catch (error) {
         console.error('Error determining dashboard path:', error)
@@ -133,7 +133,7 @@ export default function PaymentCancelled() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     )
@@ -142,35 +142,35 @@ export default function PaymentCancelled() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB] p-4 relative overflow-hidden text-slate-900">
       {/* Dynamic Background Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-amber-50 rounded-full blur-[100px] opacity-60" />
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-50 rounded-full blur-[100px] opacity-60" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-50 rounded-full blur-[100px] opacity-60" />
 
-      <div className="w-full max-w-xl relative z-10">
+      <div className="w-full max-w-xl relative z-10 transition-all duration-1000">
         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white/20 backdrop-blur-sm overflow-hidden transition-all duration-700 hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)]">
           
           {/* Header Section */}
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-12 text-white text-center relative overflow-hidden">
-            {/* Subtle Gradient Overlay */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent)]" />
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-12 text-white text-center relative overflow-hidden">
+            {/* Abstract Shine Effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] animate-shimmer" />
             
             <div className="relative z-10">
-              <div className="inline-flex p-4 rounded-full bg-white/10 backdrop-blur-md mb-6 animate-in zoom-in-50 duration-500">
+              <div className="inline-flex p-4 rounded-full bg-white/10 backdrop-blur-md mb-6 transform transition-transform duration-500 hover:scale-110">
                 <XCircle className="h-16 w-16 text-white" />
               </div>
               <h1 className="text-4xl font-extrabold tracking-tight mb-2">Payment Cancelled</h1>
-              <p className="text-amber-50/90 text-lg font-medium">No charges were made to your account</p>
+              <p className="text-orange-50/90 text-lg font-medium">No charges were made to your account</p>
             </div>
           </div>
 
           {/* Content Section */}
           <div className="p-10 text-center">
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="bg-gray-50/80 rounded-3xl p-8 border border-gray-100 group transition-all hover:bg-white hover:shadow-lg hover:shadow-gray-100/50">
+            <div className="space-y-8">
+              <div className="bg-slate-50/80 rounded-3xl p-8 border border-slate-100 group transition-all hover:bg-white hover:shadow-lg hover:shadow-slate-100/50">
                 <div className="text-left space-y-4">
                   <p className="text-slate-600 font-medium leading-relaxed">
                     The payment process was interrupted. This could be due to a manual cancellation or a timeout from the payment provider.
                   </p>
-                  <div className="h-px bg-gray-200/50 w-full" />
+                  <div className="h-px bg-slate-200/50 w-full" />
                   <p className="text-sm text-slate-500 font-medium">
                     Don't worry, you can always return to your dashboard or attempt the payment again whenever you're ready.
                   </p>
@@ -178,9 +178,9 @@ export default function PaymentCancelled() {
               </div>
 
               {paymentId && (
-                <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-gray-400">
+                <div className="flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
                   <span>Reference ID</span>
-                  <span className="text-gray-900 font-mono tracking-normal lowercase">{paymentId.substring(0, 12)}...</span>
+                  <span className="text-slate-900 font-mono tracking-normal lowercase">{paymentId.substring(0, 12)}...</span>
                 </div>
               )}
 
@@ -197,18 +197,18 @@ export default function PaymentCancelled() {
                   onClick={handleGoToDashboard}
                   className="flex-1 px-8 py-5 bg-primary-600 text-white rounded-2xl font-black text-lg hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/20 hover:shadow-primary-600/40 hover:-translate-y-1 active:scale-[0.98]"
                 >
-                  Dashboard
+                  {dashboardPath === '/admin' || dashboardPath === '/member' ? 'Dashboard' : 'Return to Login'}
                 </button>
               </div>
             </div>
           </div>
 
           {/* Footer Section */}
-          <div className="bg-gray-50/50 px-10 py-6 border-t border-gray-100/50 text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-300 flex items-center justify-center gap-3">
-              <span className="w-8 h-px bg-gray-200" />
+          <div className="bg-slate-50/50 px-10 py-6 border-t border-slate-100/50 text-center">
+            <p className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-300 flex items-center justify-center gap-3">
+              <span className="w-8 h-px bg-slate-200" />
               Secure Checkout via Fundflow
-              <span className="w-8 h-px bg-gray-200" />
+              <span className="w-8 h-px bg-slate-200" />
             </p>
           </div>
         </div>

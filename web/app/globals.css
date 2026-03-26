@@ -159,3 +159,13 @@ a {
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
 }
+
+/* Custom Animations */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite;
+}
