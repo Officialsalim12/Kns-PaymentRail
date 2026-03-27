@@ -205,7 +205,8 @@ serve(async (req) => {
     // Do NOT rely on checkout session status alone
     const isCompleted = actualPaymentStatus === "completed" ||
       actualPaymentStatus === "paid" ||
-      actualPaymentStatus === "succeeded";
+      actualPaymentStatus === "succeeded" ||
+      actualPaymentStatus === "success";
 
     if (!isCompleted && actualPaymentStatus) {
       console.log(`Payment is NOT completed. Status: ${actualPaymentStatus}`);

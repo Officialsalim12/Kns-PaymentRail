@@ -65,7 +65,7 @@ function PaymentSuccessContent() {
                 (data as any)?.monimePaymentStatus ||
                 null
 
-              if (status === 'completed' || (data as any)?.success) {
+              if (status === 'completed' || status === 'paid' || status === 'succeeded' || status === 'success') {
                 break
               }
 
