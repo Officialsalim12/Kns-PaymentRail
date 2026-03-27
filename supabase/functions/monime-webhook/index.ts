@@ -55,7 +55,12 @@ serve(async (req: Request) => {
     console.log("Webhook payload received:", JSON.stringify(webhookLog, null, 2));
 
     // Verify webhook signature (implement based on Monime's documentation)
-    const signature = req.headers.get("x-monime-signature") || req.headers.get("x-signature");
+    const signature = 
+      req.headers.get("monime-signature") || 
+      req.headers.get("x-monime-signature") || 
+      req.headers.get("x-signature") ||
+      req.headers.get("signature");
+      
     let signatureVerified = false;
     if (webhookSecret && signature) {
       signatureVerified = await verifyWebhookSignature(rawBody, signature, webhookSecret);
@@ -235,15 +240,19 @@ serve(async (req: Request) => {
   } catch (error: any) {
     console.error("Error processing Monime webhook:", error);
     console.error("Error stack:", error.stack);
+    
+    // CRITICAL: Always return a status that Monime considers a "success" (like 200 or 202)
+    // even if we couldn't process the webhook. This prevents Monime from disabling the 
+    // webhook endpoint due to repeated failures. We log the error in the DB above anyway.
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
-        stack: error.stack,
+        message: "Webhook accepted but processing failed. Please check logs.",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 200, // Return 200 to prevent disabling
       }
     );
   }
@@ -1154,15 +1163,18 @@ async function verifyWebhookSignature(
 
       // Compute expected signature
       const payloadToSign = `${timestamp}.${payload}`;
-      const expectedSig = await computeHMAC(payloadToSign, secret);
+      const expectedSigHex = await computeHMAC(payloadToSign, secret, "hex");
+      const expectedSigBase64 = await computeHMAC(payloadToSign, secret, "base64");
 
       // Timing-safe comparison
-      return timingSafeEqual(receivedSig, expectedSig);
+      return timingSafeEqual(receivedSig, expectedSigHex) || timingSafeEqual(receivedSig, expectedSigBase64);
     }
 
     // Try direct HMAC comparison (if signature is just the hash)
-    const expectedSig = await computeHMAC(payload, secret);
-    return timingSafeEqual(signature, expectedSig);
+    const expectedSigHex = await computeHMAC(payload, secret, "hex");
+    const expectedSigBase64 = await computeHMAC(payload, secret, "base64");
+    
+    return timingSafeEqual(signature, expectedSigHex) || timingSafeEqual(signature, expectedSigBase64);
   } catch (error) {
     console.error("Error verifying webhook signature:", error);
     return false;
@@ -1170,7 +1182,11 @@ async function verifyWebhookSignature(
 }
 
 // Compute HMAC-SHA256
-async function computeHMAC(message: string, secret: string): Promise<string> {
+async function computeHMAC(
+  message: string, 
+  secret: string, 
+  encoding: "hex" | "base64" = "hex"
+): Promise<string> {
   const key = new TextEncoder().encode(secret);
   const data = new TextEncoder().encode(message);
 
@@ -1185,9 +1201,15 @@ async function computeHMAC(message: string, secret: string): Promise<string> {
 
   const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
 
-  // Convert ArrayBuffer to hex string
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  if (encoding === "base64") {
+    // Convert ArrayBuffer to Base64 string
+    const binary = String.fromCharCode(...new Uint8Array(signature));
+    return btoa(binary);
+  } else {
+    // Convert ArrayBuffer to hex string
+    const hashArray = Array.from(new Uint8Array(signature));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
 }
 
 // Timing-safe string comparison
