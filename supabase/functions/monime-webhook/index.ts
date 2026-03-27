@@ -441,8 +441,8 @@ async function handlePaymentCompleted(
           }
         }
 
-        // If still not found, try payment endpoint
-        if (!orderNumber && data.id) {
+        // If still not found, try payment endpoint - ONLY if we have a valid Monime Payment ID (spm-)
+        if (!orderNumber && data.id && typeof data.id === 'string' && data.id.startsWith('spm-')) {
           try {
             console.log(`Fetching order number from Monime payment: ${data.id}`);
             const paymentResponse = await fetch(

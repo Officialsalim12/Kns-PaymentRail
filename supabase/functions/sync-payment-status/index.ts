@@ -113,8 +113,16 @@ serve(async (req) => {
       console.log(`[Sync] Monime checkout session data for ${checkoutSessionId}:`, JSON.stringify(monimeData, null, 2));
 
       sessionData = monimeData?.result || monimeData;
-      monimePaymentId = monimePaymentId || sessionData?.paymentId || sessionData?.payment?.id || sessionData?.id;
-      console.log(`[Sync] Monime payment ID identified: ${monimePaymentId || 'NONE'}`);
+      
+      // ONLY take ID as monimePaymentId if it's a real payment ID (starts with spm-)
+      // monimeData.paymentId or monimeData.payment.id are the most reliable
+      const possiblePaymentId = sessionData?.paymentId || sessionData?.payment?.id || (sessionData?.id?.startsWith('spm-') ? sessionData.id : null);
+      
+      if (possiblePaymentId && typeof possiblePaymentId === 'string' && possiblePaymentId.startsWith('spm-')) {
+        monimePaymentId = possiblePaymentId;
+      }
+      
+      console.log(`[Sync] Monime payment ID identified from session: ${monimePaymentId || 'NONE'}`);
     } else {
       console.warn(`Payment ${paymentId} has no monime_checkout_session_id, falling back to monime_payment_id flow`);
     }
@@ -125,8 +133,8 @@ serve(async (req) => {
     let orderNumber: string | null = null;
     let paymentData: any = null;
 
-    // Always fetch the actual payment status from the payment endpoint
-    if (monimePaymentId) {
+    // Always fetch the actual payment status from the payment endpoint - ONLY if we have a valid spm- ID
+    if (monimePaymentId && typeof monimePaymentId === 'string' && monimePaymentId.startsWith('spm-')) {
       try {
         console.log(`Fetching actual payment status from Monime payment endpoint: ${monimePaymentId}`);
         const paymentResponse = await fetch(
