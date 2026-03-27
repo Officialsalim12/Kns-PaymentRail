@@ -18,7 +18,7 @@ interface Props {
   organizations: OrganizationOption[]
 }
 
-const MEMBERSHIP_ID_PREFIX = 'MEM'
+const MEMBERSHIP_ID_MID = 'MEM'
 const MEMBERSHIP_ID_PAD = 3
 
 export default function MemberRegistrationForm({ organizations }: Props) {
@@ -34,14 +34,15 @@ export default function MemberRegistrationForm({ organizations }: Props) {
   const [success, setSuccess] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
-  // Generates per-organization IDs like MEM001, MEM002...
-  // Add a UNIQUE constraint on (organization_id, membership_id) in the database to guarantee uniqueness under concurrency.
-  const getNextMembershipId = async (supabase: ReturnType<typeof createClient>, organizationId: string) => {
+
+  const getNextMembershipId = async (supabase: ReturnType<typeof createClient>, organizationId: string, orgPrefix: string) => {
+    const fullPrefix = `${orgPrefix}${MEMBERSHIP_ID_MID}`
+    
     const { data: lastMember, error: lastMemberError } = await supabase
       .from('members')
       .select('membership_id, created_at')
       .eq('organization_id', organizationId)
-      .like('membership_id', `${MEMBERSHIP_ID_PREFIX}%`)
+      .like('membership_id', `${fullPrefix}%`)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -49,11 +50,11 @@ export default function MemberRegistrationForm({ organizations }: Props) {
     if (lastMemberError) throw lastMemberError
 
     const lastId = lastMember?.membership_id || null
-    const match = lastId ? lastId.match(new RegExp(`^${MEMBERSHIP_ID_PREFIX}(\\d+)$`)) : null
+    const match = lastId ? lastId.match(new RegExp(`^${fullPrefix}(\\d+)$`)) : null
     const lastNumber = match?.[1] ? Number.parseInt(match[1], 10) : 0
     const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1
 
-    return `${MEMBERSHIP_ID_PREFIX}${String(nextNumber).padStart(MEMBERSHIP_ID_PAD, '0')}`
+    return `${fullPrefix}${String(nextNumber).padStart(MEMBERSHIP_ID_PAD, '0')}`
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,7 +77,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
         return
       }
 
-      // Step 1: Sign up the member use
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
@@ -113,14 +114,17 @@ export default function MemberRegistrationForm({ organizations }: Props) {
         return
       }
 
-      // Step 3: Generate a membership ID like MEM001, MEM002, ...
-      // Note: this is best-effort on the client; add a UNIQUE constraint in DB to guarantee uniqueness.
+      const selectedOrg = organizations.find(o => o.id === formData.organization_id)
+      const orgName = selectedOrg?.name || 'ORG'
+      const cleanName = orgName.replace(/[^a-zA-Z0-9]/g, '')
+      const orgPrefix = (cleanName.length >= 3 ? cleanName.substring(0, 3) : cleanName.padEnd(3, 'X')).toUpperCase()
+
       let membershipId: string | null = null
       let newMember: any = null
       let lastInsertError: any = null
 
       for (let attempt = 0; attempt < 5; attempt++) {
-        membershipId = await getNextMembershipId(supabase, formData.organization_id)
+        membershipId = await getNextMembershipId(supabase, formData.organization_id, orgPrefix)
 
         const insertResult = await supabase
           .from('members')
@@ -131,8 +135,7 @@ export default function MemberRegistrationForm({ organizations }: Props) {
             email: formData.email.trim(),
             membership_id: membershipId,
             status: 'pending',
-            // These balance columns may not exist yet in older DB schemas.
-            // They are recomputed/displayed elsewhere (and/or set via server-side logic).
+
           })
           .select()
           .single()

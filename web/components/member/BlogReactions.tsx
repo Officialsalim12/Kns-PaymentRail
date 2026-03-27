@@ -61,6 +61,7 @@ export default function BlogReactions({ postId, postTitle = 'Fundflow Blog', sha
         .from('news_post_comments')
         .select('id, content, author_name, created_at, parent_comment_id, reactions:news_comment_reactions(user_id)')
         .eq('post_id', postId)
+        .eq('is_visible', true)
         .order('created_at', { ascending: true })
         .limit(100)
 
@@ -107,6 +108,7 @@ export default function BlogReactions({ postId, postTitle = 'Fundflow Blog', sha
           .from('news_post_comments')
           .select('*', { count: 'exact', head: true })
           .eq('post_id', postId)
+          .eq('is_visible', true)
 
         let reacted = false
         if (user) {

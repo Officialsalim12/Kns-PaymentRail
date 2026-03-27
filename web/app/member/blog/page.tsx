@@ -53,31 +53,36 @@ export default async function MemberBlogPage({ searchParams }: MemberBlogPagePro
                 id={`post-${post.id}`}
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                {post.image_url && (
-                  <div className="relative w-full pb-[56.25%] bg-black/5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={post.image_url}
-                      alt={post.title || 'Blog image'}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
                 <div className="p-4 space-y-1">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h2 className="text-base font-semibold text-gray-900">
-                      {post.title}
-                    </h2>
-                    <span className="text-xs text-gray-400 whitespace-nowrap">
-                      {format(new Date(post.created_at), 'MMM dd, yyyy')}
-                    </span>
+                  <div className="flex items-start gap-3">
+                    {/* Thumbnail */}
+                    {post.image_url && (
+                      <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.image_url}
+                          alt={post.title || 'Blog image'}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h2 className="text-base font-semibold text-gray-900">
+                          {post.title}
+                        </h2>
+                        <span className="text-xs text-gray-400 whitespace-nowrap">
+                          {format(new Date(post.created_at), 'MMM dd, yyyy')}
+                        </span>
+                      </div>
+                      {post.author_name && (
+                        <p className="text-[11px] text-gray-500 mb-2">
+                          By {post.author_name}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {post.author_name && (
-                    <p className="text-[11px] text-gray-500 mb-2">
-                      By {post.author_name}
-                    </p>
-                  )}
                   <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
                     {post.content}
                   </p>
