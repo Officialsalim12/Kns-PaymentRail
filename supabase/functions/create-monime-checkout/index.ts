@@ -145,17 +145,29 @@ serve(async (req) => {
 
         if (sessionResponse.ok) {
           const session = await sessionResponse.json();
-          return new Response(
-            JSON.stringify({
-              success: true,
-              checkoutSession: session,
-              message: "Using existing checkout session",
-            }),
-            {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            }
-          );
+          
+          const redirectUrl = session?.result?.redirectUrl || session?.redirectUrl || session?.url || session?.checkout_url || session?.checkoutUrl;
+          const sessionId = session?.result?.id || session?.id || session?.sessionId || payment.monime_checkout_session_id;
+
+          if (redirectUrl && sessionId) {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                redirectUrl,
+                sessionId,
+                idempotencyKey: payment.monime_checkout_session_id,
+                checkoutSession: {
+                  id: sessionId,
+                  url: redirectUrl,
+                },
+                message: "Using existing checkout session",
+              }),
+              {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              }
+            );
+          }
         }
       } catch (error) { }
     }
