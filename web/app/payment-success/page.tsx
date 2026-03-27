@@ -46,8 +46,10 @@ function PaymentSuccessContent() {
         if (paymentId) {
           setSyncing(true)
           try {
-            // Retry a few times because some providers finalize asynchronously.
-            for (let attempt = 1; attempt <= 3; attempt++) {
+            // Increase to 10 attempts to handle slow mobile money finalize processes (up to 35-40s total)
+            const MAX_ATTEMPTS = 10
+            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+              console.log(`Syncing payment status (attempt ${attempt}/${MAX_ATTEMPTS})...`)
               const { data, error } = await invokeEdgeFunction(
                 supabase,
                 'sync-payment-status',
@@ -60,17 +62,24 @@ function PaymentSuccessContent() {
                 console.error(`Error syncing payment (attempt ${attempt}):`, error)
               }
 
-              const status =
-                (data as any)?.paymentStatus ||
-                (data as any)?.monimePaymentStatus ||
-                null
+              // Extract status, prioritizing Monime API status if DB is still pending
+              const dbStatus = (data as any)?.paymentStatus
+              const monimeStatus = (data as any)?.monimePaymentStatus
+              
+              const status = (dbStatus === 'completed' || dbStatus === 'paid' || dbStatus === 'succeeded' || dbStatus === 'success')
+                ? dbStatus
+                : monimeStatus
 
               if (status === 'completed' || status === 'paid' || status === 'succeeded' || status === 'success') {
+                console.log(`Payment confirmed as completed (status: ${status})`)
                 break
               }
 
-              if (attempt < 3) {
-                await new Promise((resolve) => setTimeout(resolve, 1500))
+              if (attempt < MAX_ATTEMPTS) {
+                // Variable sleep: faster at first, then slower
+                // Total: (3 * 2s) + (3 * 3s) + (4 * 5s) = 6 + 9 + 20 = 35 seconds
+                const delay = attempt <= 3 ? 2000 : (attempt <= 6 ? 3000 : 5000)
+                await new Promise((resolve) => setTimeout(resolve, delay))
               }
             }
           } catch (syncError) {

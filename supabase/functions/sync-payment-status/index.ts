@@ -110,10 +110,11 @@ serve(async (req) => {
       }
 
       const monimeData = await monimeResponse.json();
-      console.log("Monime API response:", JSON.stringify(monimeData, null, 2));
+      console.log(`[Sync] Monime checkout session data for ${checkoutSessionId}:`, JSON.stringify(monimeData, null, 2));
 
       sessionData = monimeData?.result || monimeData;
       monimePaymentId = monimePaymentId || sessionData?.paymentId || sessionData?.payment?.id || sessionData?.id;
+      console.log(`[Sync] Monime payment ID identified: ${monimePaymentId || 'NONE'}`);
     } else {
       console.warn(`Payment ${paymentId} has no monime_checkout_session_id, falling back to monime_payment_id flow`);
     }

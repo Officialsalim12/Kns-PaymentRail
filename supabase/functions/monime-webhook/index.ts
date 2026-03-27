@@ -164,10 +164,15 @@ serve(async (req: Request) => {
       eventType = "checkout.session.cancelled";
     }
 
+    // Normalize payment.success to payment.completed
+    if (eventType === "payment.success") {
+      eventType = "payment.completed";
+    }
+
     // Also check if status in data indicates completion
     if (!eventType && event.data) {
       const dataStatus = event.data.status?.toLowerCase();
-      if (dataStatus === "completed" || dataStatus === "paid" || dataStatus === "succeeded") {
+      if (dataStatus === "completed" || dataStatus === "paid" || dataStatus === "succeeded" || dataStatus === "success") {
         eventType = "payment.completed";
         console.log(`Inferred event type from data.status: ${eventType}`);
       }
@@ -206,7 +211,7 @@ serve(async (req: Request) => {
         if (event.data && event.data.status) {
           const inferredStatus = event.data.status.toLowerCase();
           console.log(`Attempting to handle based on inferred status: ${inferredStatus}`);
-          if (inferredStatus === "completed" || inferredStatus === "paid" || inferredStatus === "succeeded") {
+          if (inferredStatus === "completed" || inferredStatus === "paid" || inferredStatus === "succeeded" || inferredStatus === "success") {
             await handlePaymentCompleted(supabaseClient, event.data);
           }
         }
