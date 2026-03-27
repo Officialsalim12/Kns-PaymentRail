@@ -586,24 +586,28 @@ async function handlePaymentCompleted(
     .select()
     .maybeSingle();
 
-  if (!updatedPayment) {
+  // Handle broken DB trigger gracefully
+  let triggerFailed = false;
+  if (updateError) {
+    if (updateError.code === "42703" || updateError.message?.includes("tab_name")) {
+      console.warn(`[Webhook] Trigger failure detected (tab_name error), but proceeding with manual completion logic for ${paymentId}`);
+      triggerFailed = true;
+    } else {
+      console.error(`[Webhook] ERROR updating payment ${paymentId}:`, updateError);
+      console.error(`[Webhook] Error details:`, JSON.stringify(updateError, null, 2));
+      throw updateError;
+    }
+  }
+
+  if (!updatedPayment && !triggerFailed) {
     console.log(`[Webhook] Payment ${paymentId} was already completed or not found. Skipping duplicate processing.`);
     return;
   }
 
-  if (updateError) {
-    console.error(`[Webhook] ERROR updating payment ${paymentId}:`, updateError);
-    console.error(`[Webhook] Error details:`, JSON.stringify(updateError, null, 2));
-    throw updateError;
-  }
+  // Use the update data for the 'payment' object if trigger failed
+  const finalPayment = updatedPayment || { ...updateData, id: paymentId, member_id: data.metadata?.memberId || data.metadata?.member_id };
 
-  if (!updatedPayment) {
-    console.error(`[Webhook] Payment ${paymentId} not found after update attempt. Update data was:`, JSON.stringify(updateData));
-    throw new Error(`Payment ${paymentId} not found after update`);
-  }
-
-  console.log(`[Webhook] ✅ Payment ${paymentId} updated successfully to status: ${updatedPayment.payment_status}`);
-  console.log(`[Webhook] Updated payment row:`, JSON.stringify(updatedPayment, null, 2));
+  console.log(`[Webhook] ✅ Payment ${paymentId} update ${triggerFailed ? 'failed (trigger)' : 'succeeded'}, proceeding with follow-up tasks`);
 
   // Fetch full payment data with member info (including all fields needed for receipt generation)
   const { data: payment, error: paymentFetchError } = await supabaseClient

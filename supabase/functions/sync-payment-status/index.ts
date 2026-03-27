@@ -62,6 +62,7 @@ serve(async (req) => {
     if (!monimeSpaceId) {
       throw new Error("MONIME_SPACE_ID not configured");
     }
+    console.log(`[Sync] Configured Monime Space ID: ${monimeSpaceId.substring(0, 10)}... (Length: ${monimeSpaceId.length})`);
 
     // Parse request body
     const { paymentId } = await req.json();
@@ -246,7 +247,21 @@ serve(async (req) => {
         .select()
         .maybeSingle();
 
-      if (!updatedPayment) {
+      // If we get a trigger error (often 42703 or 400 with specific message), 
+      // we should still try to proceed with the member update and receipt generation
+      // as the payment itself IS completed in the real world.
+      let triggerFailed = false;
+      if (updateError) {
+        if (updateError.code === "42703" || updateError.message?.includes("tab_name")) {
+          console.warn(`[Sync] Trigger failure detected (tab_name error), but proceeding with manual completion logic for ${paymentId}`);
+          triggerFailed = true;
+        } else {
+          console.error(`[Sync] ERROR updating payment ${paymentId}:`, updateError.message);
+          throw new Error(`Failed to update payment: ${updateError.message}`);
+        }
+      }
+
+      if (!updatedPayment && !triggerFailed) {
         console.log(`[Sync] Payment ${paymentId} was already completed or not found. Skipping duplicate processing.`);
         return new Response(
           JSON.stringify({
@@ -262,12 +277,7 @@ serve(async (req) => {
         );
       }
 
-      if (updateError) {
-        console.error(`[Sync] ERROR updating payment ${paymentId}:`, updateError.message);
-        throw new Error(`Failed to update payment: ${updateError.message}`);
-      }
-
-      console.log(`[Sync] ✅ Payment ${paymentId} updated successfully to completed`);
+      console.log(`[Sync] ✅ Payment ${paymentId} update ${triggerFailed ? 'failed (trigger)' : 'succeeded'}, proceeding with follow-up tasks`);
 
       // Update member's total_paid
       if (payment.member_id) {
