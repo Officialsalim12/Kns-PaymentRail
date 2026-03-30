@@ -105,20 +105,7 @@ export default function PaymentCancelled() {
     determinePath()
   }, [mounted])
 
-  const handleGoBack = () => {
-    try {
-      if (typeof window !== 'undefined' && window.history.length > 1) {
-        router.back()
-      } else {
-        const path = dashboardPath && dashboardPath.startsWith('/') ? dashboardPath : '/admin'
-        router.push(path)
-      }
-    } catch (error) {
-      console.error('Navigation error:', error)
-      // Fallback to admin if navigation fails
-      router.push('/admin')
-    }
-  }
+
 
   const handleGoToDashboard = () => {
     try {
@@ -185,13 +172,7 @@ export default function PaymentCancelled() {
               )}
 
               <div className="pt-2 flex flex-col sm:flex-row gap-4">
-                <button
-                  type="button"
-                  onClick={handleGoBack}
-                  className="flex-1 px-8 py-5 bg-slate-100 text-slate-700 rounded-2xl font-black text-lg hover:bg-slate-200 transition-all active:scale-[0.98] border border-slate-200/50"
-                >
-                  Try Again
-                </button>
+
                 <button
                   type="button"
                   onClick={handleGoToDashboard}

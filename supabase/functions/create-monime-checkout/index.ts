@@ -172,9 +172,18 @@ serve(async (req) => {
       } catch (error) { }
     }
 
-    // Use the provided URLs directly (frontend sends full URLs)
-    // If not provided, throw an error as we can't construct valid URLs
-    if (!successUrl || !cancelUrl) {
+    let finalSuccessUrl = successUrl;
+    let finalCancelUrl = cancelUrl;
+
+    // Hard override: If the frontend sends localhost (e.g. from a weird cached env or SSR), force it to production URL
+    if (finalSuccessUrl && finalSuccessUrl.includes('localhost')) {
+      finalSuccessUrl = finalSuccessUrl.replace(/http:\/\/localhost(:\d+)?/, 'https://fundflow.sl');
+    }
+    if (finalCancelUrl && finalCancelUrl.includes('localhost')) {
+      finalCancelUrl = finalCancelUrl.replace(/http:\/\/localhost(:\d+)?/, 'https://fundflow.sl');
+    }
+
+    if (!finalSuccessUrl || !finalCancelUrl) {
       throw new Error("Missing required parameters: successUrl and cancelUrl must be provided");
     }
 
@@ -304,8 +313,8 @@ serve(async (req) => {
     // Create payload matching Monime integration guide structure
     const monimeRequestBody: any = {
       name: paymentDescription || 'Payment',
-      successUrl: successUrl,
-      cancelUrl: cancelUrl,
+      successUrl: finalSuccessUrl,
+      cancelUrl: finalCancelUrl,
       lineItems: [
         {
           type: 'custom',
