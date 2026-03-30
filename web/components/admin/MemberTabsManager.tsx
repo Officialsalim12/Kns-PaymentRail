@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Edit, Trash2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface MemberTab {
   id: string
@@ -165,7 +167,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
   }
 
   const handleDeleteTab = async (tabId: string) => {
-    if (!confirm('Are you sure you want to delete this tab?')) return
+    if (!(await confirmDelete('tab'))) return
 
     try {
       const supabase = createClient()
@@ -178,7 +180,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
       loadTabs()
       router.refresh()
     } catch (err: any) {
-      alert(`Error deleting tab: ${err.message}`)
+      toast.error(`Error deleting tab: ${err.message}`)
     }
   }
 
@@ -194,7 +196,7 @@ export default function MemberTabsManager({ memberId, memberName, organizationId
       loadTabs()
       router.refresh()
     } catch (err: any) {
-      alert(`Error updating tab: ${err.message}`)
+      toast.error(`Error updating tab: ${err.message}`)
     }
   }
 

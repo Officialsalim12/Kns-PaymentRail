@@ -5,6 +5,8 @@ import { format } from 'date-fns'
 import { CheckCircle, XCircle, Clock, Plus, Search, X, MoreVertical, Check, Ban, Settings2, RotateCw, RefreshCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { confirmDialog } from '@/lib/utils/confirm-dialog'
 import { formatCurrency } from '@/lib/currency'
 import MemberTabsManager from './MemberTabsManager'
 import BulkTabCreator from './BulkTabCreator'
@@ -98,14 +100,22 @@ export default function MembersManagement({ members: initialMembers, organizatio
 
       router.refresh()
     } catch (error: any) {
-      alert(`Error updating member: ${error.message}`)
+      toast.error(`Error updating member: ${error.message}`)
     } finally {
       setLoading(null)
     }
   }
 
-  const handleApproveClick = (memberId: string, memberName: string) => {
-    if (confirm(`Are you sure you want to approve ${memberName}?`)) {
+  const handleApproveClick = async (memberId: string, memberName: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Approve Member?',
+      text: `Are you sure you want to approve ${memberName}?`,
+      icon: 'question',
+      confirmButtonText: 'Yes, Approve',
+      confirmButtonColor: '#16a34a', // bg-green-600
+    })
+
+    if (confirmed) {
       updateMemberStatus(memberId, 'active')
     }
   }

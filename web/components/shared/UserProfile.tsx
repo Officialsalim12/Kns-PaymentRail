@@ -5,6 +5,8 @@ import NextImage from 'next/image'
 import { User, Edit2, Save, X, Phone, Mail, MapPin, CreditCard, Shield, Camera, Home, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface UserProfileProps {
   user: {
@@ -137,7 +139,7 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
   const handleDeletePhoto = async () => {
     if (!previewUrl || !user.profile?.profile_photo_url) return
 
-    if (!confirm('Are you sure you want to delete your profile photo?')) {
+    if (!(await confirmDelete('profile photo'))) {
       return
     }
 
@@ -514,9 +516,9 @@ export default function UserProfile({ user, membershipId }: UserProfileProps) {
                   onClick={async () => {
                     try {
                       const response = await fetch(previewUrl, { method: 'HEAD' })
-                      alert(`Image URL Status: ${response.status} ${response.ok ? 'OK' : 'FAILED'}`)
+                      toast.info(`Image URL Status: ${response.status} ${response.ok ? 'OK' : 'FAILED'}`)
                     } catch (err: any) {
-                      alert(`Error: ${err.message}`)
+                      toast.error(`Error: ${err.message}`)
                     }
                   }}
                   className="text-primary-600 hover:text-primary-800 underline text-[10px]"

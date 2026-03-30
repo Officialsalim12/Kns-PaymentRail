@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { confirmDialog } from '@/lib/utils/confirm-dialog'
 import Link from 'next/link'
 import { setMemberStatusAtomic } from '@/app/actions/admin-approvals'
 
@@ -119,15 +121,23 @@ export default function ApprovalsManagement({
 
       router.refresh()
     } catch (error: any) {
-      alert(`Error: ${error.message}`)
+      toast.error(`Error: ${error.message}`)
     } finally {
       setLoading(null)
       setApproveModal(null)
     }
   }
 
-  const handleApproveClick = (memberId: string, memberName: string) => {
-    if (confirm(`Are you sure you want to approve ${memberName}?`)) {
+  const handleApproveClick = async (memberId: string, memberName: string) => {
+    const confirmed = await confirmDialog({
+      title: 'Approve Member?',
+      text: `Are you sure you want to approve ${memberName}?`,
+      icon: 'question',
+      confirmButtonText: 'Yes, Approve',
+      confirmButtonColor: '#16a34a', // bg-green-600
+    })
+
+    if (confirmed) {
       updateMemberStatus(memberId, 'active')
     }
   }

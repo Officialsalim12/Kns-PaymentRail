@@ -5,6 +5,7 @@ import { Download, FileText, Printer } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
 import { getMemberDisplayAmount } from '@/lib/utils/payment-display'
+import { toast } from 'sonner'
 
 interface Receipt {
   id: string
@@ -132,14 +133,14 @@ export default function ReceiptsList({ receipts }: Props) {
   ) => {
     try {
       if (!receiptNumber) {
-        alert('Receipt number is not available. Please contact support.')
+        toast.error('Receipt number is not available. Please contact support.')
         return
       }
 
       const blob = await getReceiptBlobForPrint(pdfUrl, receiptNumber, storagePath || null)
       if (!blob) {
         if (pdfUrl && pdfUrl.startsWith('http')) window.open(pdfUrl, '_blank')
-        else alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        else toast.error('Receipt URL is not available. Please contact support.')
         return
       }
 
@@ -148,7 +149,7 @@ export default function ReceiptsList({ receipts }: Props) {
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
     } catch (error) {
       console.error('Error printing receipt:', error)
-      alert('Unable to open receipt for printing. Please contact support.')
+      toast.error('Unable to open receipt for printing. Please contact support.')
     }
   }
 
@@ -157,7 +158,7 @@ export default function ReceiptsList({ receipts }: Props) {
       // Early validation
       if (!receiptNumber) {
         console.error('Receipt download failed - missing receipt number')
-        alert('Receipt number is not available. Please contact support.')
+        toast.error('Receipt number is not available. Please contact support.')
         return
       }
 
@@ -181,7 +182,7 @@ export default function ReceiptsList({ receipts }: Props) {
       
       // Step 3: If we have no path and no URL, we can't proceed
       if (!path && !publicUrl) {
-        alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        toast.error('Receipt URL is not available. Please contact support.')
         return
       }
       
@@ -258,7 +259,7 @@ export default function ReceiptsList({ receipts }: Props) {
       if (publicUrl && publicUrl.startsWith('http')) {
         window.open(publicUrl, '_blank')
       } else {
-        alert('Unable to download receipt. Please contact support.')
+        toast.error('Unable to download receipt. Please contact support.')
       }
     } catch (error) {
       console.error('Error downloading receipt:', error)
@@ -274,7 +275,7 @@ export default function ReceiptsList({ receipts }: Props) {
       if (fallbackUrl && fallbackUrl.startsWith('http')) {
         window.open(fallbackUrl, '_blank')
       } else {
-        alert('An error occurred while downloading the receipt. Please contact support.')
+        toast.error('An error occurred while downloading the receipt.')
       }
     }
   }

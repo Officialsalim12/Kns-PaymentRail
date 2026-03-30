@@ -5,6 +5,8 @@ import { format } from 'date-fns'
 import { Bell, CheckCircle, UserPlus, CheckCircle2, XCircle, MessageSquare, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface Notification {
   id: string
@@ -147,7 +149,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
       )
       router.refresh()
     } catch (error: any) {
-      alert(`Error updating notification: ${error.message}`)
+      toast.error(`Error updating notification: ${error.message}`)
     } finally {
       setMarkingAsRead(null)
     }
@@ -174,12 +176,12 @@ export default function NotificationsManagement({ notifications: initialNotifica
       )
       router.refresh()
     } catch (error: any) {
-      alert(`Error marking notifications as read: ${error.message}`)
+      toast.error(`Error marking notifications as read: ${error.message}`)
     }
   }
 
   const deleteNotification = async (notificationId: string) => {
-    if (!confirm('Are you sure you want to delete this notification?')) {
+    if (!(await confirmDelete('notification'))) {
       return
     }
 
@@ -196,7 +198,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       router.refresh()
     } catch (error: any) {
-      alert(`Error deleting notification: ${error.message}`)
+      toast.error(`Error deleting notification: ${error.message}`)
     } finally {
       setDeletingId(null)
     }
@@ -205,7 +207,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
   const deleteAllNotifications = async () => {
     if (notifications.length === 0) return
 
-    if (!confirm(`Are you sure you want to delete all ${notifications.length} notification(s)? This action cannot be undone.`)) {
+    if (!(await confirmDelete('all notifications', `Are you sure you want to delete all ${notifications.length} notification(s)? This action cannot be undone.`))) {
       return
     }
 
@@ -242,7 +244,7 @@ export default function NotificationsManagement({ notifications: initialNotifica
       setNotifications([])
       router.refresh()
     } catch (error: any) {
-      alert(`Error deleting notifications: ${error.message}`)
+      toast.error(`Error deleting notifications: ${error.message}`)
     } finally {
       setDeletingAll(false)
     }

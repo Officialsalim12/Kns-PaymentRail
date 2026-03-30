@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation'
 import { invokeEdgeFunction } from '@/lib/supabase/functions'
 import { getDisplayAmount } from '@/lib/utils/payment-display'
 import { deletePaymentAtomic } from '@/app/actions/admin-payments'
+import { toast } from 'sonner'
+import { confirmDelete, confirmDialog } from '@/lib/utils/confirm-dialog'
 
 interface Member {
   id: string
@@ -127,7 +129,7 @@ export default function PaymentManagement({ members: initialMembers, payments: i
   }
 
   const handleDeletePayment = async (paymentId: string) => {
-    if (!confirm('Are you sure you want to delete this payment? This action cannot be undone.')) {
+    if (!(await confirmDelete('payment', 'Are you sure you want to delete this payment? This action cannot be undone.'))) {
       return
     }
 
@@ -142,7 +144,7 @@ export default function PaymentManagement({ members: initialMembers, payments: i
       // Refresh the page to ensure database state is synced
       router.refresh()
     } catch (error: any) {
-      alert(`Error deleting payment: ${error.message}`)
+      toast.error(`Error deleting payment: ${error.message}`)
       // Re-fetch payments to ensure UI matches database
       router.refresh()
     } finally {
@@ -151,7 +153,14 @@ export default function PaymentManagement({ members: initialMembers, payments: i
   }
 
   const handleSyncPayment = async (paymentId: string) => {
-    if (!confirm('This will check the payment status from Monime and update it if completed. Continue?')) {
+    const confirmed = await confirmDialog({
+      title: 'Sync Payment Status?',
+      text: 'This will check the payment status from Monime and update it if completed. Continue?',
+      icon: 'question',
+      confirmButtonText: 'Yes, Sync Now',
+    })
+
+    if (!confirmed) {
       return
     }
 
@@ -182,13 +191,13 @@ export default function PaymentManagement({ members: initialMembers, payments: i
           description: 'Synced payment status from Monime',
         })
 
-        alert(data.message || 'Payment status synced successfully!')
+        toast.success(data.message || 'Payment status synced successfully!')
         router.refresh()
       } else {
         throw new Error(data?.error || 'Sync failed')
       }
     } catch (error: any) {
-      alert(`Error syncing payment: ${error.message}`)
+      toast.error(`Error syncing payment: ${error.message}`)
     } finally {
       setSyncingPaymentId(null)
     }

@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Search, Users, CreditCard, Heart, X, Wifi, WifiOff 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { formatCurrency } from '@/lib/currency'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 import BulkTabCreator from './BulkTabCreator'
 
 interface MemberTab {
@@ -169,7 +170,7 @@ export default function PaymentTabsManagement({ organizationId, initialTabs }: P
   }
 
   const handleDeleteTab = async (tabId: string) => {
-    if (!confirm('Are you sure you want to delete this payment tab? This action cannot be undone.')) {
+    if (!(await confirmDelete('payment tab', 'Are you sure you want to delete this payment tab? This action cannot be undone.'))) {
       return
     }
 

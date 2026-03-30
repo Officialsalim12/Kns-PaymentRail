@@ -5,6 +5,8 @@ import { format } from 'date-fns'
 import { Bell, DollarSign, UserPlus, CheckCircle2, MessageSquare, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface Notification {
   id: string
@@ -118,14 +120,14 @@ export default function SuperAdminNotificationsList({ notifications: initialNoti
       )
       router.refresh()
     } catch (error: any) {
-      alert(`Error marking notification as read: ${error.message}`)
+      toast.error(`Error marking notification as read: ${error.message}`)
     } finally {
       setMarkingAsRead(null)
     }
   }
 
   const deleteNotification = async (notificationId: string) => {
-    if (!confirm('Are you sure you want to delete this notification?')) return
+    if (!(await confirmDelete('notification'))) return
 
     setDeletingId(notificationId)
     try {
@@ -140,7 +142,7 @@ export default function SuperAdminNotificationsList({ notifications: initialNoti
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       router.refresh()
     } catch (error: any) {
-      alert(`Error deleting notification: ${error.message}`)
+      toast.error(`Error deleting notification: ${error.message}`)
     } finally {
       setDeletingId(null)
     }
@@ -167,7 +169,7 @@ export default function SuperAdminNotificationsList({ notifications: initialNoti
       )
       router.refresh()
     } catch (error: any) {
-      alert(`Error marking notifications as read: ${error.message}`)
+      toast.error(`Error marking notifications as read: ${error.message}`)
     }
   }
 

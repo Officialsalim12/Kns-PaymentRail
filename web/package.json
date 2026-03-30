@@ -16,11 +16,14 @@
     "date-fns": "^3.0.6",
     "lucide-react": "^0.303.0",
     "next": "^14.2.35",
+    "patch-package": "^8.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.49.2",
     "recharts": "^3.7.0",
-    "patch-package": "^8.0.1",
+    "sonner": "^2.0.7",
+    "sweetalert2": "^11.26.24",
+    "sweetalert2-react-content": "^5.1.2",
     "zod": "^3.22.4"
   },
   "optionalDependencies": {

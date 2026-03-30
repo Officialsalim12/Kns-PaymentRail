@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { FileText, Loader2, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, MessageCircle } from 'lucide-react'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface BlogPost {
   id: string
@@ -229,7 +230,7 @@ export default function BlogManagement({ initialPosts }: Props) {
   }
 
   const handleDelete = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+    if (!(await confirmDelete('post'))) {
       return
     }
 

@@ -10,6 +10,7 @@ import { invokeEdgeFunction } from '@/lib/supabase/functions'
 import { useRouter } from 'next/navigation'
 import { fetchWithTimeout } from '@/lib/utils/fetch-with-timeout'
 import { getMemberDisplayAmount } from '@/lib/utils/payment-display'
+import { toast } from 'sonner'
 
 interface Payment {
   id: string
@@ -72,12 +73,12 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
 
   const handleGenerateReceipt = async (payment: Payment) => {
     if (!payment.organization_id || !payment.member_id) {
-      alert('Missing payment information. Please refresh the page and try again.')
+      toast.error('Missing payment information. Please refresh the page and try again.')
       return
     }
 
     if (payment.payment_status !== 'completed') {
-      alert('Receipts can only be generated for completed payments.')
+      toast.error('Receipts can only be generated for completed payments.')
       return
     }
 
@@ -157,9 +158,11 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
             ? `\n\nTo deploy the function, run:\nsupabase functions deploy generate-receipt\n\nOr deploy via Supabase Dashboard:\n1. Go to Edge Functions → Deploy\n2. Select the generate-receipt function\n3. Click Deploy`
             : '\n\nPlease ensure your Supabase URL is configured correctly.'
 
-          alert(`Failed to connect to receipt generation service.${deploymentMsg}\n\nIf the function is already deployed, please check:\n1. Your internet connection\n2. The Supabase project is active\n3. Contact support if the issue persists`)
+          toast.error(`Failed to connect to receipt generation service.`, {
+            description: `If the function is already deployed, please check your connection or contact support.`,
+          })
         } else {
-          alert(`Failed to generate receipt: ${errorMsg}`)
+          toast.error(`Failed to generate receipt: ${errorMsg}`)
         }
         return
       }
@@ -208,27 +211,27 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
         // Try to fetch the receipt immediately
         const success = await fetchAndUpdateReceipt()
         if (success) {
-          alert('Receipt generated successfully! You can now download it using the button below.')
+          toast.success('Receipt generated successfully!')
         } else {
           // Fallback: refresh the page if we can't fetch the updated payment
-          alert('Receipt generated successfully! Refreshing page...')
+          toast.success('Receipt generated successfully! Refreshing page...')
           router.refresh()
         }
       } else if (result.data?.error) {
-        alert(`Failed to generate receipt: ${result.data.error}`)
+        toast.error(`Failed to generate receipt: ${result.data.error}`)
       } else {
         // If we got data but no success flag, try to fetch the receipt anyway
         const success = await fetchAndUpdateReceipt()
         if (success) {
-          alert('Receipt generated successfully! You can now download it using the button below.')
+          toast.success('Receipt generated successfully!')
         } else {
-          alert('Receipt generation completed. Refreshing page...')
+          toast.info('Receipt generation completed. Refreshing page...')
           router.refresh()
         }
       }
     } catch (error: any) {
       console.error('Error generating receipt:', error)
-      alert(`Failed to generate receipt: ${error.message || 'Unknown error'}`)
+      toast.error(`Failed to generate receipt: ${error.message || 'Unknown error'}`)
     } finally {
       setGeneratingReceiptId(null)
     }
@@ -239,7 +242,7 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
       // Early validation - check for valid receipt number
       if (!receiptNumber || typeof receiptNumber !== 'string' || receiptNumber.trim().length === 0) {
         console.error('Receipt download failed - invalid receipt number:', { receiptNumber, pdfUrl, storagePath })
-        alert('Receipt number is not available. Please contact support.')
+        toast.error('Receipt number is not available. Please contact support.')
         return
       }
 
@@ -268,7 +271,7 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
           storagePath: storagePath || 'null',
           receiptNumber: receiptNumber || 'null',
         })
-        alert('Receipt URL is not available. The receipt may not have been generated yet. Please try generating the receipt first using the "Generate Receipt" button.')
+        toast.error('Receipt URL is not available. The receipt may not have been generated yet.')
         return
       }
 
@@ -338,7 +341,7 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
       if (publicUrl && publicUrl.startsWith('http')) {
         window.open(publicUrl, '_blank')
       } else {
-        alert('Unable to download receipt. The receipt URL is invalid. Please contact support.')
+        toast.error('Unable to download receipt. The receipt URL is invalid.')
         console.error('Invalid PDF URL:', pdfUrl, 'Storage path:', path)
       }
     } catch (error) {
@@ -350,12 +353,12 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
         const { data: { publicUrl: generatedUrl } } = supabase.storage.from('receipts').getPublicUrl(storagePath)
         fallbackUrl = generatedUrl
       }
-
+ 
       // Fallback: open in new tab (only if URL is valid)
       if (fallbackUrl && fallbackUrl.startsWith('http')) {
         window.open(fallbackUrl, '_blank')
       } else {
-        alert('An error occurred while downloading the receipt. Please contact support.')
+        toast.error('An error occurred while downloading the receipt.')
       }
     }
   }
@@ -363,7 +366,7 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
   const handlePrintReceipt = async (pdfUrl: string | null | undefined, receiptNumber: string | null | undefined, storagePath?: string | null) => {
     try {
       if (!receiptNumber || typeof receiptNumber !== 'string' || receiptNumber.trim().length === 0) {
-        alert('Receipt number is not available. Please contact support.')
+        toast.error('Receipt number is not available. Please contact support.')
         return
       }
 
@@ -387,7 +390,7 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
       }
 
       if (!path && !publicUrl) {
-        alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        toast.error('Receipt URL is not available. Please contact support.')
         return
       }
 
@@ -445,10 +448,10 @@ export default function PaymentHistoryList({ payments: initialPayments }: Props)
         return
       }
 
-      alert('Unable to open the receipt for printing. Please contact support.')
+      toast.error('Unable to open the receipt for printing. Please contact support.')
     } catch (error) {
       console.error('Error printing receipt:', error)
-      alert('Unable to open receipt for printing. Please contact support.')
+      toast.error('Unable to open receipt for printing. Please contact support.')
     }
   }
 

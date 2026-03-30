@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import MemberPaymentForm from './MemberPaymentForm'
 import { getMemberDisplayAmount, calculateCompletedPaymentsDisplayAmount } from '@/lib/utils/payment-display'
+import { toast } from 'sonner'
+import { confirmDelete } from '@/lib/utils/confirm-dialog'
 
 interface Member {
   id: string
@@ -224,7 +226,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
     : (notifications || []).filter(n => !n.is_read).length
 
   const handleDeleteNotification = async (notificationId: string) => {
-    if (!confirm('Are you sure you want to delete this notification?')) {
+    if (!(await confirmDelete('notification'))) {
       return
     }
 
@@ -244,7 +246,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       setNotifications(notifications.filter(n => n.id !== notificationId))
       router.refresh()
     } catch (error: any) {
-      alert(`Error deleting notification: ${error.message}`)
+      toast.error(`Error deleting notification: ${error.message}`)
     } finally {
       setDeletingNotificationId(null)
     }
@@ -255,7 +257,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       // Early validation
       if (!receiptNumber) {
         console.error('Receipt download failed - missing receipt number')
-        alert('Receipt number is not available. Please contact support.')
+        toast.error('Receipt number is not available. Please contact support.')
         return
       }
 
@@ -280,7 +282,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
 
       // Step 3: If we have no path and no URL, we can't proceed
       if (!path && !publicUrl) {
-        alert('Receipt URL is not available. The receipt may not have been generated yet. Please contact support.')
+        toast.error('Receipt URL is not available. Please contact support.')
         return
       }
 
@@ -348,11 +350,11 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
       if (publicUrl && publicUrl.startsWith('http')) {
         window.open(publicUrl, '_blank')
       } else {
-        alert('Unable to download receipt. Please contact support.')
+        toast.error('Unable to download receipt. Please contact support.')
       }
     } catch (error) {
       console.error('Error downloading receipt:', error)
-      alert('An error occurred while downloading the receipt.')
+      toast.error('An error occurred while downloading the receipt.')
     }
   }
 
