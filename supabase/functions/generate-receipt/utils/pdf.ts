@@ -101,41 +101,41 @@ export async function generateReceiptPDF(
       })
     }
 
-    // Always prefer the platform's recorded payment timestamp for the receipt,
-    // and only fall back to Monime metadata if those fields are missing.
+    const isDateOnly = (val: unknown): boolean =>
+      typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val.trim())
+
+    const hasTime = (val: unknown): boolean =>
+      typeof val === "string" && val.includes("T")
+
+    // 1. Determine Payment Timestamp:
+    // Prefers payment_date from DB, falling back to update/creation times.
     const paymentTimestamp =
-        payment.payment_date ||
-        payment.created_at ||
-        monimePaymentData?.created_at ||
-        monimePaymentData?.createdAt ||
-        monimePaymentData?.paid_at ||
-        monimePaymentData?.paidAt ||
-        monimePaymentData?.completed_at ||
-        monimePaymentData?.completedAt ||
-        new Date().toISOString()
+      (hasTime(payment?.payment_date) ? payment.payment_date : null) ||
+      payment?.payment_date || 
+      payment?.updated_at ||
+      payment?.created_at ||
+      (hasTime(monimePaymentData?.paid_at) ? monimePaymentData.paid_at : null) ||
+      (hasTime(monimePaymentData?.completed_at) ? monimePaymentData.completed_at : null) ||
+      new Date().toISOString()
 
     const actualPaymentDate = new Date(paymentTimestamp)
     const formattedDate = actualPaymentDate.toLocaleString("en-US", {
       year: "numeric",
       month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true
+      day: "numeric"
     })
 
     const memberName = payment?.member?.full_name || 'Member'
     const memberInitial = memberName?.[0] || 'M'
 
-    let yPosition = height - 56
+    let yPosition = height - 50
 
-    // Header
+    // Header Line
     page.drawLine({
-      start: { x: marginX, y: yPosition + 14 },
-      end: { x: rightEdge, y: yPosition + 14 },
+      start: { x: marginX, y: yPosition + 10 },
+      end: { x: rightEdge, y: yPosition + 10 },
       thickness: 1,
-      color: rgb(0.92, 0.94, 1)
+      color: rgb(0.9, 0.92, 1)
     })
 
     if (fundflowLogo) {
@@ -143,38 +143,40 @@ export async function generateReceiptPDF(
       const logoH = 34
       page.drawImage(fundflowLogo, {
         x: (width - logoW) / 2,
-        y: height - 100,
+        y: height - 90,
         width: logoW,
         height: logoH
       })
+      yPosition -= 40
     }
 
-    drawCentered("TRANSACTION RECEIPT", yPosition + 6, 22, helveticaBoldFont, rgb(0, 0, 0))
+    drawCentered("TRANSACTION RECEIPT", yPosition, 20, helveticaBoldFont, rgb(0, 0, 0))
+    yPosition -= 22
+    drawCentered("Receipt Information", yPosition, 12, helveticaBoldFont, rgb(0.3, 0.3, 0.3))
+    yPosition -= 24
 
-    // Avatar + top identity row
-    drawAvatar(memberInitial, marginX + 22, yPosition - 10, 18)
-    drawCentered("Receipt Information", yPosition - 2, 12, helveticaBoldFont, rgb(0, 0, 0))
-    yPosition -= 44
+    // Avatar + ID row
+    drawAvatar(memberInitial, marginX + 22, height - 120, 18)
 
     drawLabelValueRow("Receipt No", receiptNumber, yPosition)
     yPosition -= rowHeight
     drawLabelValueRow("Date", formattedDate, yPosition)
-    yPosition -= sectionGap
+    yPosition -= sectionGap + 10
 
-    // Organization
+    // Organization Section
     drawCentered("Organization", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
-    yPosition -= sectionGap / 1.2
+    yPosition -= 16
     drawLabelValueRow("Name", payment?.member?.organization?.name || 'N/A', yPosition)
     yPosition -= rowHeight
     if (payment?.member?.organization?.organization_type) {
       drawLabelValueRow("Type", payment.member.organization.organization_type, yPosition)
       yPosition -= rowHeight
     }
-    yPosition -= sectionGap
+    yPosition -= sectionGap + 10
 
-    // Member
+    // Member Section
     drawCentered("Member", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
-    yPosition -= sectionGap / 1.2
+    yPosition -= 16
     drawLabelValueRow("Name", memberName, yPosition)
     yPosition -= rowHeight
     drawLabelValueRow("Membership ID", String(payment?.member?.membership_id || 'N/A'), yPosition)
@@ -187,23 +189,22 @@ export async function generateReceiptPDF(
       drawLabelValueRow("Phone", String(payment.member.phone_number), yPosition)
       yPosition -= rowHeight
     }
-    yPosition -= sectionGap
+    yPosition -= sectionGap + 10
 
-    // Amount
+    // Amount Section
     const paymentAmount =
       typeof payment.amount === 'string' ? parseFloat(payment.amount) : (payment.amount || 0)
-
     const paymentCurrency = payment.currency === 'SLE' ? 'Le' : (payment.currency || 'Le')
     const amountText = `${paymentCurrency} ${paymentAmount.toFixed(2)}`
 
     drawCentered("Amount Paid", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
-    yPosition -= 12
-    drawCentered(amountText, yPosition, 22, helveticaBoldFont, rgb(0, 0, 0))
-    yPosition -= 28
+    yPosition -= 22
+    drawCentered(amountText, yPosition, 24, helveticaBoldFont, rgb(0, 0, 0))
+    yPosition -= 36
 
-    // Payment details
+    // Payment details Section
     drawCentered("Payment Details", yPosition, 13, helveticaBoldFont, rgb(0, 0, 0))
-    yPosition -= sectionGap / 1.2
+    yPosition -= 16
     drawLabelValueRow("Transaction ID", String(payment?.id || 'N/A'), yPosition)
     yPosition -= rowHeight
 
@@ -250,7 +251,7 @@ export async function generateReceiptPDF(
     drawLabelValueRow("Status", String(monimeStatus), yPosition, { valueColor: rgb(0, 0.6, 0) })
     yPosition -= rowHeight
 
-    // Description
+    // Description Section
     const monimeDescription =
       monimePaymentData?.description ||
       monimePaymentData?.name ||
@@ -258,24 +259,24 @@ export async function generateReceiptPDF(
       null
 
     if (monimeDescription) {
-      yPosition -= 6
-      drawCentered("Description", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
       yPosition -= 12
+      drawCentered("Description", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
+      yPosition -= 16
       const lines = wrapText(String(monimeDescription), 80, 4)
       for (const line of lines) {
         drawCentered(line, yPosition, 10, helveticaFont, rgb(0, 0, 0))
         yPosition -= rowHeight
       }
-      yPosition -= 8
+      yPosition -= 10
     }
 
-    // Line items (if any)
+    // Line items Section (if any)
     if (monimePaymentData?.line_items?.length > 0) {
+      yPosition -= 6
       drawCentered("Line Items", yPosition, 11, helveticaBoldFont, rgb(0.2, 0.2, 0.2))
-      yPosition -= 14
+      yPosition -= 16
 
       for (let i = 0; i < monimePaymentData.line_items.length; i++) {
-        // Keep space for the footer at the bottom of the page.
         if (yPosition < 170) break
         const item = monimePaymentData.line_items[i]
         const itemName = item?.name || item?.description || `Item ${i + 1}`
@@ -298,7 +299,7 @@ export async function generateReceiptPDF(
       start: { x: marginX, y: footerLineY },
       end: { x: rightEdge, y: footerLineY },
       thickness: 1,
-      color: rgb(0.92, 0.94, 1),
+      color: rgb(0.9, 0.92, 1),
     })
 
     drawCentered("Thank you for your payment!", thankYouY, 12, helveticaBoldFont, rgb(0, 0, 0))

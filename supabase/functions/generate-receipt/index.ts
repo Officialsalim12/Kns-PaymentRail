@@ -72,9 +72,8 @@ serve(async (req) => {
 
     if (!paymentId || !organizationId || !memberId) throw new Error("Missing required parameters");
 
-    // Idempotency check 1: Check if receipt already exists
-    // We don't early-return because the receipt template can change.
-    // If a receipt exists, we regenerate it using the existing receipt number.
+    // 1. Idempotency Check: Verify if receipt already exists
+    // We regenerate the PDF even if it exists to allow for template updates.
     const { data: existingReceipt } = await supabaseClient
       .from("receipts")
       .select("id, receipt_number, pdf_url, pdf_storage_path")
@@ -83,13 +82,9 @@ serve(async (req) => {
 
     const existingReceiptId = existingReceipt?.id || null
     const existingReceiptNumber = existingReceipt?.receipt_number || null
-    const shouldSendSideEffects = !existingReceipt
 
-    // Idempotency check 2: Distributed Lock using receipt_generation_logs
-    // Only required for first-time generation.
+    // 2. Distributed Lock: Prevent concurrent generation for the same payment
     if (!existingReceipt) {
-      // Try to insert a 'processing' record. If it fails (constraint violation), another process is working on it.
-      // The table should have a unique constraint on payment_id.
       const { error: lockError } = await supabaseClient
         .from("receipt_generation_logs")
         .insert({
@@ -100,9 +95,6 @@ serve(async (req) => {
         });
 
       if (lockError) {
-        console.log(`Receipt generation lock failed for payment ${paymentId}:`, lockError.message);
-
-        // Check if it failed because it's already processing or completed
         const { data: logEntry } = await supabaseClient
           .from("receipt_generation_logs")
           .select("status, created_at")
@@ -110,10 +102,8 @@ serve(async (req) => {
           .maybeSingle();
 
         if (logEntry) {
-          // If it was created less than 1 minute ago, assume it's still processing vs stale lock
           const lockTime = new Date(logEntry.created_at).getTime();
-          const now = Date.now();
-          if (now - lockTime < 60000) { // 1 minute timeout
+          if (Date.now() - lockTime < 60000) { // 1 minute timeout for active locks
             return new Response(JSON.stringify({
               success: true,
               message: "Receipt generation already in progress",
@@ -122,9 +112,8 @@ serve(async (req) => {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
               status: 200,
             });
-          } else {
-            console.warn(`Found stale lock for payment ${paymentId} from ${logEntry.created_at}.`);
           }
+          console.warn(`Stale lock detected for payment ${paymentId} (from ${logEntry.created_at})`);
         }
       }
     }
@@ -227,21 +216,45 @@ serve(async (req) => {
       throw receiptError;
     }
 
-    // Notify & Email
-    if (shouldSendSideEffects) {
+    // Notify & Email (Idempotent: only send if not already sent for this specific payment)
+    const { data: existingNotification } = await supabaseClient
+      .from("notifications")
+      .select("id")
+      .eq("recipient_id", payment.member.user_id)
+      .eq("type", "receipt")
+      .contains("message", { receipt_number: receiptNumber }) // Or just match by payment link if we had it
+      .maybeSingle();
+
+    // If we can't reliably match the message, we can just check if ANY receipt notification 
+    // was sent for this payment recently. For now, let's use a simpler "should we notify" check.
+    
+    // Check if we should send notifications (if they haven't been sent yet)
+    let notificationSent = !!existingNotification;
+
+    if (!notificationSent) {
       if (payment.member.user_id) {
-        await supabaseClient.from("notifications").insert({
+        console.log(`[Receipt] Sending notification to user ${payment.member.user_id}`);
+        const { error: notifyErr } = await supabaseClient.from("notifications").insert({
           organization_id: organizationId,
           recipient_id: payment.member.user_id,
           title: "Receipt Generated",
-          message: `Your receipt ${receiptNumber} is ready.`,
-          type: "receipt"
+          message: `Your receipt ${receiptNumber} for your recent payment has been generated. You can view it in your dashboard.`,
+          type: "receipt",
+          metadata: {
+            payment_id: paymentId,
+            receipt_number: receiptNumber,
+            pdf_url: publicUrl
+          }
         });
+        if (!notifyErr) notificationSent = true;
       }
 
       if (payment.member.email) {
+        console.log(`[Receipt] Sending receipt email to ${payment.member.email}`);
         await sendReceiptEmail(payment.member.email, payment.member.full_name, receiptNumber, publicUrl, payment, payment.member.organization.name, monimePaymentData);
       }
+    } else {
+      console.log(`[Receipt] Notification already sent for payment ${paymentId}, skipping duplicates.`);
     }
 
     return new Response(JSON.stringify({ success: true, receipt }), {

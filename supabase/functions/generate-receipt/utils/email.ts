@@ -6,14 +6,22 @@ export function generateReceiptEmailHTML(
     organizationName: string,
     monimePaymentData: any = null
 ): string {
-    const monimePaymentDate = monimePaymentData?.created_at ||
-        monimePaymentData?.createdAt ||
-        monimePaymentData?.paid_at ||
-        monimePaymentData?.paidAt ||
-        monimePaymentData?.completed_at ||
-        monimePaymentData?.completedAt ||
-        payment.payment_date ||
-        payment.created_at ||
+    const isDateOnly = (val: unknown): boolean =>
+        typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val.trim())
+
+    const hasTime = (val: unknown): boolean =>
+        typeof val === "string" && val.includes("T")
+
+    const monimePaymentDate =
+        (hasTime(payment?.payment_date) ? payment.payment_date : null) ||
+        payment?.updated_at ||
+        payment?.created_at ||
+        (hasTime(monimePaymentData?.created_at) ? monimePaymentData.created_at : null) ||
+        (hasTime(monimePaymentData?.createdAt) ? monimePaymentData.createdAt : null) ||
+        (hasTime(monimePaymentData?.paid_at) ? monimePaymentData.paid_at : null) ||
+        (hasTime(monimePaymentData?.paidAt) ? monimePaymentData.paidAt : null) ||
+        (hasTime(monimePaymentData?.completed_at) ? monimePaymentData.completed_at : null) ||
+        (hasTime(monimePaymentData?.completedAt) ? monimePaymentData.completedAt : null) ||
         new Date().toISOString();
 
     const actualPaymentDate = new Date(monimePaymentDate);

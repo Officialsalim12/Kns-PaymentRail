@@ -222,6 +222,8 @@ serve(async (req) => {
       console.log(`Payment is NOT completed. Status: ${actualPaymentStatus}`);
     }
 
+    let updatedPayment: any = null;
+
     if (isCompleted && payment.payment_status !== "completed") {
       console.log(`Payment ${paymentId} is completed, updating database...`);
 
@@ -239,7 +241,7 @@ serve(async (req) => {
 
       console.log(`[Sync] Attempting to update payment ${paymentId} to completed. Data:`, JSON.stringify(updateData, null, 2));
 
-      const { error: updateError, data: updatedPayment } = await supabaseClient
+      let { error: updateError, data: updatedPayment } = await supabaseClient
         .from("payments")
         .update(updateData)
         .eq("id", paymentId)
@@ -247,62 +249,89 @@ serve(async (req) => {
         .select()
         .maybeSingle();
 
-      // If we get a trigger error (often 42703 or 400 with specific message), 
-      // we should still try to proceed with the member update and receipt generation
-      // as the payment itself IS completed in the real world.
-      let triggerFailed = false;
       if (updateError) {
-        if (updateError.code === "42703" || updateError.message?.includes("tab_name")) {
-          console.warn(`[Sync] Trigger failure detected (tab_name error), but proceeding with manual completion logic for ${paymentId}`);
-          triggerFailed = true;
+        console.warn(`[Sync] update failed for payment ${paymentId}: ${updateError.message}`);
+        
+        // If it's a trigger error (often 42703 or 400 with specific message), 
+        // we should try a fallback update that might bypass specific issues.
+        if (updateError.code === "42703" || updateError.message?.includes("tab_name") || updateError.message?.includes("tab_type")) {
+          console.warn(`[Sync] Detected schema/trigger mismatch (tab_name/type). Attempting fallback update for status only.`);
+          
+          const { error: fallbackError, data: fallbackPayment } = await supabaseClient
+            .from("payments")
+            .update({
+              payment_status: "completed",
+              payment_date: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              monime_payment_id: monimePaymentId
+            })
+            .eq("id", paymentId)
+            .neq("payment_status", "completed")
+            .select()
+            .maybeSingle();
+            
+          if (fallbackError) {
+            console.error(`[Sync] Fallback update also failed:`, fallbackError.message);
+            throw new Error(`Critical: Failed to update payment status even with fallback: ${fallbackError.message}`);
+          }
+          
+          updatedPayment = fallbackPayment;
+          updateError = null;
         } else {
-          console.error(`[Sync] ERROR updating payment ${paymentId}:`, updateError.message);
+          console.error(`[Sync] Non-recoverable error updating payment ${paymentId}:`, updateError.message);
           throw new Error(`Failed to update payment: ${updateError.message}`);
         }
       }
 
-      if (!updatedPayment && !triggerFailed) {
-        console.log(`[Sync] Payment ${paymentId} was already completed or not found. Skipping duplicate processing.`);
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "Payment was already completed by another process (webhook or sync).",
-            paymentStatus: "completed",
-            referenceNumber: referenceNumber,
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          }
-        );
+      if (!updatedPayment) {
+        // Check if it's already completed to be sure
+        const { data: finalCheck } = await supabaseClient
+          .from("payments")
+          .select("payment_status")
+          .eq("id", paymentId)
+          .single();
+          
+        if (finalCheck?.payment_status === "completed") {
+          console.log(`[Sync] Payment ${paymentId} verified as already completed. Ensuring side effects are triggered...`);
+          // We don't return here! We want to make sure the receipt is generated and 
+          // member totals are updated if they were missed.
+          updatedPayment = finalCheck;
+        } else {
+          console.error(`[Sync] Payment ${paymentId} update failed to return data and status is still ${finalCheck?.payment_status}`);
+          throw new Error(`Failed to update payment ${paymentId} to completed status.`);
+        }
       }
 
-      console.log(`[Sync] ✅ Payment ${paymentId} update ${triggerFailed ? 'failed (trigger)' : 'succeeded'}, proceeding with follow-up tasks`);
+      console.log(`[Sync] ✅ Payment ${paymentId} update succeeded, proceeding with follow-up tasks`);
 
       // Update member's total_paid
-      if (payment.member_id) {
-        const { data: allPayments, error: paymentsError } = await supabaseClient
-          .from("payments")
-          .select("amount, payment_status")
-          .eq("member_id", payment.member_id);
+      try {
+        if (payment.member_id) {
+          const { data: allPayments, error: paymentsError } = await supabaseClient
+            .from("payments")
+            .select("amount, payment_status")
+            .eq("member_id", payment.member_id);
 
-        if (!paymentsError && allPayments) {
-          const totalPaid = allPayments
-            .filter((p) => p.payment_status === "completed")
-            .reduce((sum, p) => {
-              const amount = typeof p.amount === "string"
-                ? parseFloat(p.amount)
-                : (p.amount || 0);
-              return sum + amount;
-            }, 0);
+          if (!paymentsError && allPayments) {
+            const totalPaid = allPayments
+              .filter((p) => p.payment_status === "completed")
+              .reduce((sum, p) => {
+                const amount = typeof p.amount === "string"
+                  ? parseFloat(p.amount)
+                  : (p.amount || 0);
+                return sum + amount;
+              }, 0);
 
-          await supabaseClient
-            .from("members")
-            .update({ total_paid: Math.max(0, totalPaid) })
-            .eq("id", payment.member_id);
+            await supabaseClient
+              .from("members")
+              .update({ total_paid: Math.max(0, totalPaid) })
+              .eq("id", payment.member_id);
 
-          console.log(`Updated member ${payment.member_id} total_paid to ${totalPaid}`);
+            console.log(`Updated member ${payment.member_id} total_paid to ${totalPaid}`);
+          }
         }
+      } catch (memberErr: any) {
+        console.warn("⚠️ Member total update failed in sync:", memberErr.message);
       }
 
       // Update CSV reports automatically
@@ -414,13 +443,27 @@ serve(async (req) => {
       );
     } else {
       // If payment is already completed, refresh receipt template (even if it exists).
-      if (payment.payment_status === "completed" && payment.member_id && payment.organization_id) {
+    // Determine the most up-to-date status to decide if we should trigger side effects
+    const finalPaymentStatus = updatedPayment?.payment_status || payment.payment_status;
+    const isActuallyCompleted = finalPaymentStatus === "completed";
+
+    console.log(`[Sync] Final verification: Status is ${finalPaymentStatus}. IsCompleted: ${isActuallyCompleted}. Monime: ${isCompleted}`);
+
+    if (isActuallyCompleted) {
+      // TRIGGER SIDE EFFECTS if payment is completed (idempotent calls)
+      if (payment.member_id && payment.organization_id) {
+        console.log(`[Sync] Triggering side effects for completed payment ${paymentId}...`);
+        
         try {
           const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
           const supabaseUrl = Deno.env.get("SUPABASE_URL");
           if (serviceRoleKey && supabaseUrl) {
             const functionUrl = `${supabaseUrl}/functions/v1/generate-receipt`;
-            await fetch(functionUrl, {
+            console.log(`[Sync] Calling generate-receipt for ${paymentId}`);
+            
+            // We use fetch instead of invoke to be explicit and avoid any potential 
+            // supabase-js timeouts for long PDF generation
+            const receiptResponse = await fetch(functionUrl, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${serviceRoleKey}`,
@@ -433,26 +476,49 @@ serve(async (req) => {
                 memberId: payment.member_id,
               }),
             });
+            
+            if (receiptResponse.ok) {
+              console.log(`[Sync] generate-receipt call successful for ${paymentId}`);
+            } else {
+              const errTxt = await receiptResponse.text();
+              console.warn(`[Sync] generate-receipt returned error: ${errTxt}`);
+            }
           }
         } catch (receiptRefreshErr) {
-          console.error("Receipt refresh for already-completed payment failed:", receiptRefreshErr);
+          console.error("[Sync] Side effects trigger failed:", receiptRefreshErr);
         }
       }
 
-      // Payment not completed yet
       return new Response(
         JSON.stringify({
           success: true,
-          message: `Payment status is ${actualPaymentStatus || "pending"}. Payment has not been completed yet.`,
-          paymentStatus: payment.payment_status,
+          message: "Payment confirmed and side effects triggered.",
+          paymentStatus: "completed",
           monimePaymentStatus: actualPaymentStatus,
           monimePaymentId: monimePaymentId,
+          referenceNumber: referenceNumber,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         }
       );
+    }
+
+    // Payment not completed yet
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Payment status is ${actualPaymentStatus || "pending"}. Payment has not been completed yet.`,
+        paymentStatus: finalPaymentStatus,
+        monimePaymentStatus: actualPaymentStatus,
+        monimePaymentId: monimePaymentId,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
     }
   } catch (error) {
     console.error("Error syncing payment status:", error);
