@@ -139,8 +139,8 @@ export default function MemberPaymentForm({
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription,
-            successUrl: `${getSiteUrl()}/payment-success?payment_id=${paymentId}`,
-            cancelUrl: `${getSiteUrl()}/payment-cancelled?payment_id=${paymentId}`,
+            successUrl: `${getSiteUrl()}/api/handler/payment-success?payment_id=${paymentId}`,
+            cancelUrl: `${getSiteUrl()}/api/handler/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
               payment_id: paymentId,
               organization_id: member.organization_id,

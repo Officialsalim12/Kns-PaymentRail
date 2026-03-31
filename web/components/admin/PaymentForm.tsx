@@ -128,8 +128,8 @@ export default function PaymentForm({ members, onSuccess, onCancel }: Props) {
             amount: paymentAmount,
             currency: 'SLE',
             description: paymentDescription || `Payment for member`,
-            successUrl: `${getSiteUrl()}/payment-success?payment_id=${paymentId}`,
-            cancelUrl: `${getSiteUrl()}/payment-cancelled?payment_id=${paymentId}`,
+            successUrl: `${getSiteUrl()}/api/handler/payment-success?payment_id=${paymentId}`,
+            cancelUrl: `${getSiteUrl()}/api/handler/payment-cancelled?payment_id=${paymentId}`,
             metadata: {
               payment_id: paymentId,
               organization_id: profile.organization_id,

@@ -174,7 +174,7 @@ Once your code is tested and clean:
    - Go to the GitHub interface.
    - Open a Full Pull Request against the `main` branch.
    - Provide a clear description and screenshots (if UI changes were made).
-   - Assign the PR to **Abdul Salim Gani** (Lead Developer) or another senior engineer for review.
+   - Assign the PR to **Abdul Salim Gani** (Lead Developer).
 
 ---
 
