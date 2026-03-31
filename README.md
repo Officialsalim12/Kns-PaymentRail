@@ -44,6 +44,68 @@ Fundflow handles completely separated tenant environments (organizations). The p
 
 ---
 
+## 🌍 Live Deployment & Hosting
+
+The Fundflow application is actively deployed and accessible in a production environment.
+
+- **Production URL**: [https://fundflow.sl](https://fundflow.sl)
+- **Hosting Provider**: **FastComet**
+- **Deployment Interface**: **cPanel**
+
+### Deployment Architecture & Process
+
+The deployment of Fundflow leverages **FastComet** hosting managed via **cPanel**, offering a reliable and highly optimized environment for the Next.js frontend, while keeping the database and backend tightly secured on the Supabase cloud infrastructure.
+
+#### 1. Frontend Web Application (Next.js)
+The Next.js user interface is deployed through cPanel's native Node.js application hosting capabilities:
+- **Build Generation**: The application is compiled for production utilizing the `npm run build` command to generate an optimized build footprint.
+- **cPanel "Setup Node.js App"**: The native **"Setup Node.js App"** (Phusion Passenger) feature within cPanel is utilized to initialize the Next.js instance, assigning the relevant Node.js version and pointing to the proper startup script.
+- **File Deployment**: The optimized `.next` build directory, configurations, and `public/` assets are transferred into the designated environment using cPanel's File Manager or secure FTP.
+- **Environment Variables**: Essential configuration keys (like `NEXT_PUBLIC_BASE_URL=https://fundflow.sl`, Supabase keys, and API tokens) are securely injected directly into the cPanel Node.js application interface.
+- **Routing & SSL**: cPanel securely manages the reverse proxy infrastructure, mapping external web traffic from `fundflow.sl` to the internal Next.js application port, and enforcing strict TLS encryption via Let's Encrypt.
+
+#### 2. Backend Infrastructure (Supabase)
+To ensure maximum scalability and security, the data layer and intensive backend logic are intentionally disconnected from cPanel and operate natively on the Supabase platform:
+- **Core Database & Auth**: Cloud-managed PostgreSQL and secure user authentication are handled by the Supabase project.
+- **Serverless Edge Logic**: Intensive routines like the `monime-webhook` listener and PDF receipt generation run globally as Supabase Edge Functions.
+
+### Step-by-Step Deployment Guide (FastComet + cPanel)
+
+Follow these instructions to deploy a new version of the Next.js application to FastComet:
+
+#### 1. Prepare the Production Build Locally
+1. Navigate to the `web/` directory in your local terminal.
+2. Run `npm install` to ensure all dependencies are up-to-date.
+3. Run `npm run build` to compile the production application.
+4. Compress the following items into a `.zip` archive:
+   - `.next` folder
+   - `public` folder
+   - `package.json`
+   - `package-lock.json`
+   - *(Note: A custom `server.js` might be required if utilizing a custom Passenger startup script)*.
+
+#### 2. Upload Files via cPanel
+1. Log in to your FastComet Client Area and open **cPanel**.
+2. Navigate to **Files** > **File Manager** and open the application's root directory (e.g., `public_html` or the custom addon domain directory).
+3. **Upload** your compressed `.zip` archive into this directory.
+4. Right-click the uploaded `.zip` and select **Extract**. *(Ensure you do not accidentally overwrite any production environment variables you might have stored in a local `.env` on the server).*
+
+#### 3. Setup or Update the Node.js App
+1. In cPanel, navigate to the **Software** section and click **Setup Node.js App**.
+2. If this is a **new deployment**, click **Create Application**:
+   - **Node.js version**: Select `18.x` or higher.
+   - **Application mode**: `Production`.
+   - **Application root**: Enter the folder path containing your extracted files.
+   - **Application URL**: Select your domain (`fundflow.sl`).
+   - **Startup File**: Point this to your server startup script (e.g., `server.js` or standard Next.js boot script).
+3. Under **Environment variables**, click **Add Variable** to inject your required production values (e.g., `NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_MONIME_API_KEY`). Click **Save**.
+4. Click the **Run NPM Install** button in the interface to automatically install the required `node_modules` dependencies directly on the server.
+
+#### 4. Restart the Application
+1. Click the **Restart** button on the application to command the Passenger runtime to flush the cache and mount the new Next.js production footprint.
+2. Verify the live deployment by navigating securely to `https://fundflow.sl`.
+
+---
 ## 📁 Repository Structure
 
 The repository is structured as a monorepo containing both the frontend application and the backend edge functions:
