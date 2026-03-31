@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Download, Bell, Wallet, Calendar, CheckCircle, Trash2, FileText, ExternalLink, Sparkles, ArrowUpRight, User as UserIcon, Settings, LogOut, XCircle } from 'lucide-react'
+import { Download, Bell, Wallet, Calendar, CheckCircle, Trash2, FileText, ExternalLink, Sparkles, ArrowUpRight, User as UserIcon, Settings, LogOut, XCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/currency'
 import { createClient } from '@/lib/supabase/client'
@@ -26,6 +26,7 @@ interface Payment {
   payment_date: string
   payment_method: string
   payment_status?: string
+  payment_type?: string
   reference_number: string
   description: string
   receipt?: {
@@ -96,6 +97,7 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null)
   const [mobileTab, setMobileTab] = useState<'overview' | 'history' | 'notifications'>('overview')
   const [selectedTab, setSelectedTab] = useState<MemberTab | null>(null)
+  const [currentTabMobileIndex, setCurrentTabMobileIndex] = useState(0)
   const [memberData, setMemberData] = useState(member)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -182,6 +184,23 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
   // Always use recalculated value from actual completed payments - don't fall back to database value
   const recalculatedTotalPaid = calculateCompletedPaymentsDisplayAmount(payments)
   const displayTotalPaid = recalculatedTotalPaid
+
+  // Calculate categorized totals
+  const monthlyTotal = payments
+    .filter(p => p.payment_status === 'completed' && p.payment_type === 'monthly')
+    .reduce((sum, p) => sum + getMemberDisplayAmount(p.amount), 0)
+  
+  const weeklyTotal = payments
+    .filter(p => p.payment_status === 'completed' && p.payment_type === 'weekly')
+    .reduce((sum, p) => sum + getMemberDisplayAmount(p.amount), 0)
+  
+  const oneTimeTotal = payments
+    .filter(p => p.payment_status === 'completed' && p.payment_type === 'one-time')
+    .reduce((sum, p) => sum + getMemberDisplayAmount(p.amount), 0)
+  
+  const donationTotal = payments
+    .filter(p => p.payment_status === 'completed' && p.payment_type === 'donation')
+    .reduce((sum, p) => sum + getMemberDisplayAmount(p.amount), 0)
 
   // Calculate unpaid balance dynamically from obligations
   const computeUnpaidBalance = () => {
@@ -426,9 +445,11 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
         {selectedTab && (
           <MemberPaymentForm
             memberId={memberData.id}
+            tabId={selectedTab.id}
             tabName={selectedTab.tab_name}
             tabType={selectedTab.tab_type}
             monthlyCost={selectedTab.monthly_cost}
+            obligations={obligations}
             onSuccess={() => {
               setSelectedTab(null)
               refreshMemberData()
@@ -500,7 +521,8 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
             {tabs && tabs.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 sm:p-6">
-                  <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {/* Desktop Grid Layout */}
+                  <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                     {tabs.map((tab) => (
                       <div
                         key={tab.id}
@@ -528,6 +550,70 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
                       </div>
                     ))}
                   </div>
+
+                  {/* Mobile Carousel Layout */}
+                  <div className="sm:hidden space-y-4">
+                    <div className="relative">
+                      <div className="p-1">
+                        {tabs[currentTabMobileIndex] && (
+                          <div
+                            className="border border-primary-200 bg-primary-50/10 rounded-2xl p-5 shadow-sm flex flex-col justify-between min-h-[140px] animate-in fade-in slide-in-from-right-4 duration-300"
+                            onClick={() => setSelectedTab(tabs[currentTabMobileIndex])}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1 pr-2">
+                                <h3 className="font-black text-gray-900 text-lg leading-tight mb-1">{tabs[currentTabMobileIndex].tab_name}</h3>
+                                <p className="text-xs text-gray-500 font-medium">{tabs[currentTabMobileIndex].tab_type === 'payment' ? 'Monthly or one-time payment' : 'Voluntary donation'}</p>
+                              </div>
+                              <span className={`px-2.5 py-1 text-[10px] font-black rounded-lg shrink-0 uppercase tracking-wider ${tabs[currentTabMobileIndex].tab_type === 'payment'
+                                ? 'bg-primary-500 text-white shadow-sm'
+                                : 'bg-primary-600 text-white shadow-sm'
+                                }`}>
+                                {tabs[currentTabMobileIndex].tab_type === 'payment' ? 'PAY' : 'GIVE'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedTab(tabs[currentTabMobileIndex])
+                              }}
+                              className="w-full mt-2 px-6 py-3.5 bg-primary-600 text-white rounded-xl text-sm font-black shadow-md shadow-primary-200 active:scale-95 transition-all"
+                            >
+                              {tabs[currentTabMobileIndex].tab_type === 'payment' ? 'Proceed to Pay' : 'Donate Now'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Navigation Buttons for Mobile */}
+                    {tabs.length > 1 && (
+                      <div className="flex items-center justify-between gap-4 pt-2">
+                        <button
+                          onClick={() => setCurrentTabMobileIndex((prev) => (prev - 1 + tabs.length) % tabs.length)}
+                          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 text-gray-600 border border-gray-200 rounded-xl text-xs font-bold transition-all active:bg-gray-100"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous
+                        </button>
+                        <div className="flex gap-1.5 px-2">
+                          {tabs.map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`h-1.5 rounded-full transition-all ${i === currentTabMobileIndex ? 'w-6 bg-primary-600' : 'w-1.5 bg-gray-200'}`}
+                            />
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setCurrentTabMobileIndex((prev) => (prev + 1) % tabs.length)}
+                          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 text-gray-600 border border-gray-200 rounded-xl text-xs font-bold transition-all active:bg-gray-100"
+                        >
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -536,37 +622,62 @@ export default function MemberDashboard({ member, payments: initialPayments, rec
             <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
                 <div className="p-2.5 bg-primary-500 rounded-lg mb-3">
-                  <CheckCircle className="h-5 w-5 text-white" />
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
-                <p className="text-xl font-bold text-gray-900 capitalize">{memberData.status}</p>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
-                <div className="p-2.5 bg-green-500 rounded-lg mb-3">
                   <Wallet className="h-5 w-5 text-white" />
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(displayTotalPaid)}</p>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
-                <div className="p-2.5 bg-orange-500 rounded-lg mb-3">
-                  <Wallet className="h-5 w-5 text-white" />
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(computedUnpaidBalance)}</p>
-                <Link href="/member/obligations" className="mt-2 text-[10px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider underline">View Details</Link>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Pay</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(monthlyTotal)}</p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
                 <div className="p-2.5 bg-blue-500 rounded-lg mb-3">
                   <Calendar className="h-5 w-5 text-white" />
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Last Pay</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {payments[0] ? format(new Date(payments[0].payment_date), 'MMM dd') : 'N/A'}
-                </p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Weekly Pay</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(weeklyTotal)}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
+                <div className="p-2.5 bg-purple-500 rounded-lg mb-3">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">One-Time Pay</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(oneTimeTotal)}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
+                <div className="p-2.5 bg-orange-500 rounded-lg mb-3">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Donation Pay</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(donationTotal)}</p>
+              </div>
+            </div>
+
+            {/* Additional Status Cards */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center">
+                <div className="p-2.5 bg-green-500 rounded-lg mb-3">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Overall Status</p>
+                <p className="text-xl font-bold text-gray-900 capitalize">{memberData.status}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center hover:border-primary-100 transition-colors">
+                <div className="p-2.5 bg-primary-600 rounded-lg mb-3">
+                  <Wallet className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(displayTotalPaid)}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col items-center text-center hover:border-orange-100 transition-colors">
+                <div className="p-2.5 bg-orange-600 rounded-lg mb-3">
+                  <Wallet className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Outstanding Balance</p>
+                <p className="text-xl font-bold text-gray-900">{formatCurrency(computedUnpaidBalance)}</p>
+                <Link href="/member/obligations" className="mt-2 text-[10px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider underline">View Details</Link>
               </div>
             </div>
           </div>

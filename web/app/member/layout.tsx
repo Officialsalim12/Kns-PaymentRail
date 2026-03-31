@@ -15,7 +15,7 @@ export default async function MemberLayout({
     .from('members')
     .select('full_name, organization_id')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   const organizationId = member?.organization_id || user.profile?.organization_id
   let organization = null
@@ -24,7 +24,7 @@ export default async function MemberLayout({
       .from('organizations')
       .select('*')
       .eq('id', organizationId)
-      .single()
+      .maybeSingle()
 
     if (data) {
       organization = {

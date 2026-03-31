@@ -261,9 +261,9 @@ export default function OrganizationSettings({ organization: initialOrganization
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Organization Logo</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Organization Logo</h2>
 
-            <div className="flex items-start gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
               <div className="flex-shrink-0">
                 {logoPreview ? (
                   <div className="relative h-32 w-32">

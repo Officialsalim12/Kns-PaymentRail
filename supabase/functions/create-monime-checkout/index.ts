@@ -175,14 +175,6 @@ serve(async (req) => {
     let finalSuccessUrl = successUrl;
     let finalCancelUrl = cancelUrl;
 
-    // Hard override: If the frontend sends localhost (e.g. from a weird cached env or SSR), force it to production URL
-    if (finalSuccessUrl && finalSuccessUrl.includes('localhost')) {
-      finalSuccessUrl = finalSuccessUrl.replace(/http:\/\/localhost(:\d+)?/, 'https://fundflow.sl');
-    }
-    if (finalCancelUrl && finalCancelUrl.includes('localhost')) {
-      finalCancelUrl = finalCancelUrl.replace(/http:\/\/localhost(:\d+)?/, 'https://fundflow.sl');
-    }
-
     if (!finalSuccessUrl || !finalCancelUrl) {
       throw new Error("Missing required parameters: successUrl and cancelUrl must be provided");
     }
@@ -194,22 +186,24 @@ serve(async (req) => {
     // If metadata has tab info, build a more descriptive name
     if (metadata?.tab_name) {
       const tabName = metadata.tab_name;
-      const tabType = metadata.tab_type || 'payment';
+      const paymentType = metadata.payment_type || 'one-time';
+      const quantityStr = metadata.quantity;
 
-      // If we have quantity info in metadata, include it
-      if (metadata.months || metadata.quantity) {
-        const quantity = metadata.months || metadata.quantity;
-        const unitPrice = metadata.monthly_cost || metadata.unit_price;
+      // Only show quantity/duration if it's a recurring payment and quantity > 0
+      if (quantityStr && (paymentType === 'monthly' || paymentType === 'weekly')) {
+        const quantity = parseInt(String(quantityStr));
+        const unitPrice = metadata.unit_price;
+        const unitLabel = paymentType === 'weekly' 
+          ? (quantity === 1 ? 'week' : 'weeks')
+          : (quantity === 1 ? 'month' : 'months');
 
         if (unitPrice) {
-          // Format: "Monthly Dues - 3 months × Le 100.00"
-          paymentDescription = `${tabName} - ${quantity} ${parseInt(quantity) === 1 ? 'month' : 'months'}${unitPrice ? ` × Le ${parseFloat(unitPrice).toFixed(2)}` : ''}`;
+          paymentDescription = `${tabName} - ${quantity} ${unitLabel} × Le ${parseFloat(String(unitPrice)).toFixed(2)}`;
         } else {
-          // Format: "Monthly Dues - 3 months"
-          paymentDescription = `${tabName} - ${quantity} ${parseInt(quantity) === 1 ? 'month' : 'months'}`;
+          paymentDescription = `${tabName} - ${quantity} ${unitLabel}`;
         }
       } else {
-        // Just use tab name
+        // Just use tab name for donations and one-time payments
         paymentDescription = tabName;
       }
     }
@@ -306,9 +300,14 @@ serve(async (req) => {
 
     // The frontend passes the FINAL calculated total amount (e.g. 3 months * 100 = 300)
     // If we pass effectiveQuantity > 1 along with the total amount as the unit price, 
-    // Monime will multiply them again (300 * 3 = 900).
-    // So we must fix the quantity to 1 because finalAmountMinor is already the total.
-    const effectiveQuantity = 1;
+    // Extract quantity from metadata if available (used for recurring dues displays)
+    // The frontend passes the TOTAL amount (e.g. 300 for 3 months @ 100).
+    const requestedQuantity = metadata?.quantity ? parseInt(metadata.quantity.toString()) : 1;
+    const effectiveQuantity = isNaN(requestedQuantity) || requestedQuantity <= 0 ? 1 : requestedQuantity;
+
+    // Calculate unit price from total amount and quantity
+    // finalAmountMinor is already (total * 100). We divide by quantity to get the unit price for display.
+    const unitPriceValueMinor = Math.round(finalAmountMinor / effectiveQuantity);
 
     // Create payload matching Monime integration guide structure
     const monimeRequestBody: any = {
@@ -321,7 +320,7 @@ serve(async (req) => {
           name: lineItemName,
           price: {
             currency: finalCurrency,
-            value: finalAmountMinor
+            value: unitPriceValueMinor
           },
           quantity: effectiveQuantity,
         },

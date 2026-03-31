@@ -150,7 +150,7 @@ export default function ApprovalsManagement({
   return (
     <div className="space-y-8 pb-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
         <div className="flex items-center gap-4">
           <Link
             href="/admin"
@@ -166,7 +166,8 @@ export default function ApprovalsManagement({
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="overflow-x-auto pb-1 -mx-2 px-2 hide-scrollbar">
+        <div className="flex bg-gray-100 p-1 rounded-xl w-max">
         <button
           onClick={() => setActiveTab('pending')}
           className={`px-6 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 ${activeTab === 'pending'
@@ -196,6 +197,7 @@ export default function ApprovalsManagement({
           </span>
         </button>
       </div>
+    </div>
 
       <div className="space-y-8">
         {/* Pending Content */}
@@ -316,8 +318,8 @@ export default function ApprovalsManagement({
                 <p>No approved members found</p>
               </div>
             ) : (
-              <div className="responsive-table-container">
-                <div className="inline-block min-w-full align-middle">
+              <div className="overflow-x-auto pb-4 hide-scrollbar">
+                <div className="inline-block min-w-[600px] align-middle px-4">
                   <table className="min-w-full divide-y divide-gray-50">
                     <thead className="bg-gray-50/50">
                       <tr>
@@ -354,8 +356,6 @@ export default function ApprovalsManagement({
           </div>
         )}
       </div>
-
-
     </div>
   )
 }

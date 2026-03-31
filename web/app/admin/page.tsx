@@ -26,7 +26,7 @@ export default async function AdminDashboardPage() {
     .from('organizations')
     .select('*')
     .eq('id', organizationId)
-    .single()
+    .maybeSingle()
 
   const organization = orgData ? {
     id: orgData.id,
@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
   // Get all payments for status distribution and chart
   const { data: allPayments } = await supabase
     .from('payments')
-    .select('amount, created_at, payment_date, payment_status, member_id')
+    .select('amount, created_at, payment_date, payment_status, member_id, payment_type')
     .eq('organization_id', organizationId)
 
   // Filter for completed payments for revenue calculations
@@ -97,6 +97,23 @@ export default async function AdminDashboardPage() {
 
   // Calculate totals using display amounts (97% for completed payments)
   const totalPayments = payments.reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
+
+  // Calculate totals by category
+  const monthlyTotal = payments
+    .filter(p => p.payment_type === 'monthly')
+    .reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
+  
+  const weeklyTotal = payments
+    .filter(p => p.payment_type === 'weekly')
+    .reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
+  
+  const oneTimeTotal = payments
+    .filter(p => p.payment_type === 'one-time')
+    .reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
+  
+  const donationTotal = payments
+    .filter(p => p.payment_type === 'donation')
+    .reduce((sum, p) => sum + getDisplayAmount(p.amount, p.payment_status || 'completed'), 0)
 
   // Calculate monthly revenue (current month) - using native Date methods
   const now = new Date()
@@ -152,7 +169,7 @@ export default async function AdminDashboardPage() {
     .from('organizations')
     .select('id, name, status')
     .eq('id', organizationId)
-    .single()
+    .maybeSingle()
 
   // Get pending admin requests (password reset requests for this organization's admin)
   const { data: passwordResetRequests } = await supabase
@@ -189,12 +206,15 @@ export default async function AdminDashboardPage() {
       stats={{
         totalMembers: membersWithBalance?.length || 0,
         activeMembers,
-        totalPayments,
-        monthlyRevenue,
-        averagePayment,
-        totalTransactions: payments.length,
         paidMembers,
         unpaidMembers,
+        monthlyTotal,
+        weeklyTotal,
+        oneTimeTotal,
+        donationTotal,
+        totalPayments,
+        monthlyRevenue,
+        totalTransactions: payments.length,
       }}
       recentPayments={recentPayments || []}
       pendingApprovals={pendingApprovalsList}

@@ -270,6 +270,17 @@ export async function generateReceiptPDF(
       yPosition -= 10
     }
 
+    // New Categorization Section (if provided)
+    if (payment?.payment_type) {
+      const typeLabel = payment.payment_type.charAt(0).toUpperCase() + payment.payment_type.slice(1)
+      const isRecurring = payment.payment_type === 'monthly' || payment.payment_type === 'weekly';
+      const quantityLabel = (isRecurring && payment.quantity && parseInt(payment.quantity) > 0) 
+        ? ` (Quantity: ${payment.quantity})` 
+        : "";
+      drawLabelValueRow("Category", `${typeLabel}${quantityLabel}`, yPosition)
+      yPosition -= rowHeight
+    }
+
     // Line items Section (if any)
     if (monimePaymentData?.line_items?.length > 0) {
       yPosition -= 6

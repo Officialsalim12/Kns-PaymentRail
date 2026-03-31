@@ -3,19 +3,24 @@ import { NextRequest, NextResponse } from 'next/server';
 const PRODUCTION_BASE_URL = 'https://fundflow.sl';
 
 function getBaseUrl(request: NextRequest): string {
-    // Always prefer the env var — baked in at build time
+    // 1. Client-side priority: If the request is coming from localhost, keep it on localhost
+    const url = new URL(request.url);
+    if (url.hostname.includes('localhost')) {
+        return `${url.protocol}//${url.host}`;
+    }
+
+    // 2. Otherwise, prefer the env var — baked in at build time
     if (process.env.NEXT_PUBLIC_BASE_URL && !process.env.NEXT_PUBLIC_BASE_URL.includes('localhost')) {
         return process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '');
     }
     if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')) {
         return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
     }
-    // In production, use hardcoded domain — never trust request.url which may come from Monime with wrong host
+    // In production, use hardcoded domain as safety fallback
     if (process.env.NODE_ENV === 'production') {
         return PRODUCTION_BASE_URL;
     }
-    // Local dev: derive from request
-    const url = new URL(request.url);
+    // Fallback
     return `${url.protocol}//${url.host}`;
 }
 

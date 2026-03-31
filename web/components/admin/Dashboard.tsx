@@ -36,7 +36,10 @@ interface DashboardProps {
     activeMembers: number
     unpaidMembers: number
     paidMembers: number
-    averagePayment: number
+    monthlyTotal: number
+    weeklyTotal: number
+    oneTimeTotal: number
+    donationTotal: number
   }
   recentPayments: any[]
   pendingApprovals: any[]
@@ -142,36 +145,37 @@ export default function AdminDashboard({
           <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-primary-400/20 rounded-full blur-2xl" />
 
-          <div className="relative p-5 xs:p-6 sm:p-8 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-4 sm:mb-0">
+          <div className="relative p-5 xs:p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
               {organization.logo_url && !logoError ? (
-                <div className="relative h-10 w-10 shrink-0">
+                <div className="relative h-12 w-12 sm:h-16 sm:w-16 shrink-0">
                   <Image
                     src={organization.logo_url}
                     alt={organization.name}
                     fill
-                    className="object-contain rounded-lg bg-white ring-2 ring-white/30 shadow-2xl"
+                    className="object-contain rounded-xl bg-white ring-4 ring-white/20 shadow-2xl"
                     onError={() => setLogoError(true)}
                   />
                 </div>
               ) : (
-                <div className="relative h-10 w-10 shrink-0 rounded-lg bg-white/10 flex items-center justify-center ring-2 ring-white/20 shadow-2xl">
-                  <Building2 className="h-6 w-6 text-white opacity-80" />
+                <div className="relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-xl bg-white/10 flex items-center justify-center ring-4 ring-white/10 shadow-2xl backdrop-blur-sm">
+                  <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-white opacity-80" />
                 </div>
               )}
-              <div className="space-y-1 min-w-0 w-full sm:w-auto">
-                <h1 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight truncate">
+              <div className="space-y-1.5 min-w-0">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
                   {organization.name}
                 </h1>
-                <p className="text-primary-100 text-[10px] xs:text-xs sm:text-sm font-medium opacity-80">Organization Dashboard</p>
+                <p className="text-primary-100 text-xs sm:text-sm font-semibold opacity-90 tracking-wide uppercase">Admin Dashboard</p>
               </div>
             </div>
-            <div className="flex flex-col items-center sm:items-end gap-4 w-full sm:w-auto sm:absolute sm:top-5 sm:right-5 md:top-8 md:right-8">
+            
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               <button
                 onClick={() => setShowBulkTabCreator(true)}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3.5 bg-white text-primary-700 rounded-xl sm:rounded-2xl hover:bg-primary-50 transition-all shadow-lg font-bold text-xs sm:text-sm tracking-wide active:scale-95 group"
+                className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 bg-white text-primary-700 rounded-2xl hover:bg-primary-50 transition-all shadow-xl font-bold text-sm tracking-wide active:scale-95 group"
               >
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
+                <Plus className="h-5 w-5 text-primary-600 transition-transform group-hover:rotate-90" />
                 <span>Create Payment Tab</span>
               </button>
             </div>
@@ -207,53 +211,90 @@ export default function AdminDashboard({
         <div className="space-y-8">
           {/* Summary Tab Content */}
           <div className={`${mobileTab === 'summary' ? 'block' : 'hidden md:block'} space-y-8`}>
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col items-center text-center">
                 <div className="p-2 bg-primary-500 rounded-lg mb-4">
                   <Wallet className="h-5 w-5 text-white" />
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.totalPayments)}</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.monthlyTotal + stats.weeklyTotal + stats.oneTimeTotal + stats.donationTotal)}</p>
               </div>
 
-              <Link href="/admin/payments" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:border-green-200 transition-colors flex flex-col items-center text-center">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col items-center text-center">
                 <div className="p-2 bg-green-500 rounded-lg mb-4">
-                  <BarChart3 className="h-5 w-5 text-white" />
+                  <Calendar className="h-5 w-5 text-white" />
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.monthlyRevenue)}</p>
-              </Link>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Pay</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.monthlyTotal)}</p>
+              </div>
 
-              <Link href="/admin/members" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:border-blue-200 transition-colors flex flex-col items-center text-center">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col items-center text-center">
                 <div className="p-2 bg-blue-500 rounded-lg mb-4">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Members</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none">{stats.totalMembers}</p>
-              </Link>
-
-              <Link href="/admin/approvals" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 hover:border-orange-200 transition-colors flex flex-col items-center text-center">
-                <div className="p-2 bg-orange-500 rounded-lg mb-4">
                   <Clock className="h-5 w-5 text-white" />
                 </div>
-                {totalPendingApprovals > 0 && (
-                  <span className="mb-3 bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {totalPendingApprovals}
-                  </span>
-                )}
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending</p>
-                <p className="text-2xl font-bold text-gray-900 leading-none">{totalPendingApprovals}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Weekly Pay</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.weeklyTotal)}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col items-center text-center">
+                <div className="p-2 bg-purple-500 rounded-lg mb-4">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">One-Time Pay</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.oneTimeTotal)}</p>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex flex-col items-center text-center">
+                <div className="p-2 bg-orange-500 rounded-lg mb-4">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Donations</p>
+                <p className="text-2xl font-bold text-gray-900 leading-none">{formatCurrency(stats.donationTotal)}</p>
+              </div>
+            </div>
+
+            {/* Sub-metrics members info */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <Link href="/admin/members" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:border-blue-200 transition-colors flex items-center gap-4">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Members</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.totalMembers}</p>
+                </div>
               </Link>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <span className="w-5 h-5 rounded-full bg-green-600 animate-pulse block" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Paid Members</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.paidMembers}</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4">
+                <div className="p-2 bg-red-50 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Unpaid Balance</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.unpaidMembers}</p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Analytics Content (always visible so charts are never hidden) */}
           <div className="space-y-8">
             {/* Revenue Performance (existing bar chart) */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 overflow-hidden">
               <h2 className="text-lg font-bold text-gray-900 mb-8 sm:mb-10 text-center sm:text-left">Revenue Performance</h2>
               {hasGraphData ? (
-                <div className="h-64 sm:h-80 flex items-end justify-between gap-1 xs:gap-3 sm:gap-6 lg:gap-8 px-1 xs:px-4">
+                <div className="overflow-x-auto pb-4 -mx-1 px-1 hide-scrollbar">
+                  <div className="h-64 sm:h-80 min-w-[500px] flex items-end justify-between gap-3 sm:gap-6 lg:gap-8 pr-4">
                   {chartData.map((day) => {
                     const safeAmount = toSafeAmount(day.amount)
                     const height = Math.max(8, (safeAmount / maxAmount) * 100)
@@ -286,12 +327,13 @@ export default function AdminDashboard({
                     )
                   })}
                 </div>
-              ) : (
-                <div className="h-64 sm:h-80 flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
-                  <p className="text-sm text-gray-500">No payment data for the selected period yet.</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="h-64 sm:h-80 flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50">
+                <p className="text-sm text-gray-500">No payment data for the selected period yet.</p>
+              </div>
+            )}
+          </div>
 
             {/* Member Payment Participation chart */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">

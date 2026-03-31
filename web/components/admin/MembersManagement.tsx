@@ -380,8 +380,8 @@ export default function MembersManagement({ members: initialMembers, organizatio
               </div>
 
               {/* Desktop Table View */}
-              <div className="hidden md:block responsive-table-container">
-                <div className="inline-block min-w-full align-middle">
+              <div className="hidden md:block overflow-x-auto pb-4 hide-scrollbar">
+                <div className="inline-block min-w-[900px] align-middle px-4">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>

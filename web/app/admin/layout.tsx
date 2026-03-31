@@ -18,7 +18,7 @@ export default async function AdminLayout({
       .from('organizations')
       .select('*')
       .eq('id', organizationId)
-      .single()
+      .maybeSingle()
 
     if (data) {
       organization = {

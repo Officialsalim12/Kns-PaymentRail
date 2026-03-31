@@ -11,7 +11,7 @@ export default async function MemberDashboardPage() {
     .from('members')
     .select('*')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   let obligations = []
 

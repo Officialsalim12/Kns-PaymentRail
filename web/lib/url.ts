@@ -16,24 +16,33 @@
 const PRODUCTION_DOMAIN = 'https://fundflow.sl'
 
 export function getSiteUrl(): string {
-  // 1. Check NEXT_PUBLIC_BASE_URL (recommended — set this in your hosting panel)
+  // 1. Client-side priority: If we are in the browser and on localhost, 
+  //    ALWAYS prefer the actual browser URL. This fixes redirects during local dev.
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const origin = window.location.origin
+    if (origin.includes('localhost')) {
+      return origin
+    }
+  }
+
+  // 2. Check NEXT_PUBLIC_BASE_URL (recommended — set this in your hosting panel)
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
   if (baseUrl && !baseUrl.includes('localhost')) {
     return baseUrl.replace(/\/$/, '')
   }
 
-  // 2. Legacy support for NEXT_PUBLIC_APP_URL
+  // 3. Legacy support for NEXT_PUBLIC_APP_URL
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
   if (appUrl && !appUrl.includes('localhost')) {
     return appUrl.replace(/\/$/, '')
   }
 
-  // 3. Vercel auto-detected URL
+  // 4. Vercel auto-detected URL
   if (process.env.NEXT_PUBLIC_VERCEL_URL) {
     return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
   }
 
-  // 4. Client-side: use actual browser URL (most accurate)
+  // 5. Client-side fallback: use actual browser URL
   if (typeof window !== 'undefined' && window.location.origin) {
     const origin = window.location.origin
     // If browser is on localhost but env says production → use production domain
@@ -44,14 +53,14 @@ export function getSiteUrl(): string {
     return origin
   }
 
-  // 5. Server-side fallback — if no env var is set and NODE_ENV is production,
+  // 6. Server-side fallback — if no env var is set and NODE_ENV is production,
   //    use the hardcoded production domain rather than returning localhost
   if (process.env.NODE_ENV === 'production') {
     console.warn('[getSiteUrl] No env var set in production – falling back to PRODUCTION_DOMAIN')
     return PRODUCTION_DOMAIN
   }
 
-  // 6. Local development only
+  // 7. Local development fallback
   return 'http://localhost:3000'
 }
 

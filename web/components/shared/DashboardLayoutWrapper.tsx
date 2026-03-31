@@ -87,7 +87,7 @@ export default function DashboardLayoutWrapper({
         <main
           className={`flex-1 w-full min-h-[calc(100vh-64px)] min-w-0 transition-all duration-300 text-[color:var(--org-text-color)] ${mainOffsetClassName}`}
         >
-          <div className="min-h-full w-full max-w-full py-4 sm:py-8">
+          <div className="min-h-full w-full max-w-full px-4 sm:px-0 py-4 sm:py-8">
             <div className="main-container w-full max-w-full">
               {children}
             </div>
