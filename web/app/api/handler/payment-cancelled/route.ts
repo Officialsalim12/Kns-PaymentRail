@@ -68,3 +68,33 @@ export async function POST(request: NextRequest) {
         return NextResponse.redirect(new URL('/payment-cancelled', base), 303);
     }
 }
+
+export async function GET(request: NextRequest) {
+    try {
+        const url = new URL(request.url);
+        const searchParams = new URLSearchParams(url.search);
+
+        let paymentId = searchParams.get('payment_id') || searchParams.get('paymentId') || searchParams.get('id');
+
+        // Use env-aware base URL
+        const base = getBaseUrl(request);
+        const redirectUrl = new URL('/payment-cancelled', base);
+        console.log(`[payment-cancelled GET] Redirecting to: ${redirectUrl.toString()}`);
+
+        // Append all existing query params
+        searchParams.forEach((value, key) => {
+            redirectUrl.searchParams.set(key, value);
+        });
+
+        if (paymentId && !redirectUrl.searchParams.has('payment_id')) {
+            redirectUrl.searchParams.set('payment_id', paymentId);
+        }
+
+        // Redirect to the GET page
+        return NextResponse.redirect(redirectUrl, 303);
+    } catch (error) {
+        console.error('Error handling GET request to payment-cancelled:', error);
+        const base = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || PRODUCTION_BASE_URL;
+        return NextResponse.redirect(new URL('/payment-cancelled', base), 303);
+    }
+}
